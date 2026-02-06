@@ -1,0 +1,37 @@
+{
+  "name": "sharego-mobile",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "start": "react-native start",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@react-native-clipboard/clipboard": "^1.14.0",
+    "@react-navigation/native": "^7.0.0",
+    "@react-navigation/native-stack": "^7.0.0",
+    "@sharego/core": "*",
+    "buffer": "^6.0.3",
+    "js-sha1": "^0.7.0",
+    "react": "^18.3.1",
+    "react-native": "^0.75.0",
+    "react-native-qrcode-svg": "^6.3.0",
+    "react-native-safe-area-context": "^5.0.0",
+    "react-native-screens": "^4.0.0",
+    "react-native-svg": "^15.0.0",
+    "react-native-tcp-socket": "^6.2.0",
+    "react-native-vision-camera": "^4.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "@babel/runtime": "^7.26.0",
+    "@react-native/babel-preset": "^0.75.0",
+    "@react-native/metro-config": "^0.75.0",
+    "@types/js-sha1": "^0.6.2",
+    "@types/react": "^18.3.0",
+    "typescript": "^5.7.0"
+  }
+}

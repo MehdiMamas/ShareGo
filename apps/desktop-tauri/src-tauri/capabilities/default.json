@@ -1,0 +1,9 @@
+{
+  "identifier": "default",
+  "description": "default capabilities for sharego",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "event:default"
+  ]
+}

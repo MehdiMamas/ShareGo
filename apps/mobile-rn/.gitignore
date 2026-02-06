@@ -1,0 +1,13 @@
+node_modules/
+.gradle/
+android/app/build/
+android/.gradle/
+ios/Pods/
+ios/build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+.metro-health-check*

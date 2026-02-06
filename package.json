@@ -1,0 +1,17 @@
+{
+  "name": "sharego",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Serverless, end-to-end encrypted, local-network-only sharing for sensitive data",
+  "workspaces": [
+    "core",
+    "apps/*"
+  ],
+  "scripts": {
+    "build:core": "npm run build --workspace=core",
+    "test:core": "npm run test --workspace=core"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

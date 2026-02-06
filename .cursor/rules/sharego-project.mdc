@@ -1,0 +1,41 @@
+---
+description: ShareGo project overview, architecture invariants, and repo conventions
+alwaysApply: true
+---
+
+# ShareGo project context
+
+ShareGo is a serverless, end-to-end encrypted, local-network-only app for securely sharing sensitive data (passwords, OTPs, text) between exactly 2 devices on the same Wi-Fi.
+
+## Supported platforms
+
+- Desktop: Windows, macOS, Linux (Tauri)
+- Mobile: Android, iOS (React Native bare)
+
+## Architecture invariants (never violate these)
+
+1. No cloud servers, no TURN, no signaling, no relay
+2. Same Wi-Fi / local network only
+3. Exactly 2 participants per session, no late join
+4. Receiver creates session, sender joins
+5. All crypto uses libsodium — no platform-specific crypto APIs
+6. Ephemeral keys only — never persist secrets to disk
+7. QR and manual code are bootstrap only — never data channels
+
+## Repo layout
+
+- `core/src/crypto/` — libsodium wrappers (keygen, exchange, encrypt, decrypt)
+- `core/src/protocol/` — message types, serialization, QR payload
+- `core/src/session/` — session state machine, lifecycle, events
+- `core/src/transport/` — ILocalTransport interface, WebSocketTransport
+- `apps/desktop-tauri/` — Tauri shell (Windows, macOS, Linux)
+- `apps/mobile-rn/` — React Native bare (Android, iOS)
+- `docs/` — ARCHITECTURE.md, PROTOCOL.md, THREAT_MODEL.md, REJECTED.md
+
+## Key design rules
+
+- All security logic lives in `@sharego/core` — app shells are thin wrappers
+- Transport is pluggable via `ILocalTransport` interface
+- Every message is typed via the `ProtocolMessage` union
+- Session state transitions are explicit and validated
+- Comments should be lowercase and only added when they explain *why*, not *what*

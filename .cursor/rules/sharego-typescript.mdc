@@ -1,0 +1,50 @@
+---
+description: TypeScript coding conventions for ShareGo core and apps
+globs: "**/*.ts"
+alwaysApply: false
+---
+
+# TypeScript conventions
+
+## Style
+
+- Use `type` imports for types: `import type { Foo } from "./foo.js"`
+- Always include `.js` extension in relative imports (ESM)
+- Use `Uint8Array` for all binary data — never `Buffer`
+- Prefer `const` over `let`, never use `var`
+- Use explicit return types on exported functions
+- Comments are lowercase, only when explaining *why*
+
+## Error handling
+
+```typescript
+// bad — swallowing errors
+try { await op(); } catch {}
+
+// good — rethrow or handle meaningfully
+try {
+  await op();
+} catch (err) {
+  throw new Error("operation failed", { cause: err });
+}
+```
+
+## Patterns
+
+- Exported interfaces start with `I` only for transport/adapter contracts (e.g. `ILocalTransport`)
+- Use discriminated unions for message types (see `ProtocolMessage`)
+- Use enums for finite sets (e.g. `MessageType`, `SessionState`)
+- Use generic type parameters to preserve literal types (see `createBaseFields<T>`)
+
+## Testing
+
+- Tests go in `*.test.ts` files alongside the module
+- Use vitest: `import { describe, it, expect } from "vitest"`
+- Never use direct SQL or database calls in tests
+- Test state transitions explicitly by checking before and after states
+
+## Barrel exports
+
+- Each module has an `index.ts` that re-exports public API
+- `core/src/index.ts` is the top-level barrel for the entire core package
+- Keep barrel exports alphabetically ordered by category

@@ -1,0 +1,39 @@
+---
+description: Security rules and constraints for ShareGo — never compromise these
+alwaysApply: true
+---
+
+# Security rules
+
+## Never do these
+
+- Never add cloud servers, relay services, or internet fallbacks
+- Never persist keys, secrets, or session data to disk or local storage
+- Never use platform-specific crypto APIs — always use libsodium
+- Never bypass the receiver approval step for pairing
+- Never allow more than 2 participants in a session
+- Never send sensitive data through QR codes or pairing codes
+- Never disable or weaken AEAD encryption
+- Never reuse ephemeral keys across sessions
+- Never skip memory zeroing of secrets on session close
+
+## Always do these
+
+- Use `crypto_aead_xchacha20poly1305_ietf_encrypt` for all data encryption
+- Generate a fresh random nonce for every DATA message
+- Generate fresh X25519 key pairs for every session
+- Validate protocol version and message type on every received message
+- Check sequence numbers for replay detection
+- Call `zeroMemory()` on all key material when a session ends
+- Use constant-time comparison for any secret comparison
+
+## Crypto surface (auditable)
+
+| Operation       | Primitive                   | Source                |
+|-----------------|-----------------------------|-----------------------|
+| Key exchange    | X25519                      | `crypto_kx_keypair`   |
+| Encryption      | XChaCha20-Poly1305 (AEAD)  | `crypto_aead_*_ietf`  |
+| Nonces          | 24-byte random              | `randombytes_buf`     |
+| Memory zeroing  | Best-effort                 | `sodium.memzero`      |
+
+See `docs/THREAT_MODEL.md` for full threat analysis.

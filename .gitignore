@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.DS_Store
+*.tgz
+*.log
+.env
+.env.*
+
+# personal notes and context (not part of the project)
+.progress/
+.cursor/rules/personal-context.mdc
+.cursor/plans/

@@ -1,0 +1,61 @@
+import type { WebSocketClientAdapter } from "../lib/core";
+
+/**
+ * websocket client adapter using the browser's native WebSocket.
+ * used by the sender to connect to the receiver's ws server.
+ */
+export class BrowserWsClientAdapter implements WebSocketClientAdapter {
+  private ws: WebSocket | null = null;
+  private messageHandler: ((data: Uint8Array) => void) | null = null;
+  private closeHandler: (() => void) | null = null;
+
+  connect(url: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.ws = new WebSocket(url);
+      this.ws.binaryType = "arraybuffer";
+
+      this.ws.onopen = () => resolve();
+
+      this.ws.onerror = () =>
+        reject(new Error("websocket connection failed"));
+
+      this.ws.onmessage = (event) => {
+        if (this.messageHandler) {
+          const data =
+            event.data instanceof ArrayBuffer
+              ? new Uint8Array(event.data)
+              : new TextEncoder().encode(event.data);
+          this.messageHandler(data);
+        }
+      };
+
+      this.ws.onclose = () => {
+        if (this.closeHandler) {
+          this.closeHandler();
+        }
+      };
+    });
+  }
+
+  send(data: Uint8Array): void {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      throw new Error("websocket not connected");
+    }
+    this.ws.send(data);
+  }
+
+  onMessage(handler: (data: Uint8Array) => void): void {
+    this.messageHandler = handler;
+  }
+
+  onClose(handler: () => void): void {
+    this.closeHandler = handler;
+  }
+
+  close(): void {
+    this.ws?.close();
+    this.ws = null;
+    this.messageHandler = null;
+    this.closeHandler = null;
+  }
+}

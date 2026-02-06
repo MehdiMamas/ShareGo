@@ -1,0 +1,43 @@
+---
+description: Protocol and message format conventions for ShareGo wire protocol
+globs: "**/protocol/**"
+alwaysApply: false
+---
+
+# Protocol conventions
+
+## Message format
+
+- All messages are UTF-8 JSON over WebSocket binary frames
+- Every message must have: `v` (version), `type`, `sid`, `seq`
+- Use `createBaseFields<T>(type, sid, seq)` to construct base fields with literal types
+- Always validate `v === PROTOCOL_VERSION` on deserialization
+
+## Adding a new message type
+
+1. Add the type to `MessageType` enum in `protocol/types.ts`
+2. Define the message interface extending `BaseMessage`
+3. Add the interface to the `ProtocolMessage` union
+4. Add a handler in `session/session.ts` `handleIncoming` switch
+5. Update `docs/PROTOCOL.md` with the new message spec
+6. Update `docs/THREAT_MODEL.md` if the new message has security implications
+
+## Serialization rules
+
+- Use `toBase64()` / `fromBase64()` for binary fields (keys, nonces, ciphertext)
+- Base64 variant: URL-safe, no padding (`sodium.base64_variants.URLSAFE_NO_PADDING`)
+- Sequence numbers are monotonically increasing per session, per sender
+- QR payloads use the same JSON format but are NOT protocol messages
+
+## Wire example
+
+```json
+{
+  "v": 1,
+  "type": "DATA",
+  "sid": "A7K3M2",
+  "seq": 5,
+  "ciphertext": "...",
+  "nonce": "..."
+}
+```

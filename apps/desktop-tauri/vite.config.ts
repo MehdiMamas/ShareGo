@@ -1,0 +1,42 @@
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path";
+import type { Plugin } from "vite";
+
+// libsodium-wrappers-sumo's ESM build imports ./libsodium-sumo.mjs
+// but that file lives in the separate libsodium-sumo package
+function fixLibsodiumEsm(): Plugin {
+  return {
+    name: "fix-libsodium-esm",
+    resolveId(source, importer) {
+      if (
+        source === "./libsodium-sumo.mjs" &&
+        importer?.includes("libsodium-wrappers-sumo")
+      ) {
+        return path.resolve(
+          __dirname,
+          "../../node_modules/libsodium-sumo/dist/modules-sumo-esm/libsodium-sumo.mjs",
+        );
+      }
+      return null;
+    },
+  };
+}
+
+export default defineConfig({
+  plugins: [react(), fixLibsodiumEsm()],
+  resolve: {
+    alias: {
+      "@sharego/core": path.resolve(__dirname, "../../core/src"),
+    },
+  },
+  clearScreen: false,
+  server: {
+    port: 1420,
+    strictPort: true,
+  },
+  build: {
+    outDir: "dist",
+    target: "es2022",
+  },
+});
