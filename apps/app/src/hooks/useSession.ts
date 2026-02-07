@@ -8,6 +8,7 @@ import {
   type ReceivedItem,
   type SentItem,
   type SessionId,
+  asSessionId,
 } from "../lib/core";
 
 export type { ReceivedItem, SentItem };
@@ -87,7 +88,7 @@ export function useSession(): UseSessionReturn {
       addr: string,
       receiverPk?: string,
       sid?: string,
-    ) => ctrl.startSender(transport, config, addr, receiverPk, sid as SessionId | undefined),
+    ) => ctrl.startSender(transport, config, addr, receiverPk, sid ? asSessionId(sid) : undefined),
     [ctrl],
   );
 

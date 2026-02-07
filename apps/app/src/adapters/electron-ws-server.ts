@@ -9,6 +9,13 @@ import type {
   ConnectionHandler,
 } from "../lib/core";
 
+function getElectronAPI(): NonNullable<typeof window.electronAPI> {
+  if (!window.electronAPI) {
+    throw new Error("electronAPI not available — is this running inside Electron?");
+  }
+  return window.electronAPI;
+}
+
 /**
  * wraps a single peer connection exposed via Electron IPC.
  */
@@ -19,7 +26,7 @@ class ElectronWsClient implements WebSocketClientAdapter {
   private unsubClose: (() => void) | null = null;
 
   constructor() {
-    const api = window.electronAPI!;
+    const api = getElectronAPI();
 
     this.unsubMessage = api.onWsMessage((base64: string) => {
       if (this.messageHandler) {
@@ -45,7 +52,7 @@ class ElectronWsClient implements WebSocketClientAdapter {
       binary += String.fromCharCode(data[i]);
     }
     const base64 = btoa(binary);
-    window.electronAPI!.wsSend(base64);
+    getElectronAPI().wsSend(base64);
   }
 
   onMessage(handler: (data: Uint8Array) => void): void {
@@ -73,7 +80,7 @@ export class ElectronWsServerAdapter implements WebSocketServerAdapter {
   private unsubConnection: (() => void) | null = null;
 
   async start(port: number): Promise<string> {
-    const api = window.electronAPI!;
+    const api = getElectronAPI();
     const address = await api.startWsServer(port);
 
     // listen for incoming connections from main process
@@ -95,6 +102,6 @@ export class ElectronWsServerAdapter implements WebSocketServerAdapter {
     this.unsubConnection?.();
     this.unsubConnection = null;
     this.connectionHandler = null;
-    await window.electronAPI!.stopWsServer();
+    await getElectronAPI().stopWsServer();
   }
 }
