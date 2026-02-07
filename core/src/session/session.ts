@@ -2,10 +2,12 @@ import {
   SessionState,
   SessionRole,
   SessionEvent,
-  VALID_TRANSITIONS,
   type SessionEventMap,
   type PairingRequest,
 } from "./types.js";
+import { createActor } from "xstate";
+import { sessionMachine, STATE_TO_EVENT } from "./machine.js";
+// sessionMachine is used in constructor to create the actor
 import {
   type KeyPair,
   type SharedSecret,
@@ -92,6 +94,9 @@ export class Session {
     new Map();
   private flushTimer: ReturnType<typeof setTimeout> | null = null;
   private closing = false;
+  private machineActor = createActor(sessionMachine, {
+    snapshot: sessionMachine.resolveState({ value: SessionState.Created, context: { role: SessionRole.Receiver } }),
+  });
 
   constructor(role: SessionRole, config: SessionConfig, id?: SessionId) {
     this.role = role;
@@ -103,6 +108,14 @@ export class Session {
       deviceName: config.deviceName,
       port: config.port ?? DEFAULT_PORT,
     };
+    // initialize the xstate actor with the correct role context
+    this.machineActor = createActor(sessionMachine, {
+      snapshot: sessionMachine.resolveState({
+        value: SessionState.Created,
+        context: { role },
+      }),
+    });
+    this.machineActor.start();
   }
 
   /** get current session state */
@@ -589,12 +602,25 @@ export class Session {
   }
 
   private transition(next: SessionState): void {
-    const allowed = VALID_TRANSITIONS[this.state];
-    if (!allowed.includes(next)) {
+    const key = `${this.state}->${next}`;
+    const eventType = STATE_TO_EVENT[key];
+    if (!eventType) {
       throw new Error(
         `invalid state transition: ${this.state} -> ${next}`,
       );
     }
+
+    // advance the xstate actor and verify it reached the expected state
+    const before = String(this.machineActor.getSnapshot().value);
+    this.machineActor.send({ type: eventType });
+    const after = String(this.machineActor.getSnapshot().value);
+
+    if (after !== next) {
+      throw new Error(
+        `invalid state transition: ${before} -> ${next} (machine reached ${after})`,
+      );
+    }
+
     this.state = next;
     this.emit(SessionEvent.StateChanged, next);
   }

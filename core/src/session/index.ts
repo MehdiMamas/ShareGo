@@ -16,3 +16,9 @@ export {
   type SessionSnapshot,
   type SnapshotListener,
 } from "./session-controller.js";
+
+export {
+  sessionMachine,
+  type SessionMachineEvent,
+  type SessionMachineContext,
+} from "./machine.js";

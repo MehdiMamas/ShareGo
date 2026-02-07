@@ -53,7 +53,11 @@ export type SessionEventMap = {
   [SessionEvent.Error]: (error: Error) => void;
 };
 
-/** valid state transitions */
+/**
+ * valid state transitions — kept for backward compatibility.
+ * the xstate machine in machine.ts is the authoritative source of truth;
+ * a test validates that these stay in sync.
+ */
 export const VALID_TRANSITIONS: Record<SessionState, SessionState[]> = {
   [SessionState.Created]: [SessionState.WaitingForSender, SessionState.Handshaking, SessionState.Closed],
   [SessionState.WaitingForSender]: [
