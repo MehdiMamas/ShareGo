@@ -1,14 +1,27 @@
 node_modules/
 dist/
 .DS_Store
+Thumbs.db
 *.tgz
 *.log
+*.tsbuildinfo
 .env
 .env.*
+coverage/
 
 # platform generated files
 apps/mobile-rn/ios/main.jsbundle
 apps/desktop-tauri/src-tauri/gen/
+
+# xcode user data
+**/xcuserdata/
+*.xcuserstate
+
+# local xcode env (machine-specific, not versioned)
+apps/mobile-rn/ios/.xcode.env.local
+
+# react native bundled assets from node_modules
+apps/mobile-rn/ios/assets/__node_modules/
 
 # android build artifacts
 apps/mobile-rn/android/app/build/
