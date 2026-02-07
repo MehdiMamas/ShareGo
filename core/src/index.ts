@@ -39,6 +39,12 @@ export {
   encodeQrPayload,
   decodeQrPayload,
   createBaseFields,
+  serializeBinaryData,
+  deserializeBinaryData,
+  isBinaryDataFrame,
+  BINARY_DATA_TYPE,
+  BINARY_HEADER_SIZE,
+  type BinaryDataMessage,
 } from "./protocol/index.js";
 
 // session

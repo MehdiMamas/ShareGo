@@ -21,3 +21,12 @@ export {
   decodeQrPayload,
   createBaseFields,
 } from "./serialization.js";
+
+export {
+  serializeBinaryData,
+  deserializeBinaryData,
+  isBinaryDataFrame,
+  BINARY_DATA_TYPE,
+  BINARY_HEADER_SIZE,
+  type BinaryDataMessage,
+} from "./binary.js";
