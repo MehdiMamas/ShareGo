@@ -10,6 +10,56 @@ type ListItem =
   | { type: "sent"; data: SentItem }
   | { type: "received"; data: ReceivedItem };
 
+const MASKED_TEXT = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
+
+function EyeIcon({
+  size = 16,
+  color = colors.textSecondary,
+}: {
+  size?: number;
+  color?: string;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function EyeOffIcon({
+  size = 16,
+  color = colors.textSecondary,
+}: {
+  size?: number;
+  color?: string;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
 interface ActiveSessionProps {
   session: ReturnType<typeof useSession>;
   onEnd: () => void;
@@ -19,6 +69,7 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
   const { t } = useTranslation();
   const [input, setInput] = useState("");
   const [copied, setCopied] = useState<number | null>(null);
+  const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set());
   const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
@@ -38,7 +89,10 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
       await navigator.clipboard.writeText(text);
       setCopied(id);
       if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-      copyTimerRef.current = setTimeout(() => setCopied(null), COPY_FEEDBACK_MS);
+      copyTimerRef.current = setTimeout(
+        () => setCopied(null),
+        COPY_FEEDBACK_MS,
+      );
     } catch {
       // clipboard api may not be available
     }
@@ -49,6 +103,18 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const toggleVisibility = (key: string) => {
+    setVisibleItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
   };
 
   // merge and sort messages by timestamp, matching mobile behavior
@@ -124,9 +190,11 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
         {items.map((item, index) => {
           if (item.type === "sent") {
             const sent = item.data as SentItem;
+            const key = `sent-${sent.seq}`;
+            const isVisible = visibleItems.has(key);
             return (
               <div
-                key={`sent-${sent.seq}`}
+                key={key}
                 style={{
                   alignSelf: "flex-end",
                   maxWidth: "80%",
@@ -138,22 +206,52 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
                   wordBreak: "break-all",
                 }}
               >
-                <div>{sent.text}</div>
+                <div>{isVisible ? sent.text : MASKED_TEXT}</div>
                 <div
                   style={{
-                    fontSize: 11,
-                    color: colors.sentStatusText,
-                    marginTop: 4,
-                    textAlign: "right",
+                    display: "flex",
+                    alignItems: "center",
+                    marginTop: 6,
+                    gap: 8,
                   }}
                 >
-                  {sent.acked ? t("session.delivered") : t("session.sending")}
+                  <button
+                    onClick={() => toggleVisibility(key)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 4,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    {isVisible ? (
+                      <EyeOffIcon size={16} color={colors.sentStatusText} />
+                    ) : (
+                      <EyeIcon size={16} color={colors.sentStatusText} />
+                    )}
+                  </button>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: colors.sentStatusText,
+                      marginLeft: "auto",
+                      textAlign: "right",
+                    }}
+                  >
+                    {sent.acked
+                      ? t("session.delivered")
+                      : t("session.sending")}
+                  </div>
                 </div>
               </div>
             );
           }
 
           const received = item.data as ReceivedItem;
+          const key = `recv-${received.id}`;
+          const isVisible = visibleItems.has(key);
           return (
             <div
               key={`recv-${received.id}-${index}`}
@@ -169,22 +267,50 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
                 wordBreak: "break-all",
               }}
             >
-              <div>{received.text}</div>
-              <button
-                onClick={() => handleCopy(received.text, received.id)}
+              <div>{isVisible ? received.text : MASKED_TEXT}</div>
+              <div
                 style={{
+                  display: "flex",
+                  alignItems: "center",
                   marginTop: 6,
-                  padding: "4px 10px",
-                  borderRadius: 6,
-                  background:
-                    copied === received.id ? colors.success : colors.border,
-                  color: colors.textPrimary,
-                  fontSize: 11,
-                  fontWeight: 500,
+                  gap: 8,
                 }}
               >
-                {copied === received.id ? t("session.copied") : t("session.copy")}
-              </button>
+                <button
+                  onClick={() => toggleVisibility(key)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: 4,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  {isVisible ? (
+                    <EyeOffIcon size={16} color={colors.textSecondary} />
+                  ) : (
+                    <EyeIcon size={16} color={colors.textSecondary} />
+                  )}
+                </button>
+                <button
+                  onClick={() => handleCopy(received.text, received.id)}
+                  style={{
+                    marginLeft: "auto",
+                    padding: "4px 10px",
+                    borderRadius: 6,
+                    background:
+                      copied === received.id ? colors.success : colors.border,
+                    color: colors.textPrimary,
+                    fontSize: 11,
+                    fontWeight: 500,
+                  }}
+                >
+                  {copied === received.id
+                    ? t("session.copied")
+                    : t("session.copy")}
+                </button>
+              </div>
             </div>
           );
         })}
