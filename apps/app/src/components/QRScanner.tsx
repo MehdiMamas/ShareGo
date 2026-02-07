@@ -187,7 +187,10 @@ function WebQRScanner({ onScanned }: QRScannerProps) {
   useEffect(() => {
     let mounted = true;
 
-    import("html5-qrcode").then(({ Html5Qrcode }) => {
+    // small delay to ensure the DOM container is rendered before html5-qrcode tries to use it
+    const startDelay = new Promise<void>((r) => setTimeout(r, 300));
+
+    startDelay.then(() => import("html5-qrcode")).then(({ Html5Qrcode }) => {
       if (!mounted) return;
 
       const scanner = new Html5Qrcode(containerRef.current);

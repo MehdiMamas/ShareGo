@@ -53,6 +53,17 @@ function createWindow(): void {
     },
   );
 
+  // allow permission checks (Electron 12+)
+  mainWindow.webContents.session.setPermissionCheckHandler(
+    (_webContents, permission) => {
+      const allowed = ["media", "camera", "microphone", "mediaKeySystem"];
+      return allowed.includes(permission);
+    },
+  );
+
+  // allow device access (needed for getUserMedia on some Electron versions)
+  mainWindow.webContents.session.setDevicePermissionHandler(() => true);
+
   // in dev, load from webpack dev server; in prod, load the built HTML
   if (process.env.ELECTRON_DEV_URL) {
     mainWindow.loadURL(process.env.ELECTRON_DEV_URL);

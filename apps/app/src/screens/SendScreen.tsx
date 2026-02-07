@@ -23,10 +23,11 @@ import {
 import { StatusIndicator } from "../components/StatusIndicator";
 import { QRScanner } from "../components/QRScanner";
 import { colors } from "../styles/theme";
-import { isElectron } from "../platform";
+import { isElectron, isMobile } from "../platform";
 
 /** resolve local LAN IP for subnet discovery fallback */
 async function getLocalIp(): Promise<string | null> {
+  // electron: use IPC to get LAN IP from main process
   if (isElectron && window.electronAPI) {
     try {
       return await window.electronAPI.getLocalIp();
@@ -34,6 +35,18 @@ async function getLocalIp(): Promise<string | null> {
       return null;
     }
   }
+
+  // react native: use react-native-network-info
+  if (isMobile) {
+    try {
+      const { NetworkInfo } = require("react-native-network-info");
+      const ip: string | null = await NetworkInfo.getIPV4Address();
+      return ip && ip !== "0.0.0.0" ? ip : null;
+    } catch {
+      return null;
+    }
+  }
+
   return null;
 }
 
