@@ -78,18 +78,8 @@ export {
   MDNS_TXT_KEYS,
 } from "./discovery/index.js";
 
-// utils (legacy subnet discovery — deprecated, use discovery/ instead)
-export {
-  discoverReceiver as legacyDiscoverReceiver,
-  type DiscoveryOptions as LegacyDiscoveryOptions,
-} from "./utils/index.js";
-
 // config
 export * from "./config.js";
-
-// strings (legacy — use i18n translations instead)
-import * as _strings from "./strings.js";
-export { _strings as strings };
 
 // i18n translation resources
 export { en, type TranslationResource } from "./i18n/index.js";

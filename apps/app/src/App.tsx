@@ -10,6 +10,7 @@ import { HomeScreen } from "./screens/HomeScreen";
 import { ReceiveScreen } from "./screens/ReceiveScreen";
 import { SendScreen } from "./screens/SendScreen";
 import { ActiveSessionScreen } from "./screens/ActiveSessionScreen";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { colors } from "./styles/theme";
 
 export type RootStackParamList = {
@@ -61,6 +62,7 @@ export default function App() {
   }
 
   return (
+    <ErrorBoundary>
     <SafeAreaProvider>
       <SessionContext.Provider value={{ session, transport }}>
         <NavigationContainer
@@ -94,6 +96,7 @@ export default function App() {
         </NavigationContainer>
       </SessionContext.Provider>
     </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 
