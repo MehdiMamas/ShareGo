@@ -99,8 +99,8 @@ describe("Session state machine", () => {
     }
   });
 
-  it("should have Rejected as a terminal state", () => {
-    expect(VALID_TRANSITIONS[SessionState.Rejected]).toEqual([]);
+  it("should allow Rejected to transition to Closed for cleanup", () => {
+    expect(VALID_TRANSITIONS[SessionState.Rejected]).toEqual([SessionState.Closed]);
   });
 
   it("should have Closed as a terminal state", () => {
