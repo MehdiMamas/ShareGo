@@ -8,4 +8,7 @@ export const colors = {
   success: "#22c55e",
   error: "#ef4444",
   border: "#334155",
+  white: "#ffffff",
+  black: "#000000",
+  sentStatusText: "rgba(255,255,255,0.6)",
 } as const;

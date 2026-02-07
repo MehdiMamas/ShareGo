@@ -105,6 +105,6 @@ const styles = StyleSheet.create({
   acceptButtonText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#ffffff",
+    color: colors.white,
   },
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -29,12 +29,28 @@ export const SessionContext = React.createContext<{
 
 export default function App() {
   const [ready, setReady] = useState(false);
+  const [cryptoError, setCryptoError] = useState<string | null>(null);
   const session = useSession();
   const transport = useTransport();
 
   useEffect(() => {
-    initCrypto().then(() => setReady(true));
+    initCrypto()
+      .then(() => setReady(true))
+      .catch((err) => {
+        setCryptoError(
+          err instanceof Error ? err.message : "failed to initialize crypto",
+        );
+      });
   }, []);
+
+  if (cryptoError) {
+    return (
+      <View style={styles.loading}>
+        <Text style={styles.errorTitle}>crypto initialization failed</Text>
+        <Text style={styles.errorDetail}>{cryptoError}</Text>
+      </View>
+    );
+  }
 
   if (!ready) {
     return (
@@ -57,12 +73,6 @@ export default function App() {
               text: colors.textPrimary,
               border: colors.border,
               notification: colors.primary,
-            },
-            fonts: {
-              regular: { fontFamily: "System", fontWeight: "400" },
-              medium: { fontFamily: "System", fontWeight: "500" },
-              bold: { fontFamily: "System", fontWeight: "700" },
-              heavy: { fontFamily: "System", fontWeight: "900" },
             },
           }}
         >
@@ -93,5 +103,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.background,
+    gap: 12,
+  },
+  errorTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.error,
+  },
+  errorDetail: {
+    fontSize: 13,
+    color: colors.textSecondary,
   },
 });

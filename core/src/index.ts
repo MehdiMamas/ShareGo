@@ -13,6 +13,10 @@ export {
   zeroMemory,
   toBase64,
   fromBase64,
+  PUBLIC_KEY_LENGTH,
+  KEY_LENGTH,
+  NONCE_LENGTH,
+  AEAD_TAG_LENGTH,
 } from "./crypto/index.js";
 
 // protocol
@@ -46,8 +50,20 @@ export {
   type SessionEventMap,
   type PairingRequest,
   Session,
+  DEFAULT_PORT,
   type SessionConfig,
+  SessionController,
+  type ReceivedItem,
+  type SentItem,
+  type SessionSnapshot,
+  type SnapshotListener,
 } from "./session/index.js";
+
+// utils
+export {
+  discoverReceiver,
+  type DiscoveryOptions,
+} from "./utils/index.js";
 
 // transport
 export {
@@ -56,6 +72,7 @@ export {
   type TransportStateCallback,
   type MessageCallback,
   WebSocketTransport,
+  MAX_MESSAGE_SIZE,
   type WebSocketServerAdapter,
   type WebSocketClientAdapter,
   type ConnectionHandler,

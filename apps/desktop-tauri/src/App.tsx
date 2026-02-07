@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { initCrypto, SessionState } from "./lib/core";
 import { useSession } from "./hooks/useSession";
 import { useTransport } from "./hooks/useTransport";
@@ -13,22 +13,60 @@ type AppScreen = "home" | "receive" | "send" | "active";
 export default function App() {
   const [screen, setScreen] = useState<AppScreen>("home");
   const [ready, setReady] = useState(false);
+  const [cryptoError, setCryptoError] = useState<string | null>(null);
   const session = useSession();
   const transport = useTransport();
 
   useEffect(() => {
-    initCrypto().then(() => setReady(true));
+    initCrypto()
+      .then(() => setReady(true))
+      .catch((err) => {
+        setCryptoError(
+          err instanceof Error ? err.message : "failed to initialize crypto",
+        );
+      });
   }, []);
 
-  // auto-navigate based on session state
+  // auto-navigate to active session when handshake completes
   useEffect(() => {
     if (session.state === SessionState.Active) {
       setScreen("active");
     }
-    if (session.state === SessionState.Closed && screen !== "home") {
-      setScreen("home");
-    }
-  }, [session.state, screen]);
+  }, [session.state]);
+
+  // navigate to a screen, ensuring any previous session is cleaned up
+  const navigateTo = useCallback(
+    (target: AppScreen) => {
+      if (session.state !== SessionState.Created) {
+        session.endSession();
+      }
+      setScreen(target);
+    },
+    [session],
+  );
+
+  if (cryptoError) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          background: colors.background,
+          gap: 12,
+        }}
+      >
+        <p style={{ color: colors.error, fontSize: 16, fontWeight: 600 }}>
+          crypto initialization failed
+        </p>
+        <p style={{ color: colors.textSecondary, fontSize: 13 }}>
+          {cryptoError}
+        </p>
+      </div>
+    );
+  }
 
   if (!ready) {
     return (
@@ -54,10 +92,7 @@ export default function App() {
         <ReceiveScreen
           session={session}
           transport={transport}
-          onBack={() => {
-            session.endSession();
-            setScreen("home");
-          }}
+          onBack={() => navigateTo("home")}
         />
       );
     case "send":
@@ -65,27 +100,21 @@ export default function App() {
         <SendScreen
           session={session}
           transport={transport}
-          onBack={() => {
-            session.endSession();
-            setScreen("home");
-          }}
+          onBack={() => navigateTo("home")}
         />
       );
     case "active":
       return (
         <ActiveSession
           session={session}
-          onEnd={() => {
-            session.endSession();
-            setScreen("home");
-          }}
+          onEnd={() => navigateTo("home")}
         />
       );
     default:
       return (
         <HomeScreen
-          onReceive={() => setScreen("receive")}
-          onSend={() => setScreen("send")}
+          onReceive={() => navigateTo("receive")}
+          onSend={() => navigateTo("send")}
         />
       );
   }

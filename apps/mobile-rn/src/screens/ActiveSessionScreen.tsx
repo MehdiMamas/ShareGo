@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -30,6 +30,13 @@ export function ActiveSessionScreen({ navigation }: Props) {
   const { session } = ctx;
   const [input, setInput] = useState("");
   const [copied, setCopied] = useState<number | null>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
   // navigate home when session closes
   useEffect(() => {
@@ -47,7 +54,8 @@ export function ActiveSessionScreen({ navigation }: Props) {
   const handleCopy = (text: string, id: number) => {
     Clipboard.setString(text);
     setCopied(id);
-    setTimeout(() => setCopied(null), 2000);
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopied(null), 2000);
   };
 
   const items: ListItem[] = [
@@ -199,7 +207,7 @@ const styles = StyleSheet.create({
   endButtonText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#ffffff",
+    color: colors.white,
   },
   messageList: {
     flex: 1,
@@ -240,7 +248,7 @@ const styles = StyleSheet.create({
   },
   sentStatus: {
     fontSize: 11,
-    color: "rgba(255,255,255,0.6)",
+    color: colors.sentStatusText,
     marginTop: 4,
     textAlign: "right",
   },

@@ -18,6 +18,8 @@ import {
   zeroMemory,
   toBase64,
   fromBase64,
+  PUBLIC_KEY_LENGTH,
+  NONCE_LENGTH,
 } from "../crypto/index.js";
 import {
   type ILocalTransport,
@@ -40,6 +42,8 @@ import {
 const DEFAULT_SESSION_TTL = 300;
 /** default QR/code expiry in seconds */
 const DEFAULT_BOOTSTRAP_TTL = 90;
+/** default server port */
+export const DEFAULT_PORT = 4040;
 
 export interface SessionConfig {
   /** session TTL in seconds (default 300) */
@@ -61,13 +65,16 @@ export class Session {
   private sharedSecret: SharedSecret | null = null;
   private peerPublicKey: Uint8Array | null = null;
   private challengeNonce: Uint8Array | null = null;
+  private peerDeviceName: string | null = null;
   private seq = 0;
-  private expectedSeq = 0;
+  private highestSeenSeq = 0;
+  private helloReceived = false;
   private createdAt: number;
   private config: Required<SessionConfig>;
   private transport: ILocalTransport | null = null;
   private listeners: Map<SessionEvent, Set<(...args: any[]) => void>> =
     new Map();
+  private flushTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(role: SessionRole, config: SessionConfig, id?: string) {
     this.role = role;
@@ -77,7 +84,7 @@ export class Session {
       sessionTtl: config.sessionTtl ?? DEFAULT_SESSION_TTL,
       bootstrapTtl: config.bootstrapTtl ?? DEFAULT_BOOTSTRAP_TTL,
       deviceName: config.deviceName,
-      port: config.port ?? 4040,
+      port: config.port ?? DEFAULT_PORT,
     };
   }
 
@@ -151,6 +158,10 @@ export class Session {
     transport.onStateChange((ts) => this.handleTransportState(ts));
 
     await transport.listen(this.config.port);
+
+    // session may have been closed during the async listen (e.g. react strict mode cleanup)
+    if (this.state === SessionState.Closed) return;
+
     this.transition(SessionState.WaitingForSender);
   }
 
@@ -170,12 +181,13 @@ export class Session {
    */
   rejectPairing(reason?: string): void {
     this.assertState(SessionState.PendingApproval);
-    this.transition(SessionState.Rejected);
+    // send REJECT before transitioning so transport is still available
     this.sendMessage({
       ...createBaseFields(MessageType.REJECT, this.id, this.nextSeq()),
       reason,
     });
-    this.close();
+    this.transition(SessionState.Rejected);
+    this.cleanup();
   }
 
   // -- lifecycle: sender --
@@ -202,6 +214,10 @@ export class Session {
     transport.onStateChange((ts) => this.handleTransportState(ts));
 
     await transport.connect(addr);
+
+    // session may have been closed during the async connect
+    if (this.state === SessionState.Closed) return;
+
     this.transition(SessionState.Handshaking);
 
     // send HELLO
@@ -240,9 +256,17 @@ export class Session {
 
   /**
    * close the session, zero secrets, release transport.
+   * sends a CLOSE message to the peer then cleans up after a short flush delay
+   * so the message actually reaches the wire before the transport is torn down.
    */
   close(): void {
     if (this.state === SessionState.Closed) return;
+
+    // cancel any pending flush timer from a previous close() call
+    if (this.flushTimer) {
+      clearTimeout(this.flushTimer);
+      this.flushTimer = null;
+    }
 
     // send CLOSE if transport is connected
     if (
@@ -256,21 +280,50 @@ export class Session {
       } catch {
         // best effort
       }
+
+      // transition immediately so no further messages are processed
+      this.transition(SessionState.Closed);
+
+      // delay cleanup to let the CLOSE message flush over the wire.
+      // keep transport reference alive until the timeout fires.
+      this.flushTimer = setTimeout(() => {
+        this.flushTimer = null;
+        this.cleanupKeys();
+        this.transport?.close();
+        this.transport = null;
+      }, 200);
+      return;
     }
 
-    this.cleanup();
     this.transition(SessionState.Closed);
+    this.cleanup();
   }
 
   // -- internal message handling --
 
   private handleIncoming(data: Uint8Array): void {
+    // ignore messages after session is closed or rejected
+    if (this.state === SessionState.Closed || this.state === SessionState.Rejected) return;
+
     try {
       const msg = deserializeMessage(data);
 
       if (msg.sid !== this.id) {
         return; // wrong session, ignore
       }
+
+      // enforce session expiry on every incoming message
+      if (this.isSessionExpired()) {
+        this.emit(SessionEvent.Error, new Error("session expired"));
+        this.close();
+        return;
+      }
+
+      // validate sequence numbers for replay detection
+      if (msg.seq <= this.highestSeenSeq) {
+        return; // duplicate or replayed message, ignore
+      }
+      this.highestSeenSeq = msg.seq;
 
       switch (msg.type) {
         case MessageType.HELLO:
@@ -310,12 +363,21 @@ export class Session {
   private handleHello(msg: HelloMessage): void {
     if (this.role !== SessionRole.Receiver) return;
     if (this.state !== SessionState.WaitingForSender) return;
+    if (this.helloReceived) return; // reject duplicate/replayed HELLO
+    this.helloReceived = true;
     if (this.isBootstrapExpired()) {
       this.close();
       return;
     }
 
-    this.peerPublicKey = fromBase64(msg.pk);
+    const peerPk = fromBase64(msg.pk);
+    if (peerPk.length !== PUBLIC_KEY_LENGTH) {
+      this.emit(SessionEvent.Error, new Error("invalid public key length"));
+      this.close();
+      return;
+    }
+    this.peerPublicKey = peerPk;
+    this.peerDeviceName = msg.deviceName ?? "Unknown Device";
     this.transition(SessionState.Handshaking);
 
     // send CHALLENGE with our public key and a nonce
@@ -331,10 +393,20 @@ export class Session {
   private handleChallenge(msg: ChallengeMessage): void {
     if (this.role !== SessionRole.Sender) return;
     if (this.state !== SessionState.Handshaking) return;
+    if (this.isBootstrapExpired()) {
+      this.close();
+      return;
+    }
 
     // if we didn't get the receiver's pk from QR, get it from the challenge
     if (!this.peerPublicKey) {
-      this.peerPublicKey = fromBase64(msg.pk);
+      const peerPk = fromBase64(msg.pk);
+      if (peerPk.length !== PUBLIC_KEY_LENGTH) {
+        this.emit(SessionEvent.Error, new Error("invalid public key length"));
+        this.close();
+        return;
+      }
+      this.peerPublicKey = peerPk;
     }
 
     // derive shared secret
@@ -360,6 +432,10 @@ export class Session {
   private handleAuth(msg: AuthMessage): void {
     if (this.role !== SessionRole.Receiver) return;
     if (this.state !== SessionState.Handshaking) return;
+    if (this.isBootstrapExpired()) {
+      this.close();
+      return;
+    }
 
     // derive shared secret on receiver side
     this.sharedSecret = deriveSharedSecret(
@@ -370,9 +446,8 @@ export class Session {
 
     // verify the proof
     const proofBytes = fromBase64(msg.proof);
-    const nonceLen = 24; // XChaCha20 nonce size
-    const proofNonce = proofBytes.slice(0, nonceLen);
-    const proofCiphertext = proofBytes.slice(nonceLen);
+    const proofNonce = proofBytes.slice(0, NONCE_LENGTH);
+    const proofCiphertext = proofBytes.slice(NONCE_LENGTH);
 
     try {
       const decrypted = decrypt(
@@ -385,15 +460,29 @@ export class Session {
         throw new Error("challenge proof mismatch");
       }
     } catch {
+      zeroMemory(proofBytes);
       this.emit(SessionEvent.Error, new Error("auth failed: invalid proof"));
-      this.rejectPairing("authentication failed");
+      // send REJECT and close — bypass rejectPairing() since we're in Handshaking, not PendingApproval
+      try {
+        this.sendMessage({
+          ...createBaseFields(MessageType.REJECT, this.id, this.nextSeq()),
+          reason: "authentication failed",
+        });
+      } catch {
+        // best effort
+      }
+      this.transition(SessionState.Rejected);
+      this.cleanup();
       return;
     }
+
+    // zero proof material after successful verification
+    zeroMemory(proofBytes);
 
     // auth passed — move to pending approval (receiver decides)
     this.transition(SessionState.PendingApproval);
     this.emit(SessionEvent.PairingRequest, {
-      deviceName: "Unknown Device", // will be set from HELLO
+      deviceName: this.peerDeviceName ?? "Unknown Device",
       publicKey: this.peerPublicKey!,
     });
   }
@@ -401,12 +490,7 @@ export class Session {
   /** sender handles ACCEPT */
   private handleAccept(): void {
     if (this.role !== SessionRole.Sender) return;
-    if (
-      this.state !== SessionState.Handshaking &&
-      this.state !== SessionState.PendingApproval
-    ) {
-      return;
-    }
+    if (this.state !== SessionState.Handshaking) return;
     this.transition(SessionState.Active);
   }
 
@@ -415,7 +499,6 @@ export class Session {
     if (this.role !== SessionRole.Sender) return;
     this.transition(SessionState.Rejected);
     this.cleanup();
-    this.transition(SessionState.Closed);
   }
 
   /** handle incoming encrypted DATA */
@@ -448,23 +531,28 @@ export class Session {
 
   /** handle CLOSE from peer */
   private handleClose(): void {
-    this.cleanup();
+    // transition before cleanup so StateChanged event fires while listeners exist
     this.transition(SessionState.Closed);
+    this.cleanup();
   }
 
   // -- transport state --
 
   private handleTransportState(ts: TransportState): void {
-    if (ts === "disconnected" && this.state !== SessionState.Closed) {
+    if (ts === "disconnected" && this.state !== SessionState.Closed && this.state !== SessionState.Rejected) {
       this.emit(SessionEvent.Error, new Error("transport disconnected"));
-      this.cleanup();
+      // transition before cleanup so StateChanged event fires while listeners exist
       this.transition(SessionState.Closed);
+      this.cleanup();
     }
   }
 
   // -- helpers --
 
   private sendMessage(msg: ProtocolMessage): void {
+    if (this.state === SessionState.Closed) {
+      return; // silently drop messages after close
+    }
     if (!this.transport) {
       throw new Error("no transport bound");
     }
@@ -494,8 +582,8 @@ export class Session {
     }
   }
 
-  private cleanup(): void {
-    // zero all sensitive material
+  /** zero all key material without touching the transport */
+  private cleanupKeys(): void {
     if (this.keyPair) {
       zeroMemory(this.keyPair.secretKey);
       this.keyPair = null;
@@ -509,15 +597,19 @@ export class Session {
       this.challengeNonce = null;
     }
     if (this.peerPublicKey) {
+      zeroMemory(this.peerPublicKey);
       this.peerPublicKey = null;
     }
+    this.peerDeviceName = null;
+    this.listeners.clear();
+  }
+
+  private cleanup(): void {
+    this.cleanupKeys();
 
     // close transport
     this.transport?.close();
     this.transport = null;
-
-    // clear listeners
-    this.listeners.clear();
   }
 }
 

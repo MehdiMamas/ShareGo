@@ -1,5 +1,5 @@
-import React, { useCallback, useRef, useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useCallback, useRef, useState, useImperativeHandle, forwardRef } from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import {
   Camera,
   useCameraDevice,
@@ -7,19 +7,37 @@ import {
 } from "react-native-vision-camera";
 import { colors } from "../styles/theme";
 
+export interface QRScannerRef {
+  reset: () => void;
+}
+
 interface QRScannerProps {
   onScanned: (data: string) => void;
 }
 
-export function QRScanner({ onScanned }: QRScannerProps) {
+export const QRScanner = forwardRef<QRScannerRef, QRScannerProps>(
+  function QRScanner({ onScanned }, ref) {
   const device = useCameraDevice("back");
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const scannedRef = useRef(false);
+  const [showRetry, setShowRetry] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    reset: () => {
+      scannedRef.current = false;
+      setShowRetry(false);
+    },
+  }));
 
   React.useEffect(() => {
     Camera.requestCameraPermission().then((status) => {
       setHasPermission(status === "granted");
     });
+  }, []);
+
+  const handleReset = useCallback(() => {
+    scannedRef.current = false;
+    setShowRetry(false);
   }, []);
 
   const codeScanner = useCodeScanner({
@@ -30,6 +48,7 @@ export function QRScanner({ onScanned }: QRScannerProps) {
         const qrCode = codes.find((c) => c.type === "qr" && c.value);
         if (qrCode?.value) {
           scannedRef.current = true;
+          setShowRetry(true);
           onScanned(qrCode.value);
         }
       },
@@ -68,16 +87,22 @@ export function QRScanner({ onScanned }: QRScannerProps) {
       <Camera
         style={StyleSheet.absoluteFill}
         device={device}
-        isActive={true}
+        isActive={!scannedRef.current}
         codeScanner={codeScanner}
       />
       <View style={styles.overlay}>
         <View style={styles.scanFrame} />
       </View>
-      <Text style={styles.hint}>point camera at the receiver's QR code</Text>
+      {showRetry ? (
+        <TouchableOpacity style={styles.retryButton} onPress={handleReset}>
+          <Text style={styles.retryText}>tap to scan again</Text>
+        </TouchableOpacity>
+      ) : (
+        <Text style={styles.hint}>point camera at the receiver's QR code</Text>
+      )}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -121,5 +146,17 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 12,
     color: colors.textSecondary,
+  },
+  retryButton: {
+    position: "absolute",
+    bottom: -36,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  retryText: {
+    fontSize: 13,
+    color: colors.primary,
+    fontWeight: "600",
   },
 });

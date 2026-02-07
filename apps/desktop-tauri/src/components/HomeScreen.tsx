@@ -24,7 +24,7 @@ export function HomeScreen({ onReceive, onSend }: HomeScreenProps) {
           fontSize: 32,
           fontWeight: 700,
           color: colors.textPrimary,
-          marginBottom: 8,
+          marginBottom: 12,
         }}
       >
         ShareGo
@@ -50,7 +50,7 @@ export function HomeScreen({ onReceive, onSend }: HomeScreenProps) {
           gap: 16,
           width: "100%",
           maxWidth: 320,
-          marginTop: 24,
+          marginTop: 32,
         }}
       >
         <button
@@ -62,7 +62,6 @@ export function HomeScreen({ onReceive, onSend }: HomeScreenProps) {
             color: colors.textPrimary,
             fontSize: 16,
             fontWeight: 600,
-            transition: "background 150ms",
           }}
           onMouseEnter={(e) =>
             (e.currentTarget.style.background = colors.primaryHover)
@@ -71,7 +70,7 @@ export function HomeScreen({ onReceive, onSend }: HomeScreenProps) {
             (e.currentTarget.style.background = colors.primary)
           }
         >
-          receive
+          show QR code / show code
         </button>
 
         <button
@@ -84,7 +83,6 @@ export function HomeScreen({ onReceive, onSend }: HomeScreenProps) {
             fontSize: 16,
             fontWeight: 600,
             border: `1px solid ${colors.border}`,
-            transition: "background 150ms",
           }}
           onMouseEnter={(e) =>
             (e.currentTarget.style.background = colors.border)
@@ -93,7 +91,7 @@ export function HomeScreen({ onReceive, onSend }: HomeScreenProps) {
             (e.currentTarget.style.background = colors.surface)
           }
         >
-          send
+          scan QR code / enter code
         </button>
       </div>
     </div>

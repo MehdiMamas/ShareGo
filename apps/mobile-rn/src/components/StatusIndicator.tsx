@@ -1,9 +1,10 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { SessionState } from "../lib/core";
 import { colors } from "../styles/theme";
 
 interface StatusIndicatorProps {
-  state: string;
+  state: SessionState;
 }
 
 const stateLabels: Record<string, { label: string; color: string }> = {

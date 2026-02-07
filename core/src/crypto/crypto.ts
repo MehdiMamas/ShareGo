@@ -2,12 +2,16 @@ import sodium from "libsodium-wrappers-sumo";
 import type { KeyPair, SharedSecret, EncryptedEnvelope } from "./types.js";
 
 let initialized = false;
+let initPromise: Promise<void> | null = null;
 
 /** ensure libsodium is ready before any crypto operation */
-export async function initCrypto(): Promise<void> {
-  if (initialized) return;
-  await sodium.ready;
-  initialized = true;
+export function initCrypto(): Promise<void> {
+  if (!initPromise) {
+    initPromise = sodium.ready.then(() => {
+      initialized = true;
+    });
+  }
+  return initPromise;
 }
 
 /**
@@ -36,26 +40,34 @@ export function deriveSharedSecret(
 ): SharedSecret {
   assertReady();
 
-  // libsodium kx produces rx and tx keys depending on role
-  const sessionKeys = isReceiver
-    ? sodium.crypto_kx_server_session_keys(
-        ourKeyPair.publicKey,
-        ourKeyPair.secretKey,
-        theirPublicKey,
-      )
-    : sodium.crypto_kx_client_session_keys(
-        ourKeyPair.publicKey,
-        ourKeyPair.secretKey,
-        theirPublicKey,
-      );
+  if (theirPublicKey.length !== PUBLIC_KEY_LENGTH) {
+    throw new Error(`invalid public key length: expected ${PUBLIC_KEY_LENGTH}, got ${theirPublicKey.length}`);
+  }
 
-  // use the rx key as symmetric encryption key (both sides derive same key)
-  // receiver's rx = sender's tx, so we pick a consistent one
-  const encryptionKey = isReceiver
-    ? sessionKeys.sharedRx
-    : sessionKeys.sharedTx;
+  try {
+    // libsodium kx produces rx and tx keys depending on role
+    const sessionKeys = isReceiver
+      ? sodium.crypto_kx_server_session_keys(
+          ourKeyPair.publicKey,
+          ourKeyPair.secretKey,
+          theirPublicKey,
+        )
+      : sodium.crypto_kx_client_session_keys(
+          ourKeyPair.publicKey,
+          ourKeyPair.secretKey,
+          theirPublicKey,
+        );
 
-  return { encryptionKey };
+    // use the rx key as symmetric encryption key (both sides derive same key)
+    // receiver's rx = sender's tx, so we pick a consistent one
+    const encryptionKey = isReceiver
+      ? sessionKeys.sharedRx
+      : sessionKeys.sharedTx;
+
+    return { encryptionKey };
+  } catch (err) {
+    throw new Error(`key exchange failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }
 
 /**
@@ -67,17 +79,26 @@ export function encrypt(
   key: Uint8Array,
 ): EncryptedEnvelope {
   assertReady();
-  const nonce = sodium.randombytes_buf(
-    sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES,
-  );
-  const ciphertext = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
-    plaintext,
-    null, // no additional data
-    null, // secret nonce (unused in ietf variant)
-    nonce,
-    key,
-  );
-  return { ciphertext, nonce };
+
+  if (key.length !== KEY_LENGTH) {
+    throw new Error(`invalid encryption key length: expected ${KEY_LENGTH}, got ${key.length}`);
+  }
+
+  try {
+    const nonce = sodium.randombytes_buf(
+      sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES,
+    );
+    const ciphertext = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
+      plaintext,
+      null, // no additional data
+      null, // secret nonce (unused in ietf variant)
+      nonce,
+      key,
+    );
+    return { ciphertext, nonce };
+  } catch (err) {
+    throw new Error(`encryption failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }
 
 /**
@@ -89,13 +110,28 @@ export function decrypt(
   key: Uint8Array,
 ): Uint8Array {
   assertReady();
-  return sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
-    null, // secret nonce (unused in ietf variant)
-    envelope.ciphertext,
-    null, // no additional data
-    envelope.nonce,
-    key,
-  );
+
+  if (key.length !== KEY_LENGTH) {
+    throw new Error(`invalid decryption key length: expected ${KEY_LENGTH}, got ${key.length}`);
+  }
+  if (envelope.nonce.length !== NONCE_LENGTH) {
+    throw new Error(`invalid nonce length: expected ${NONCE_LENGTH}, got ${envelope.nonce.length}`);
+  }
+  if (envelope.ciphertext.length < AEAD_TAG_LENGTH) {
+    throw new Error(`ciphertext too short: minimum ${AEAD_TAG_LENGTH} bytes (AEAD tag), got ${envelope.ciphertext.length}`);
+  }
+
+  try {
+    return sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
+      null, // secret nonce (unused in ietf variant)
+      envelope.ciphertext,
+      null, // no additional data
+      envelope.nonce,
+      key,
+    );
+  } catch (err) {
+    throw new Error(`decryption failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }
 
 /**
@@ -121,6 +157,18 @@ export function generateNonce(): Uint8Array {
   assertReady();
   return sodium.randombytes_buf(32);
 }
+
+/** expected length of an X25519 public key in bytes */
+export const PUBLIC_KEY_LENGTH = 32; // crypto_kx_PUBLICKEYBYTES
+
+/** xchacha20-poly1305 symmetric key length in bytes */
+export const KEY_LENGTH = 32; // crypto_aead_xchacha20poly1305_ietf_KEYBYTES
+
+/** xchacha20-poly1305 nonce length in bytes */
+export const NONCE_LENGTH = 24; // crypto_aead_xchacha20poly1305_ietf_NPUBBYTES
+
+/** xchacha20-poly1305 AEAD authentication tag length in bytes */
+export const AEAD_TAG_LENGTH = 16; // crypto_aead_xchacha20poly1305_ietf_ABYTES
 
 /**
  * best-effort zeroing of sensitive byte arrays.

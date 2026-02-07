@@ -11,4 +11,8 @@ export {
   zeroMemory,
   toBase64,
   fromBase64,
+  PUBLIC_KEY_LENGTH,
+  KEY_LENGTH,
+  NONCE_LENGTH,
+  AEAD_TAG_LENGTH,
 } from "./crypto.js";

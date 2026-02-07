@@ -1,7 +1,12 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { colors } from "../styles/theme";
 import { StatusIndicator } from "./StatusIndicator";
 import type { useSession } from "../hooks/useSession";
+import type { ReceivedItem, SentItem } from "../hooks/useSession";
+
+type ListItem =
+  | { type: "sent"; data: SentItem }
+  | { type: "received"; data: ReceivedItem };
 
 interface ActiveSessionProps {
   session: ReturnType<typeof useSession>;
@@ -11,6 +16,13 @@ interface ActiveSessionProps {
 export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
   const [input, setInput] = useState("");
   const [copied, setCopied] = useState<number | null>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -22,7 +34,8 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(id);
-      setTimeout(() => setCopied(null), 2000);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopied(null), 2000);
     } catch {
       // clipboard api may not be available
     }
@@ -34,6 +47,16 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
       handleSend();
     }
   };
+
+  // merge and sort messages by timestamp, matching mobile behavior
+  const items: ListItem[] = [
+    ...session.sentItems.map(
+      (s): ListItem => ({ type: "sent", data: s }),
+    ),
+    ...session.receivedItems.map(
+      (r): ListItem => ({ type: "received", data: r }),
+    ),
+  ].sort((a, b) => a.data.timestamp - b.data.timestamp);
 
   return (
     <div
@@ -75,7 +98,7 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
             padding: "8px 16px",
             borderRadius: 8,
             background: colors.error,
-            color: "#ffffff",
+            color: colors.white,
             fontSize: 13,
             fontWeight: 600,
           }}
@@ -95,83 +118,88 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
           paddingBottom: 16,
         }}
       >
-        {session.sentItems.map((item) => (
-          <div
-            key={`sent-${item.seq}`}
-            style={{
-              alignSelf: "flex-end",
-              maxWidth: "80%",
-              padding: "10px 14px",
-              borderRadius: 10,
-              background: colors.primary,
-              color: colors.textPrimary,
-              fontSize: 14,
-              wordBreak: "break-all",
-            }}
-          >
-            <div>{item.text}</div>
-            <div
-              style={{
-                fontSize: 11,
-                color: "rgba(255,255,255,0.6)",
-                marginTop: 4,
-                textAlign: "right",
-              }}
-            >
-              {item.acked ? "delivered" : "sending..."}
-            </div>
-          </div>
-        ))}
+        {items.map((item, index) => {
+          if (item.type === "sent") {
+            const sent = item.data as SentItem;
+            return (
+              <div
+                key={`sent-${sent.seq}`}
+                style={{
+                  alignSelf: "flex-end",
+                  maxWidth: "80%",
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  background: colors.primary,
+                  color: colors.textPrimary,
+                  fontSize: 14,
+                  wordBreak: "break-all",
+                }}
+              >
+                <div>{sent.text}</div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: colors.sentStatusText,
+                    marginTop: 4,
+                    textAlign: "right",
+                  }}
+                >
+                  {sent.acked ? "delivered" : "sending..."}
+                </div>
+              </div>
+            );
+          }
 
-        {session.receivedItems.map((item) => (
-          <div
-            key={`recv-${item.id}`}
-            style={{
-              alignSelf: "flex-start",
-              maxWidth: "80%",
-              padding: "10px 14px",
-              borderRadius: 10,
-              background: colors.surface,
-              color: colors.textPrimary,
-              fontSize: 14,
-              border: `1px solid ${colors.border}`,
-              wordBreak: "break-all",
-            }}
-          >
-            <div>{item.text}</div>
-            <button
-              onClick={() => handleCopy(item.text, item.id)}
+          const received = item.data as ReceivedItem;
+          return (
+            <div
+              key={`recv-${received.id}-${index}`}
               style={{
-                marginTop: 6,
-                padding: "4px 10px",
-                borderRadius: 6,
-                background:
-                  copied === item.id ? colors.success : colors.border,
+                alignSelf: "flex-start",
+                maxWidth: "80%",
+                padding: "10px 14px",
+                borderRadius: 10,
+                background: colors.surface,
                 color: colors.textPrimary,
-                fontSize: 11,
-                fontWeight: 500,
+                fontSize: 14,
+                border: `1px solid ${colors.border}`,
+                wordBreak: "break-all",
               }}
             >
-              {copied === item.id ? "copied!" : "copy"}
-            </button>
-          </div>
-        ))}
-
-        {session.receivedItems.length === 0 &&
-          session.sentItems.length === 0 && (
-            <div
-              style={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <p style={{ color: colors.textSecondary, fontSize: 14 }}>
-                no messages yet
-              </p>
+              <div>{received.text}</div>
+              <button
+                onClick={() => handleCopy(received.text, received.id)}
+                style={{
+                  marginTop: 6,
+                  padding: "4px 10px",
+                  borderRadius: 6,
+                  background:
+                    copied === received.id ? colors.success : colors.border,
+                  color: colors.textPrimary,
+                  fontSize: 11,
+                  fontWeight: 500,
+                }}
+              >
+                {copied === received.id ? "copied!" : "copy"}
+              </button>
             </div>
-          )}
+          );
+        })}
+
+        {items.length === 0 && (
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <p style={{ color: colors.textSecondary, fontSize: 14 }}>
+              no messages yet
+            </p>
+          </div>
+        )}
       </div>
 
       {/* input area */}

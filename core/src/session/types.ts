@@ -53,13 +53,15 @@ export type SessionEventMap = {
 
 /** valid state transitions */
 export const VALID_TRANSITIONS: Record<SessionState, SessionState[]> = {
-  [SessionState.Created]: [SessionState.WaitingForSender, SessionState.Closed],
+  [SessionState.Created]: [SessionState.WaitingForSender, SessionState.Handshaking, SessionState.Closed],
   [SessionState.WaitingForSender]: [
     SessionState.Handshaking,
     SessionState.Closed,
   ],
   [SessionState.Handshaking]: [
     SessionState.PendingApproval,
+    SessionState.Active,
+    SessionState.Rejected,
     SessionState.Closed,
   ],
   [SessionState.PendingApproval]: [

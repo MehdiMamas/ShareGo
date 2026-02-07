@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -7,29 +7,41 @@ import {
   StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { NetworkInfo } from "react-native-network-info";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../App";
 import { SessionContext } from "../App";
-import { SessionState, decodeQrPayload } from "../lib/core";
+import { SessionState, decodeQrPayload, DEFAULT_PORT } from "../lib/core";
+import { discoverReceiver } from "@sharego/core";
 import { StatusIndicator } from "../components/StatusIndicator";
 import { QRScanner } from "../components/QRScanner";
-import { CodeInput } from "../components/CodeInput";
 import { colors } from "../styles/theme";
 
 interface Props {
   navigation: NativeStackNavigationProp<RootStackParamList, "Send">;
 }
 
-type SendTab = "scan" | "code";
+/** resolve local IP via react-native-network-info */
+async function getRnLocalIp(): Promise<string | null> {
+  return NetworkInfo.getIPV4Address();
+}
 
 export function SendScreen({ navigation }: Props) {
   const ctx = useContext(SessionContext)!;
   const { session, transport } = ctx;
-  const [tab, setTab] = useState<SendTab>("scan");
+  const [tab, setTab] = useState<"scan" | "code">("scan");
   const [code, setCode] = useState("");
-  const [address, setAddress] = useState("");
   const [connecting, setConnecting] = useState(false);
+  const [discovering, setDiscovering] = useState(false);
   const [inputError, setInputError] = useState<string | null>(null);
+  const discoveryAbortRef = useRef<AbortController | null>(null);
+
+  // abort discovery on unmount
+  useEffect(() => {
+    return () => {
+      discoveryAbortRef.current?.abort();
+    };
+  }, []);
 
   // navigate to active session when connected
   useEffect(() => {
@@ -38,56 +50,90 @@ export function SendScreen({ navigation }: Props) {
     }
   }, [session.state, navigation]);
 
-  const handleQrScanned = async (data: string) => {
-    try {
-      const payload = decodeQrPayload(data);
+  const connectToReceiver = useCallback(
+    async (addr: string, pk?: string, sid?: string) => {
       setConnecting(true);
       setInputError(null);
+      try {
+        const t = transport.createSenderTransport();
+        await session.startSender(
+          t,
+          { deviceName: "Mobile Sender" },
+          addr,
+          pk,
+          sid,
+        );
+      } catch (err) {
+        setInputError(
+          err instanceof Error ? err.message : "connection failed",
+        );
+        setConnecting(false);
+      }
+    },
+    [session, transport],
+  );
 
-      const t = transport.createSenderTransport();
-      await session.startSender(
-        t,
-        { deviceName: "Mobile Sender" },
-        payload.addr,
-        payload.pk,
-        payload.sid,
-      );
-    } catch (err) {
-      setInputError(
-        err instanceof Error ? err.message : "failed to connect via QR",
-      );
-      setConnecting(false);
-    }
-  };
+  const handleQrScanned = useCallback(
+    async (data: string) => {
+      try {
+        const payload = decodeQrPayload(data);
+        await connectToReceiver(payload.addr, payload.pk, payload.sid);
+      } catch (err) {
+        setInputError(
+          err instanceof Error ? err.message : "invalid QR code",
+        );
+      }
+    },
+    [connectToReceiver],
+  );
 
   const handleManualConnect = async () => {
     if (code.length !== 6) {
       setInputError("enter a 6-character code");
       return;
     }
-    if (!address) {
-      setInputError("enter the receiver's address (ip:port)");
-      return;
-    }
 
     setInputError(null);
-    setConnecting(true);
+    setDiscovering(true);
+
+    // create an abort controller so discovery can be cancelled
+    discoveryAbortRef.current?.abort();
+    const controller = new AbortController();
+    discoveryAbortRef.current = controller;
 
     try {
-      const t = transport.createSenderTransport();
-      await session.startSender(
-        t,
-        { deviceName: "Mobile Sender" },
-        address,
-        undefined,
-        code,
-      );
+      const addr = await discoverReceiver({
+        sessionCode: code,
+        port: DEFAULT_PORT,
+        getLocalIp: getRnLocalIp,
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
+      if (!addr) {
+        setInputError(
+          "could not find receiver on your network — make sure both devices are on the same WiFi",
+        );
+        setDiscovering(false);
+        return;
+      }
+      setDiscovering(false);
+      await connectToReceiver(addr, undefined, code);
     } catch (err) {
+      if (controller.signal.aborted) return;
       setInputError(
-        err instanceof Error ? err.message : "connection failed",
+        err instanceof Error ? err.message : "discovery failed",
       );
-      setConnecting(false);
+      setDiscovering(false);
     }
+  };
+
+  const handleCancel = () => {
+    discoveryAbortRef.current?.abort();
+    discoveryAbortRef.current = null;
+    session.endSession();
+    setConnecting(false);
+    setDiscovering(false);
+    setInputError(null);
   };
 
   const isConnecting = session.state === SessionState.Handshaking || connecting;
@@ -140,30 +186,33 @@ export function SendScreen({ navigation }: Props) {
 
       {/* content */}
       <View style={styles.content}>
-        {tab === "scan" && !connecting && (
+        {tab === "scan" && !connecting && !discovering && (
           <QRScanner onScanned={handleQrScanned} />
         )}
 
-        {tab === "code" && !connecting && (
+        {tab === "code" && !connecting && !discovering && (
           <View style={styles.codeForm}>
-            <CodeInput value={code} onChange={setCode} />
+            <Text style={styles.hintText}>
+              enter the 6-character code shown on the receiver
+            </Text>
 
             <TextInput
-              style={styles.addressInput}
-              value={address}
-              onChangeText={setAddress}
-              placeholder="192.168.1.100:4040"
+              style={styles.codeInput}
+              value={code}
+              onChangeText={(t) => setCode(t.toUpperCase().slice(0, 6))}
+              placeholder="ABC123"
               placeholderTextColor={colors.textSecondary}
-              autoCapitalize="none"
+              maxLength={6}
+              autoCapitalize="characters"
               autoCorrect={false}
             />
 
             <TouchableOpacity
               style={[
                 styles.connectButton,
-                (code.length !== 6 || !address) && styles.disabledButton,
+                code.length !== 6 && styles.disabledButton,
               ]}
-              disabled={isConnecting || code.length !== 6 || !address}
+              disabled={isConnecting || code.length !== 6}
               onPress={handleManualConnect}
             >
               <Text style={styles.connectButtonText}>connect</Text>
@@ -171,12 +220,34 @@ export function SendScreen({ navigation }: Props) {
           </View>
         )}
 
-        {isConnecting && (
-          <Text style={styles.statusText}>
-            {session.state === SessionState.PendingApproval
-              ? "waiting for approval..."
-              : "connecting..."}
-          </Text>
+        {discovering && (
+          <>
+            <Text style={styles.statusText}>
+              searching for receiver on your network...
+            </Text>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={handleCancel}
+            >
+              <Text style={styles.cancelButtonText}>cancel</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        {isConnecting && !discovering && (
+          <>
+            <Text style={styles.statusText}>
+              {session.state === SessionState.PendingApproval
+                ? "waiting for approval..."
+                : "connecting..."}
+            </Text>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={handleCancel}
+            >
+              <Text style={styles.cancelButtonText}>cancel</Text>
+            </TouchableOpacity>
+          </>
         )}
 
         {inputError && <Text style={styles.errorText}>{inputError}</Text>}
@@ -252,15 +323,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 16,
   },
-  addressInput: {
-    width: 260,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+  hintText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    textAlign: "center",
+  },
+  codeInput: {
+    width: 200,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     borderRadius: 10,
     backgroundColor: colors.surface,
     color: colors.textPrimary,
-    fontSize: 14,
+    fontSize: 24,
+    fontFamily: "monospace",
     textAlign: "center",
+    letterSpacing: 6,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -277,6 +355,18 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: colors.textPrimary,
+  },
+  cancelButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.error,
+  },
+  cancelButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.error,
   },
   statusText: {
     fontSize: 14,

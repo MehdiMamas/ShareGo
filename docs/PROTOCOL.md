@@ -52,7 +52,7 @@ Used for laptop-to-laptop (no camera available).
 2. Receiver starts listening on a local port
 3. Receiver displays a 6-character alphanumeric code (the session ID): `A7K3M2`
 4. Sender types the code into their app
-5. Sender discovers receiver via UDP broadcast on a known port, filtering by session ID
+5. Sender enters the receiver's address (ip:port) displayed alongside the session code
 6. Sender connects via WebSocket
 7. Wire protocol handshake begins (public keys exchanged in HELLO/CHALLENGE)
 

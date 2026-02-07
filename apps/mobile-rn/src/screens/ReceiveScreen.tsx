@@ -1,10 +1,10 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState, useCallback } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../App";
 import { SessionContext } from "../App";
-import { SessionState } from "../lib/core";
+import { SessionState, DEFAULT_PORT } from "../lib/core";
 import { QRDisplay } from "../components/QRDisplay";
 import { ApprovalDialog } from "../components/ApprovalDialog";
 import { StatusIndicator } from "../components/StatusIndicator";
@@ -17,32 +17,44 @@ interface Props {
 export function ReceiveScreen({ navigation }: Props) {
   const ctx = useContext(SessionContext)!;
   const { session, transport } = ctx;
+  const bootstrapTtl = 90;
   const [started, setStarted] = useState(false);
-  const [countdown, setCountdown] = useState(90);
+  const [countdown, setCountdown] = useState(bootstrapTtl);
+  const [initError, setInitError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
-  const initRef = useRef(false);
 
-  useEffect(() => {
-    if (initRef.current) return;
-    initRef.current = true;
+  const startSession = useCallback(() => {
+    setStarted(false);
+    setCountdown(bootstrapTtl);
+    setInitError(null);
 
     const t = transport.createReceiverTransport();
     session
       .startReceiver(t, {
         deviceName: "Mobile",
-        port: 4040,
-        bootstrapTtl: 90,
+        port: DEFAULT_PORT,
+        bootstrapTtl,
       })
-      .then(() => setStarted(true))
+      .then(() => {
+        setStarted(true);
+      })
       .catch((err: unknown) => {
-        console.error("failed to start receiver:", err);
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("failed to start receiver:", msg);
+        setInitError(msg);
       });
   }, [session, transport]);
+
+  // start on mount
+  useEffect(() => {
+    startSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // countdown timer
   useEffect(() => {
     if (!started) return;
-    setCountdown(90);
+    setCountdown(bootstrapTtl);
     timerRef.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -61,6 +73,21 @@ export function ReceiveScreen({ navigation }: Props) {
       navigation.replace("ActiveSession");
     }
   }, [session.state, navigation]);
+
+  // auto-regenerate when expired
+  const regeneratingRef = useRef(false);
+  useEffect(() => {
+    if (countdown !== 0 || !started || regeneratingRef.current) return;
+    regeneratingRef.current = true;
+
+    const regen = async () => {
+      session.endSession();
+      await new Promise((r) => setTimeout(r, 300));
+      startSession();
+      regeneratingRef.current = false;
+    };
+    regen();
+  }, [countdown, started, session, startSession]);
 
   const isWaiting =
     session.state === SessionState.WaitingForSender ||
@@ -84,14 +111,33 @@ export function ReceiveScreen({ navigation }: Props) {
 
       {/* content */}
       <View style={styles.content}>
+        {!started && !initError && (
+          <Text style={styles.statusText}>starting session...</Text>
+        )}
+
+        {initError && (
+          <Text style={styles.errorText}>failed to start: {initError}</Text>
+        )}
+
         {isWaiting && session.qrPayload && session.sessionId && (
           <>
             <QRDisplay
               value={session.qrPayload}
               sessionId={session.sessionId}
+              address={session.localAddress ?? undefined}
             />
-            <Text style={styles.expires}>expires in {countdown}s</Text>
+            {countdown === 0 ? (
+              <Text style={styles.expires}>regenerating...</Text>
+            ) : (
+              <Text style={styles.expires}>
+                expires in {countdown}s
+              </Text>
+            )}
           </>
+        )}
+
+        {started && isWaiting && !session.qrPayload && (
+          <Text style={styles.statusText}>waiting for QR code...</Text>
         )}
 
         {session.state === SessionState.Handshaking && (

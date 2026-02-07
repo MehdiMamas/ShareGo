@@ -11,13 +11,23 @@ export class BrowserWsClientAdapter implements WebSocketClientAdapter {
 
   connect(url: string): Promise<void> {
     return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        this.ws?.close();
+        reject(new Error("connection timed out"));
+      }, 10000);
+
       this.ws = new WebSocket(url);
       this.ws.binaryType = "arraybuffer";
 
-      this.ws.onopen = () => resolve();
+      this.ws.onopen = () => {
+        clearTimeout(timeout);
+        resolve();
+      };
 
-      this.ws.onerror = () =>
+      this.ws.onerror = () => {
+        clearTimeout(timeout);
         reject(new Error("websocket connection failed"));
+      };
 
       this.ws.onmessage = (event) => {
         if (this.messageHandler) {

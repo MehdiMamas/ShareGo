@@ -30,6 +30,11 @@ export default defineConfig({
       "@sharego/core": path.resolve(__dirname, "../../core/src"),
     },
   },
+  optimizeDeps: {
+    // libsodium ESM uses top-level await which esbuild can't handle —
+    // exclude from pre-bundling so the vite plugin resolves it at serve time
+    exclude: ["libsodium-wrappers-sumo", "libsodium-sumo"],
+  },
   clearScreen: false,
   server: {
     port: 1420,

@@ -12,6 +12,7 @@
   "dependencies": {
     "@sharego/core": "*",
     "@tauri-apps/api": "^2.0.0",
+    "jsqr": "^1.4.0",
     "qrcode.react": "^4.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

@@ -57,7 +57,9 @@ class TauriWsClient implements WebSocketClientAdapter {
 
   send(data: Uint8Array): void {
     const b64 = toBase64(data);
-    invoke("ws_send", { data: b64 });
+    invoke("ws_send", { data: b64 }).catch((err) => {
+      console.error("ws_send failed:", err);
+    });
   }
 
   onMessage(handler: (data: Uint8Array) => void): void {

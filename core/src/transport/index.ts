@@ -7,6 +7,7 @@ export type {
 
 export {
   WebSocketTransport,
+  MAX_MESSAGE_SIZE,
   type WebSocketServerAdapter,
   type WebSocketClientAdapter,
   type ConnectionHandler,

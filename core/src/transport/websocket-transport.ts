@@ -5,6 +5,21 @@ import type {
   MessageCallback,
 } from "./types.js";
 
+/** max allowed message size in bytes (64 KB) */
+export const MAX_MESSAGE_SIZE = 65536;
+
+/** validate that an address is a valid ipv4:port string */
+function isValidAddress(addr: string): boolean {
+  const match = addr.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3}):(\d{1,5})$/);
+  if (!match) return false;
+  const octets = [match[1], match[2], match[3], match[4]];
+  if (!octets.every((o) => { const n = parseInt(o, 10); return n >= 0 && n <= 255; })) {
+    return false;
+  }
+  const port = parseInt(match[5], 10);
+  return port >= 1 && port <= 65535;
+}
+
 /**
  * v1 transport: local WebSocket.
  *
@@ -60,6 +75,10 @@ export class WebSocketTransport implements ILocalTransport {
 
     this.server = this.serverFactory();
     this.localAddress = await this.server.start(port);
+
+    // transport may have been closed during the async start (e.g. react strict mode)
+    if (!this.server) return;
+
     this.setState("listening");
 
     this.server.onConnection((client) => {
@@ -73,6 +92,7 @@ export class WebSocketTransport implements ILocalTransport {
       this.setState("connected");
 
       client.onMessage((data) => {
+        if (data.length > MAX_MESSAGE_SIZE) return; // drop oversized messages
         for (const cb of this.messageCallbacks) {
           cb(data);
         }
@@ -92,14 +112,28 @@ export class WebSocketTransport implements ILocalTransport {
       throw new Error("no client factory provided — cannot connect");
     }
 
+    // sanitize address — only allow valid ipv4:port or ws://ipv4:port
+    const sanitized = addr.trim();
+    const bare = sanitized.replace(/^ws:\/\//, "");
+    if (!isValidAddress(bare)) {
+      throw new Error("invalid address format");
+    }
+
     const client = this.clientFactory();
-    const url = addr.startsWith("ws://") ? addr : `ws://${addr}`;
+    const url = sanitized.startsWith("ws://") ? sanitized : `ws://${sanitized}`;
     await client.connect(url);
+
+    // transport may have been closed during the async connect
+    if (this.state === "closed") {
+      client.close();
+      return;
+    }
 
     this.peer = client;
     this.setState("connected");
 
     client.onMessage((data) => {
+      if (data.length > MAX_MESSAGE_SIZE) return; // drop oversized messages
       for (const cb of this.messageCallbacks) {
         cb(data);
       }
@@ -117,6 +151,9 @@ export class WebSocketTransport implements ILocalTransport {
     if (!this.peer) {
       throw new Error("no peer connected — cannot send");
     }
+    if (data.length > MAX_MESSAGE_SIZE) {
+      throw new Error(`message too large: ${data.length} bytes exceeds ${MAX_MESSAGE_SIZE} limit`);
+    }
     this.peer.send(data);
   }
 
@@ -124,8 +161,18 @@ export class WebSocketTransport implements ILocalTransport {
     this.messageCallbacks.push(cb);
   }
 
+  offMessage(cb: MessageCallback): void {
+    const idx = this.messageCallbacks.indexOf(cb);
+    if (idx !== -1) this.messageCallbacks.splice(idx, 1);
+  }
+
   onStateChange(cb: TransportStateCallback): void {
     this.stateCallbacks.push(cb);
+  }
+
+  offStateChange(cb: TransportStateCallback): void {
+    const idx = this.stateCallbacks.indexOf(cb);
+    if (idx !== -1) this.stateCallbacks.splice(idx, 1);
   }
 
   close(): void {
@@ -134,6 +181,9 @@ export class WebSocketTransport implements ILocalTransport {
     this.server?.stop();
     this.server = null;
     this.setState("closed");
+    // clear all callbacks to prevent leaks
+    this.messageCallbacks.length = 0;
+    this.stateCallbacks.length = 0;
   }
 
   getState(): TransportState {

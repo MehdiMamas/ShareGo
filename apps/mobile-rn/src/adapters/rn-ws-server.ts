@@ -1,5 +1,6 @@
 import TcpSocket from "react-native-tcp-socket";
 import { Buffer } from "buffer";
+import { NetworkInfo } from "react-native-network-info";
 import sha1 from "js-sha1";
 import type {
   WebSocketServerAdapter,
@@ -22,7 +23,7 @@ function computeAcceptKey(key: string): string {
   for (let i = 0; i < hash.length; i += 2) {
     bytes.push(parseInt(hash.substr(i, 2), 16));
   }
-  return btoa(String.fromCharCode(...bytes));
+  return Buffer.from(bytes).toString("base64");
 }
 
 function createWsFrame(data: Uint8Array, opcode: number = OP_BINARY): Buffer {
@@ -57,6 +58,7 @@ function createWsFrame(data: Uint8Array, opcode: number = OP_BINARY): Buffer {
 }
 
 interface ParsedFrame {
+  fin: boolean;
   opcode: number;
   payload: Uint8Array;
   bytesConsumed: number;
@@ -67,6 +69,7 @@ function parseWsFrame(buf: Buffer): ParsedFrame | null {
 
   const byte0 = buf[0];
   const byte1 = buf[1];
+  const fin = (byte0 & 0x80) !== 0;
   const opcode = byte0 & 0x0f;
   const masked = (byte1 & 0x80) !== 0;
   let payloadLength = byte1 & 0x7f;
@@ -101,7 +104,7 @@ function parseWsFrame(buf: Buffer): ParsedFrame | null {
     payload = new Uint8Array(buf.subarray(offset, totalLength));
   }
 
-  return { opcode, payload, bytesConsumed: totalLength };
+  return { fin, opcode, payload, bytesConsumed: totalLength };
 }
 
 /**
@@ -113,6 +116,8 @@ class RnWsClient implements WebSocketClientAdapter {
   private closeHandler: (() => void) | null = null;
   private socket: ReturnType<typeof TcpSocket.createConnection>;
   private buffer: Buffer = Buffer.alloc(0);
+  private fragmentBuffer: Uint8Array[] = [];
+  private fragmentOpcode: number = 0;
 
   constructor(socket: ReturnType<typeof TcpSocket.createConnection>) {
     this.socket = socket;
@@ -139,20 +144,52 @@ class RnWsClient implements WebSocketClientAdapter {
 
       this.buffer = this.buffer.subarray(frame.bytesConsumed);
 
-      switch (frame.opcode) {
-        case OP_BINARY:
-        case OP_TEXT:
-          if (this.messageHandler) {
-            this.messageHandler(frame.payload);
-          }
-          break;
-        case OP_CLOSE:
-          this.socket.destroy();
-          break;
-        case OP_PING: {
-          const pong = createWsFrame(frame.payload, OP_PONG);
-          this.socket.write(pong);
-          break;
+      // handle control frames immediately (they can appear between fragments)
+      if (frame.opcode === OP_CLOSE) {
+        try {
+          const closeFrame = createWsFrame(frame.payload, OP_CLOSE);
+          this.socket.write(closeFrame);
+        } catch {
+          // best effort
+        }
+        this.socket.destroy();
+        break;
+      }
+      if (frame.opcode === OP_PING) {
+        const pong = createWsFrame(frame.payload, OP_PONG);
+        this.socket.write(pong);
+        continue;
+      }
+      if (frame.opcode === OP_PONG) {
+        continue;
+      }
+
+      // handle data frames with fragmentation support
+      if (frame.opcode !== 0) {
+        // first frame of a message (or single-frame message)
+        this.fragmentOpcode = frame.opcode;
+        this.fragmentBuffer = [frame.payload];
+      } else {
+        // continuation frame
+        this.fragmentBuffer.push(frame.payload);
+      }
+
+      if (frame.fin) {
+        // message is complete — reassemble fragments
+        const totalLen = this.fragmentBuffer.reduce((sum, f) => sum + f.length, 0);
+        const assembled = new Uint8Array(totalLen);
+        let offset = 0;
+        for (const frag of this.fragmentBuffer) {
+          assembled.set(frag, offset);
+          offset += frag.length;
+        }
+        this.fragmentBuffer = [];
+
+        if (
+          (this.fragmentOpcode === OP_BINARY || this.fragmentOpcode === OP_TEXT) &&
+          this.messageHandler
+        ) {
+          this.messageHandler(assembled);
         }
       }
     }
@@ -193,6 +230,7 @@ class RnWsClient implements WebSocketClientAdapter {
 export class RnWsServerAdapter implements WebSocketServerAdapter {
   private server: ReturnType<typeof TcpSocket.createServer> | null = null;
   private connectionHandler: ConnectionHandler | null = null;
+  private pendingClient: WebSocketClientAdapter | null = null;
   private hasPeer = false;
 
   async start(port: number): Promise<string> {
@@ -242,30 +280,46 @@ export class RnWsServerAdapter implements WebSocketServerAdapter {
           const client = new RnWsClient(socket);
           if (this.connectionHandler) {
             this.connectionHandler(client);
+          } else {
+            // queue the client if handler isn't registered yet
+            this.pendingClient = client;
           }
         };
 
         socket.on("data", onData);
       });
 
-      this.server.listen({ port, host: "0.0.0.0" }, () => {
-        const address = this.server!.address();
-        // returns the bound address — caller should determine the LAN ip separately
-        const host =
-          address && typeof address === "object" ? address.address : "0.0.0.0";
-        const boundPort =
-          address && typeof address === "object" ? address.port : port;
-        resolve(`${host}:${boundPort}`);
-      });
-
+      // register error handler before listen so early failures are caught
       this.server.on("error", (err: Error) => {
         reject(err.message);
+      });
+
+      this.server.listen({ port, host: "0.0.0.0" }, async () => {
+        const address = this.server!.address();
+        const boundPort =
+          address && typeof address === "object" ? address.port : port;
+
+        // detect actual LAN IP since server.address() returns 0.0.0.0
+        let host = "0.0.0.0";
+        try {
+          const lanIp = await NetworkInfo.getIPV4Address();
+          if (lanIp) host = lanIp;
+        } catch {
+          // fallback to 0.0.0.0 if detection fails
+        }
+
+        resolve(`${host}:${boundPort}`);
       });
     });
   }
 
   onConnection(handler: ConnectionHandler): void {
     this.connectionHandler = handler;
+    // flush any client that connected before the handler was registered
+    if (this.pendingClient) {
+      handler(this.pendingClient);
+      this.pendingClient = null;
+    }
   }
 
   async stop(): Promise<void> {
@@ -274,5 +328,7 @@ export class RnWsServerAdapter implements WebSocketServerAdapter {
       this.server = null;
     }
     this.hasPeer = false;
+    this.connectionHandler = null;
+    this.pendingClient = null;
   }
 }

@@ -30,7 +30,7 @@ export function HomeScreen({ navigation }: Props) {
             activeOpacity={0.8}
             onPress={() => navigation.navigate("Receive")}
           >
-            <Text style={styles.receiveButtonText}>receive</Text>
+            <Text style={styles.receiveButtonText}>show QR code / show code</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -38,7 +38,7 @@ export function HomeScreen({ navigation }: Props) {
             activeOpacity={0.8}
             onPress={() => navigation.navigate("Send")}
           >
-            <Text style={styles.sendButtonText}>send</Text>
+            <Text style={styles.sendButtonText}>scan QR code / enter code</Text>
           </TouchableOpacity>
         </View>
       </View>

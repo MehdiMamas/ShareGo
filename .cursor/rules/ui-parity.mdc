@@ -1,0 +1,71 @@
+---
+description: Enforce full feature and UI parity between desktop (Tauri) and mobile (React Native) apps
+alwaysApply: true
+---
+
+# feature and UI parity rules (HIGHEST PRIORITY RULE)
+
+the desktop and mobile apps MUST be identical in features, behavior, and appearance. this is the #1 project rule. when adding or changing ANY feature, logic, or UI element on one platform, the equivalent MUST be applied to the other platform in the same session — no exceptions. the only allowed differences are platform primitives and responsive layout.
+
+## screen contract (both apps must implement these identically)
+
+| screen | purpose | required elements |
+|---|---|---|
+| HomeScreen | landing / entry | app title, description text, "show QR code / show code" button, "scan QR code / enter code" button |
+| ReceiveScreen | receiver flow | QR code display, session code, local address, 90-second countdown, status indicator, approval dialog |
+| SendScreen | sender flow | QR scanner (camera), manual code input (6-char), address input, connect button, status indicator |
+| ActiveSession | data exchange | message list (sent + received), text input, send button, delivery status, copy button, end session button |
+
+## feature parity rules
+
+1. **same features** — every feature available on desktop must be available on mobile and vice versa. no platform-exclusive features unless physically impossible (e.g. native camera vs webcam)
+2. **same logic** — business logic, validation, error handling, and session flow must be identical. shared logic lives in `@sharego/core` (SessionController, discovery, crypto)
+3. **same error handling** — error messages, retry behavior, and fallback states must match exactly
+4. **same data flow** — both platforms use the same `SessionController` from core. hooks are thin wrappers over the shared controller
+
+## backend parity rules
+
+1. **same core** — both platforms import from `@sharego/core`. crypto, session, protocol, and transport logic is shared. never duplicate core logic into platform code
+2. **same transport behavior** — both platform adapters (tauri ws server, rn ws server, browser ws client, rn ws client) must implement the same `WebSocketServerAdapter` and `WebSocketClientAdapter` interfaces with identical behavior
+3. **same discovery** — both platforms use the shared `discoverReceiver()` from core, injecting only the platform-specific IP resolver
+4. **same security** — crypto, key exchange, encryption, and validation logic is exclusively in core. platform adapters NEVER touch security primitives
+5. **same protocol** — message serialization, validation, and handling is in core. platform adapters only do raw byte transport
+
+## visual parity rules
+
+1. **same theme** — both apps use the identical `colors` object from `styles/theme.ts`. never define colors inline or use platform-specific color values
+2. **same typography** — font sizes, weights, and line heights must match across platforms
+3. **same spacing** — padding, margin, gap, and border-radius values must be identical
+4. **same layout** — flexbox direction, alignment, and structure must match
+5. **same copy** — all user-facing text (labels, descriptions, error messages, status labels) must be word-for-word identical
+6. **same flow** — screen transitions, state-driven UI changes, and user interaction patterns must match
+
+## allowed differences (only these)
+
+1. **responsive layout** — desktop may use `maxWidth` constraints for large screens; mobile uses full-width. desktop uses `100vh`, mobile uses `flex: 1`
+2. **platform navigation** — desktop uses callback props (`onReceive`, `onSend`), mobile uses react-navigation
+3. **platform primitives** — `<div>` vs `<View>`, `<button>` vs `<TouchableOpacity>`, `<input>` vs `<TextInput>`, etc.
+4. **platform-specific components** — `SafeAreaView` (mobile only), hover states (desktop only), native camera scanner (mobile-specific library)
+5. **platform adapters** — `useTransport` returns different adapter implementations per platform
+
+## change propagation rule
+
+when modifying UI on one platform, you MUST apply the equivalent change to the other platform in the same session. this includes:
+- adding or removing a screen
+- changing button labels or description text
+- adjusting colors, spacing, or layout
+- adding or removing UI elements
+- changing state-driven behavior (loading, error, empty states)
+
+if a change is platform-specific (e.g. adding `SafeAreaView` padding on mobile), document why it doesn't apply to the other platform.
+
+## hook parity
+
+`useSession` and `useTransport` must expose the same API surface on both platforms:
+- same state fields: `state`, `sessionId`, `qrPayload`, `localAddress`, `pairingRequest`, `receivedItems`, `sentItems`, `error`
+- same methods: `startReceiver()`, `startSender()`, `approve()`, `reject()`, `sendData()`, `endSession()`
+- same event handling behavior
+
+## shared design tokens
+
+the `styles/theme.ts` file is the single source of truth for colors. if you need new tokens (e.g. font sizes, spacing scale), add them to BOTH theme files simultaneously and keep them identical.

@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from "react";
-import { SessionState } from "../lib/core";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { SessionState, DEFAULT_PORT } from "../lib/core";
 import { colors } from "../styles/theme";
 import { QRDisplay } from "./QRDisplay";
 import { ApprovalDialog } from "./ApprovalDialog";
@@ -18,33 +18,49 @@ export function ReceiveScreen({
   transport,
   onBack,
 }: ReceiveScreenProps) {
+  const bootstrapTtl = 90;
   const [started, setStarted] = useState(false);
-  const [countdown, setCountdown] = useState(90);
+  const [countdown, setCountdown] = useState(bootstrapTtl);
+  const [initError, setInitError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
-  const initRef = useRef(false);
+  const sessionRef = useRef(session);
+  const transportRef = useRef(transport);
+  sessionRef.current = session;
+  transportRef.current = transport;
 
-  useEffect(() => {
-    if (initRef.current) return;
-    initRef.current = true;
+  const startSession = useCallback(() => {
+    setStarted(false);
+    setCountdown(bootstrapTtl);
+    setInitError(null);
 
-    const t = transport.createReceiverTransport();
-    session
+    const t = transportRef.current.createReceiverTransport();
+    sessionRef.current
       .startReceiver(t, {
         deviceName: "Desktop",
-        port: 4040,
-        bootstrapTtl: 90,
+        port: DEFAULT_PORT,
+        bootstrapTtl,
       })
-      .then(() => setStarted(true))
+      .then(() => {
+        setStarted(true);
+      })
       .catch((err: unknown) => {
-        console.error("failed to start receiver:", err);
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("failed to start receiver:", msg);
+        setInitError(msg);
       });
-  }, [session, transport]);
+  }, []);
 
-  // countdown timer for bootstrap TTL
+  // start on mount
+  useEffect(() => {
+    startSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // countdown timer
   useEffect(() => {
     if (!started) return;
 
-    setCountdown(90);
+    setCountdown(bootstrapTtl);
     timerRef.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -57,6 +73,21 @@ export function ReceiveScreen({
 
     return () => clearInterval(timerRef.current);
   }, [started]);
+
+  // auto-regenerate when expired
+  const regeneratingRef = useRef(false);
+  useEffect(() => {
+    if (countdown !== 0 || !started || regeneratingRef.current) return;
+    regeneratingRef.current = true;
+
+    const regen = async () => {
+      sessionRef.current.endSession();
+      await new Promise((r) => setTimeout(r, 300));
+      startSession();
+      regeneratingRef.current = false;
+    };
+    regen();
+  }, [countdown, started, startSession]);
 
   const isWaiting =
     session.state === SessionState.WaitingForSender ||
@@ -92,7 +123,7 @@ export function ReceiveScreen({
             border: `1px solid ${colors.border}`,
           }}
         >
-          &larr; back
+          back
         </button>
         <StatusIndicator state={session.state} />
       </div>
@@ -108,16 +139,41 @@ export function ReceiveScreen({
           gap: 24,
         }}
       >
+        {!started && !initError && (
+          <p style={{ color: colors.textSecondary, fontSize: 14 }}>
+            starting session...
+          </p>
+        )}
+
+        {initError && (
+          <p style={{ color: colors.error, fontSize: 14 }}>
+            failed to start: {initError}
+          </p>
+        )}
+
         {isWaiting && session.qrPayload && session.sessionId && (
           <>
             <QRDisplay
               value={session.qrPayload}
               sessionId={session.sessionId}
+              address={session.localAddress ?? undefined}
             />
-            <div style={{ fontSize: 13, color: colors.textSecondary }}>
-              expires in {countdown}s
-            </div>
+            {countdown === 0 ? (
+              <div style={{ fontSize: 13, color: colors.textSecondary }}>
+                regenerating...
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: colors.textSecondary }}>
+                expires in {countdown}s
+              </div>
+            )}
           </>
+        )}
+
+        {started && isWaiting && !session.qrPayload && (
+          <p style={{ color: colors.textSecondary, fontSize: 14 }}>
+            waiting for QR code...
+          </p>
         )}
 
         {session.state === SessionState.Handshaking && (

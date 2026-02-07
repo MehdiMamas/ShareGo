@@ -1,14 +1,21 @@
+use std::net::SocketAddr;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use base64::{engine::general_purpose, Engine as _};
 use futures_util::{stream::SplitSink, SinkExt, StreamExt};
 use serde::Serialize;
+use socket2::{Domain, Protocol, Socket, Type};
 use tauri::{AppHandle, Emitter};
 use tokio::{
     net::TcpListener,
     sync::{mpsc, Mutex},
+    task::JoinHandle,
 };
 use tokio_tungstenite::{accept_async, tungstenite::Message};
+
+/// max allowed message size in bytes (64 KB), matching the JS transport limit
+const MAX_MESSAGE_SIZE: usize = 65536;
 
 type WsSink = SplitSink<
     tokio_tungstenite::WebSocketStream<tokio::net::TcpStream>,
@@ -23,6 +30,9 @@ pub struct WsMessagePayload {
 pub struct WsServerState {
     pub sink: Arc<Mutex<Option<WsSink>>>,
     pub shutdown_tx: Arc<Mutex<Option<mpsc::Sender<()>>>>,
+    pub listener_handle: Arc<Mutex<Option<JoinHandle<()>>>>,
+    /// serializes stop+start operations so they never interleave
+    pub op_lock: Arc<Mutex<()>>,
 }
 
 impl WsServerState {
@@ -30,6 +40,8 @@ impl WsServerState {
         Self {
             sink: Arc::new(Mutex::new(None)),
             shutdown_tx: Arc::new(Mutex::new(None)),
+            listener_handle: Arc::new(Mutex::new(None)),
+            op_lock: Arc::new(Mutex::new(())),
         }
     }
 
@@ -38,10 +50,14 @@ impl WsServerState {
         port: u16,
         app: AppHandle,
     ) -> Result<String, String> {
-        let addr = format!("0.0.0.0:{}", port);
-        let listener = TcpListener::bind(&addr)
-            .await
-            .map_err(|e| format!("failed to bind: {}", e))?;
+        // serialize against concurrent stop/start calls
+        let _guard = self.op_lock.lock().await;
+
+        // stop any previous server and wait for the listener task to finish
+        self.stop_inner().await;
+
+        // bind with SO_REUSEADDR and retry to handle lingering sockets
+        let listener = self.bind_with_retry(port, 5, 200).await?;
 
         let local_port = listener
             .local_addr()
@@ -58,16 +74,15 @@ impl WsServerState {
 
         let sink_ref = self.sink.clone();
 
-        tokio::spawn(async move {
-            let mut has_peer = false;
+        let handle = tokio::spawn(async move {
+            let has_peer = Arc::new(AtomicBool::new(false));
 
             loop {
                 tokio::select! {
                     result = listener.accept() => {
                         match result {
                             Ok((stream, _)) => {
-                                // only one peer allowed per session
-                                if has_peer {
+                                if has_peer.load(Ordering::SeqCst) {
                                     drop(stream);
                                     continue;
                                 }
@@ -77,7 +92,7 @@ impl WsServerState {
                                     Err(_) => continue,
                                 };
 
-                                has_peer = true;
+                                has_peer.store(true, Ordering::SeqCst);
                                 let (write, mut read) = ws.split();
                                 *sink_ref.lock().await = Some(write);
 
@@ -85,12 +100,15 @@ impl WsServerState {
 
                                 let app_read = app.clone();
                                 let sink_close = sink_ref.clone();
+                                let has_peer_clone = has_peer.clone();
 
-                                // read loop for this client
                                 tokio::spawn(async move {
                                     while let Some(msg) = read.next().await {
                                         match msg {
                                             Ok(Message::Binary(data)) => {
+                                                if data.len() > MAX_MESSAGE_SIZE {
+                                                    continue; // drop oversized messages
+                                                }
                                                 let encoded =
                                                     general_purpose::STANDARD
                                                         .encode(&data);
@@ -102,6 +120,9 @@ impl WsServerState {
                                                 );
                                             }
                                             Ok(Message::Text(text)) => {
+                                                if text.len() > MAX_MESSAGE_SIZE {
+                                                    continue; // drop oversized messages
+                                                }
                                                 let encoded =
                                                     general_purpose::STANDARD
                                                         .encode(
@@ -121,6 +142,7 @@ impl WsServerState {
                                         }
                                     }
 
+                                    has_peer_clone.store(false, Ordering::SeqCst);
                                     *sink_close.lock().await = None;
                                     let _ = app_read.emit("ws-close", ());
                                 });
@@ -133,7 +155,10 @@ impl WsServerState {
                     }
                 }
             }
+            // listener is dropped here, releasing the port
         });
+
+        *self.listener_handle.lock().await = Some(handle);
 
         Ok(bound)
     }
@@ -150,11 +175,66 @@ impl WsServerState {
     }
 
     pub async fn stop(&self) {
+        let _guard = self.op_lock.lock().await;
+        self.stop_inner().await;
+    }
+
+    /// internal stop without acquiring op_lock (caller must hold it)
+    async fn stop_inner(&self) {
         if let Some(tx) = self.shutdown_tx.lock().await.take() {
             let _ = tx.send(()).await;
         }
         if let Some(mut sink) = self.sink.lock().await.take() {
             let _ = sink.close().await;
         }
+        if let Some(handle) = self.listener_handle.lock().await.take() {
+            let _ = handle.await;
+        }
+    }
+
+    /// try binding with retries to handle the port not being released yet
+    async fn bind_with_retry(
+        &self,
+        port: u16,
+        max_attempts: u32,
+        delay_ms: u64,
+    ) -> Result<TcpListener, String> {
+        let addr: SocketAddr = format!("0.0.0.0:{}", port)
+            .parse()
+            .map_err(|e| format!("invalid address: {}", e))?;
+
+        let mut last_err = String::new();
+        for attempt in 0..max_attempts {
+            if attempt > 0 {
+                tokio::time::sleep(std::time::Duration::from_millis(delay_ms)).await;
+            }
+
+            match self.try_bind(addr) {
+                Ok(listener) => return Ok(listener),
+                Err(e) => last_err = e,
+            }
+        }
+
+        Err(last_err)
+    }
+
+    fn try_bind(&self, addr: SocketAddr) -> Result<TcpListener, String> {
+        let socket = Socket::new(Domain::IPV4, Type::STREAM, Some(Protocol::TCP))
+            .map_err(|e| format!("failed to create socket: {}", e))?;
+        socket
+            .set_reuse_address(true)
+            .map_err(|e| format!("failed to set SO_REUSEADDR: {}", e))?;
+        socket
+            .bind(&addr.into())
+            .map_err(|e| format!("failed to bind: {}", e))?;
+        socket
+            .listen(128)
+            .map_err(|e| format!("failed to listen: {}", e))?;
+        socket
+            .set_nonblocking(true)
+            .map_err(|e| format!("failed to set nonblocking: {}", e))?;
+        let std_listener: std::net::TcpListener = socket.into();
+        TcpListener::from_std(std_listener)
+            .map_err(|e| format!("failed to create tokio listener: {}", e))
     }
 }

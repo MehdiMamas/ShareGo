@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { colors } from "../styles/theme";
 import type { PairingRequest } from "../lib/core";
 
@@ -12,6 +13,21 @@ export function ApprovalDialog({
   onApprove,
   onReject,
 }: ApprovalDialogProps) {
+  // keyboard shortcuts: Enter to approve, Escape to reject
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        onApprove();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        onReject();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onApprove, onReject]);
+
   return (
     <div
       style={{
@@ -82,7 +98,7 @@ export function ApprovalDialog({
               padding: "12px 16px",
               borderRadius: 10,
               background: colors.success,
-              color: "#ffffff",
+              color: colors.white,
               fontSize: 14,
               fontWeight: 600,
             }}

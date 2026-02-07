@@ -6,6 +6,10 @@ dist/
 .env
 .env.*
 
+# platform generated files
+apps/mobile-rn/ios/main.jsbundle
+apps/desktop-tauri/src-tauri/gen/
+
 # personal notes and context (not part of the project)
 .progress/
 .cursor/rules/personal-context.mdc

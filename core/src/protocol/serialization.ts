@@ -42,6 +42,44 @@ export function deserializeMessage(data: Uint8Array): ProtocolMessage {
     throw new Error("missing or invalid sequence number");
   }
 
+  // validate type-specific required fields
+  switch (parsed.type) {
+    case MessageType.HELLO:
+      if (typeof parsed.pk !== "string" || !parsed.pk) {
+        throw new Error("HELLO: missing public key");
+      }
+      if (typeof parsed.deviceName !== "string") {
+        throw new Error("HELLO: missing device name");
+      }
+      break;
+    case MessageType.CHALLENGE:
+      if (typeof parsed.nonce !== "string" || !parsed.nonce) {
+        throw new Error("CHALLENGE: missing nonce");
+      }
+      if (typeof parsed.pk !== "string" || !parsed.pk) {
+        throw new Error("CHALLENGE: missing public key");
+      }
+      break;
+    case MessageType.AUTH:
+      if (typeof parsed.proof !== "string" || !parsed.proof) {
+        throw new Error("AUTH: missing proof");
+      }
+      break;
+    case MessageType.DATA:
+      if (typeof parsed.ciphertext !== "string" || !parsed.ciphertext) {
+        throw new Error("DATA: missing ciphertext");
+      }
+      if (typeof parsed.nonce !== "string" || !parsed.nonce) {
+        throw new Error("DATA: missing nonce");
+      }
+      break;
+    case MessageType.ACK:
+      if (typeof parsed.ackSeq !== "number") {
+        throw new Error("ACK: missing ackSeq");
+      }
+      break;
+  }
+
   return parsed as ProtocolMessage;
 }
 
