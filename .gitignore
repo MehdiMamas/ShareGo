@@ -34,3 +34,13 @@ apps/mobile-rn/android/local.properties
 .progress/
 .cursor/rules/personal-context.mdc
 .cursor/plans/
+
+# secrets and credentials (safety net)
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+secrets.json
+.env.local
+.env.production

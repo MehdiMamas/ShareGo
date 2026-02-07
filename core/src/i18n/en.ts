@@ -43,6 +43,7 @@ const en = {
     endSession: "end session",
     copy: "copy",
     copied: "copied!",
+    autoCopy: "auto-copy",
   },
   approval: {
     title: "pairing request",

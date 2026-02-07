@@ -8,6 +8,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Switch,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -97,14 +98,30 @@ export function ActiveSessionScreen({ navigation }: Props) {
   const [input, setInput] = useState("");
   const [copied, setCopied] = useState<number | null>(null);
   const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set());
+  const [autoCopy, setAutoCopy] = useState(true);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const flatListRef = useRef<FlatList>(null);
+  const prevReceivedCountRef = useRef(session.receivedItems.length);
 
   useEffect(() => {
     return () => {
       if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
     };
   }, []);
+
+  // auto-copy latest received item to clipboard
+  useEffect(() => {
+    if (autoCopy && session.receivedItems.length > prevReceivedCountRef.current) {
+      const latest = session.receivedItems[session.receivedItems.length - 1];
+      if (latest) {
+        Clipboard.setString(latest.text);
+        setCopied(latest.id);
+        if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+        copyTimerRef.current = setTimeout(() => setCopied(null), COPY_FEEDBACK_MS);
+      }
+    }
+    prevReceivedCountRef.current = session.receivedItems.length;
+  }, [session.receivedItems.length, autoCopy]);
 
   // navigate home when session closes
   useEffect(() => {
@@ -243,12 +260,25 @@ export function ActiveSessionScreen({ navigation }: Props) {
             </Text>
             <StatusIndicator state={session.state} />
           </View>
-          <TouchableOpacity
-            style={styles.endButton}
-            onPress={() => session.endSession()}
-          >
-            <Text style={styles.endButtonText}>{t("session.endSession")}</Text>
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <View style={styles.autoCopyRow}>
+              <Text style={styles.autoCopyLabel}>{t("session.autoCopy")}</Text>
+              <Switch
+                value={autoCopy}
+                onValueChange={setAutoCopy}
+                trackColor={{ false: colors.border, true: colors.success }}
+                thumbColor={colors.white}
+              />
+            </View>
+            <TouchableOpacity
+              style={styles.endButton}
+              onPress={() => session.endSession()}
+            >
+              <Text style={styles.endButtonText}>
+                {t("session.endSession")}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* messages */}
@@ -328,6 +358,20 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: colors.textPrimary,
     marginBottom: 4,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  autoCopyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  autoCopyLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
   },
   endButton: {
     paddingVertical: 8,

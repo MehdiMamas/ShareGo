@@ -70,13 +70,35 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
   const [input, setInput] = useState("");
   const [copied, setCopied] = useState<number | null>(null);
   const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set());
+  const [autoCopy, setAutoCopy] = useState(true);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const prevReceivedCountRef = useRef(session.receivedItems.length);
 
   useEffect(() => {
     return () => {
       if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
     };
   }, []);
+
+  // auto-copy latest received item to clipboard
+  useEffect(() => {
+    if (autoCopy && session.receivedItems.length > prevReceivedCountRef.current) {
+      const latest = session.receivedItems[session.receivedItems.length - 1];
+      if (latest) {
+        navigator.clipboard.writeText(latest.text).then(() => {
+          setCopied(latest.id);
+          if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+          copyTimerRef.current = setTimeout(
+            () => setCopied(null),
+            COPY_FEEDBACK_MS,
+          );
+        }).catch(() => {
+          // clipboard api may not be available
+        });
+      }
+    }
+    prevReceivedCountRef.current = session.receivedItems.length;
+  }, [session.receivedItems.length, autoCopy]);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -161,19 +183,59 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
           </h2>
           <StatusIndicator state={session.state} />
         </div>
-        <button
-          onClick={onEnd}
-          style={{
-            padding: "8px 16px",
-            borderRadius: 8,
-            background: colors.error,
-            color: colors.white,
-            fontSize: 13,
-            fontWeight: 600,
-          }}
-        >
-          {t("session.endSession")}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span
+              style={{
+                fontSize: 12,
+                color: colors.textSecondary,
+                userSelect: "none",
+              }}
+            >
+              {t("session.autoCopy")}
+            </span>
+            <button
+              onClick={() => setAutoCopy(!autoCopy)}
+              style={{
+                width: 36,
+                height: 20,
+                borderRadius: 10,
+                background: autoCopy ? colors.success : colors.border,
+                position: "relative",
+                cursor: "pointer",
+                border: "none",
+                padding: 0,
+                transition: "background 0.2s",
+              }}
+            >
+              <div
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: 8,
+                  background: colors.white,
+                  position: "absolute",
+                  top: 2,
+                  left: autoCopy ? 18 : 2,
+                  transition: "left 0.2s",
+                }}
+              />
+            </button>
+          </div>
+          <button
+            onClick={onEnd}
+            style={{
+              padding: "8px 16px",
+              borderRadius: 8,
+              background: colors.error,
+              color: colors.white,
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
+            {t("session.endSession")}
+          </button>
+        </div>
       </div>
 
       {/* messages area */}
