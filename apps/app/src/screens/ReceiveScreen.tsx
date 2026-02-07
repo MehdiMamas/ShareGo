@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef, useState, useCallback } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ScreenContainer } from "../components/ScreenContainer";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../App";
 import { SessionContext } from "../App";
@@ -102,7 +102,7 @@ export function ReceiveScreen({ navigation }: Props) {
     session.state === SessionState.Created;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenContainer style={styles.container}>
       {/* header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -165,7 +165,7 @@ export function ReceiveScreen({ navigation }: Props) {
           onReject={() => session.reject(en.common.rejectionReason)}
         />
       )}
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 24,
+    marginBottom: 16,
   },
   backButton: {
     paddingVertical: 8,
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 24,
+    gap: 16,
   },
   expires: {
     fontSize: 13,

@@ -1,22 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#2563eb"/>
-      <stop offset="100%" stop-color="#1d4ed8"/>
-    </linearGradient>
-  </defs>
-  <!-- rounded square background -->
-  <rect width="512" height="512" rx="108" ry="108" fill="url(#bg)"/>
-  <!-- shield shape -->
-  <path d="M256 80 L380 140 C380 140 390 300 256 420 C122 300 132 140 132 140 Z"
-        fill="none" stroke="white" stroke-width="18" stroke-linejoin="round" opacity="0.3"/>
-  <!-- arrow pair (share symbol) -->
-  <g transform="translate(256,240)" fill="white">
-    <!-- up arrow -->
-    <polygon points="-40,-60 0,-100 40,-60" />
-    <rect x="-10" y="-60" width="20" height="70" rx="4"/>
-    <!-- down arrow -->
-    <polygon points="-40,60 0,100 40,60" />
-    <rect x="-10" y="-10" width="20" height="70" rx="4"/>
-  </g>
+<svg width="512" height="512" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Shield -->
+  <path
+    d="M12 2L4 5V11C4 16 7.5 20.5 12 22C16.5 20.5 20 16 20 11V5L12 2Z"
+    fill="#0f172a"
+    stroke="#334155"
+    stroke-width="1.2"
+  />
+
+  <!-- Share Nodes -->
+  <circle cx="8" cy="11" r="1.6" fill="#f1f5f9"/>
+  <circle cx="15.5" cy="8" r="1.6" fill="#f1f5f9"/>
+  <circle cx="15.5" cy="14.5" r="1.6" fill="#f1f5f9"/>
+
+  <!-- Share Lines -->
+  <path d="M9.3 10.4L14.1 8.9" stroke="#f1f5f9" stroke-width="1.4" stroke-linecap="round"/>
+  <path d="M9.3 11.6L14.1 13.6" stroke="#f1f5f9" stroke-width="1.4" stroke-linecap="round"/>
+
+  <!-- Lock Body -->
+  <rect x="9" y="13.2" width="6" height="5" rx="1.4" fill="#3b82f6"/>
+
+  <!-- Lock Shackle -->
+  <path
+    d="M10.5 13.2V11.8C10.5 10.6 11.4 9.8 12 9.8C12.6 9.8 13.5 10.6 13.5 11.8V13.2"
+    stroke="#3b82f6"
+    stroke-width="1.4"
+    stroke-linecap="round"
+  />
+
+  <!-- Keyhole -->
+  <circle cx="12" cy="15.8" r="0.7" fill="#0f172a"/>
 </svg>

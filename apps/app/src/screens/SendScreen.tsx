@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ScreenContainer } from "../components/ScreenContainer";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../App";
 import { SessionContext } from "../App";
@@ -140,7 +140,7 @@ export function SendScreen({ navigation }: Props) {
   const isConnecting = session.state === SessionState.Handshaking || connecting;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenContainer style={styles.container}>
       {/* header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -261,7 +261,7 @@ export function SendScreen({ navigation }: Props) {
           </Text>
         )}
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

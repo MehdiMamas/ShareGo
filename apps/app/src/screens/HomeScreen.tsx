@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ScreenContainer } from "../components/ScreenContainer";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../App";
 import { en } from "../lib/core";
@@ -17,7 +17,7 @@ interface Props {
 
 export function HomeScreen({ navigation }: Props) {
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenContainer style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>{en.home.title}</Text>
         <Text style={styles.subtitle}>{en.home.description}</Text>
@@ -40,7 +40,7 @@ export function HomeScreen({ navigation }: Props) {
           </TouchableOpacity>
         </View>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

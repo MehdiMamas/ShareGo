@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef } from "react";
 import { WebSocketTransport } from "../lib/core";
 import { isElectron, isMobile } from "../platform";
+import { ElectronWsServerAdapter } from "../adapters/electron-ws-server";
+import { WebWsClientAdapter } from "../adapters/web-ws-client";
+import { RnWsServerAdapter } from "../adapters/rn-ws-server";
+import { RnWsClientAdapter } from "../adapters/rn-ws-client";
 
 /**
  * platform-aware transport hook.
@@ -25,12 +29,8 @@ export function useTransport() {
     let serverFactory: (() => any) | undefined;
 
     if (isElectron) {
-      // lazy import to avoid bundling electron adapter on mobile
-      const { ElectronWsServerAdapter } = require("../adapters/electron-ws-server");
       serverFactory = () => new ElectronWsServerAdapter();
     } else if (isMobile) {
-      // lazy import to avoid bundling RN TCP on web/electron
-      const { RnWsServerAdapter } = require("../adapters/rn-ws-server");
       serverFactory = () => new RnWsServerAdapter();
     }
 
@@ -45,11 +45,9 @@ export function useTransport() {
     let clientFactory: (() => any) | undefined;
 
     if (isMobile) {
-      const { RnWsClientAdapter } = require("../adapters/rn-ws-client");
       clientFactory = () => new RnWsClientAdapter();
     } else {
       // both Electron and web use the browser WebSocket API
-      const { WebWsClientAdapter } = require("../adapters/web-ws-client");
       clientFactory = () => new WebWsClientAdapter();
     }
 
