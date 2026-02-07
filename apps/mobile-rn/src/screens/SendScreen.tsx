@@ -44,12 +44,13 @@ export function SendScreen({ navigation }: Props) {
   const [inputError, setInputError] = useState<string | null>(null);
   const discoveryAbortRef = useRef<AbortController | null>(null);
 
-  // abort discovery on unmount
+  // abort discovery and end session on unmount
   useEffect(() => {
     return () => {
       discoveryAbortRef.current?.abort();
+      session.endSession();
     };
-  }, []);
+  }, [session]);
 
   // navigate to active session when connected
   useEffect(() => {

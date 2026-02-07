@@ -33,5 +33,14 @@ export const COUNTDOWN_INTERVAL_MS = 1000;
 /** max websocket message size in bytes (64 KB) */
 export const MAX_MESSAGE_SIZE = 65536;
 
+/** max allowed gap between consecutive sequence numbers (prevents gap attacks) */
+export const MAX_SEQ_GAP = 100;
+
+/** max length for base64-encoded fields (ciphertext, proof, pk, nonce) */
+export const MAX_BASE64_FIELD_LENGTH = 131072;
+
+/** max device name length in characters */
+export const MAX_DEVICE_NAME_LENGTH = 256;
+
 /** session code placeholder text shown in input fields */
 export const CODE_PLACEHOLDER = "ABC123";

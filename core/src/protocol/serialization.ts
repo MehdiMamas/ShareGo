@@ -4,6 +4,11 @@ import {
   MessageType,
   PROTOCOL_VERSION,
 } from "./types.js";
+import {
+  MAX_MESSAGE_SIZE,
+  MAX_BASE64_FIELD_LENGTH,
+  MAX_DEVICE_NAME_LENGTH,
+} from "../config.js";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -16,11 +21,25 @@ export function serializeMessage(msg: ProtocolMessage): Uint8Array {
   return encoder.encode(JSON.stringify(msg));
 }
 
+/** guard for base64-encoded string fields */
+function assertBase64Field(value: unknown, name: string): asserts value is string {
+  if (typeof value !== "string" || !value) {
+    throw new Error(`${name}: missing`);
+  }
+  if (value.length > MAX_BASE64_FIELD_LENGTH) {
+    throw new Error(`${name}: exceeds maximum length`);
+  }
+}
+
 /**
  * deserialize bytes from transport back into a protocol message.
  * throws on invalid JSON or missing required fields.
  */
 export function deserializeMessage(data: Uint8Array): ProtocolMessage {
+  if (data.length > MAX_MESSAGE_SIZE) {
+    throw new Error(`message too large: ${data.length} bytes`);
+  }
+
   const text = decoder.decode(data);
   const parsed = JSON.parse(text);
 
@@ -42,36 +61,27 @@ export function deserializeMessage(data: Uint8Array): ProtocolMessage {
     throw new Error("missing or invalid sequence number");
   }
 
-  // validate type-specific required fields
+  // validate type-specific required fields with length checks
   switch (parsed.type) {
     case MessageType.HELLO:
-      if (typeof parsed.pk !== "string" || !parsed.pk) {
-        throw new Error("HELLO: missing public key");
-      }
+      assertBase64Field(parsed.pk, "HELLO: public key");
       if (typeof parsed.deviceName !== "string") {
         throw new Error("HELLO: missing device name");
       }
+      if (parsed.deviceName.length > MAX_DEVICE_NAME_LENGTH) {
+        throw new Error("HELLO: device name too long");
+      }
       break;
     case MessageType.CHALLENGE:
-      if (typeof parsed.nonce !== "string" || !parsed.nonce) {
-        throw new Error("CHALLENGE: missing nonce");
-      }
-      if (typeof parsed.pk !== "string" || !parsed.pk) {
-        throw new Error("CHALLENGE: missing public key");
-      }
+      assertBase64Field(parsed.nonce, "CHALLENGE: nonce");
+      assertBase64Field(parsed.pk, "CHALLENGE: public key");
       break;
     case MessageType.AUTH:
-      if (typeof parsed.proof !== "string" || !parsed.proof) {
-        throw new Error("AUTH: missing proof");
-      }
+      assertBase64Field(parsed.proof, "AUTH: proof");
       break;
     case MessageType.DATA:
-      if (typeof parsed.ciphertext !== "string" || !parsed.ciphertext) {
-        throw new Error("DATA: missing ciphertext");
-      }
-      if (typeof parsed.nonce !== "string" || !parsed.nonce) {
-        throw new Error("DATA: missing nonce");
-      }
+      assertBase64Field(parsed.ciphertext, "DATA: ciphertext");
+      assertBase64Field(parsed.nonce, "DATA: nonce");
       break;
     case MessageType.ACK:
       if (typeof parsed.ackSeq !== "number") {

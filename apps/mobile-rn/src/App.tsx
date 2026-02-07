@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, AppState, StyleSheet, Text, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -42,6 +42,18 @@ export default function App() {
         );
       });
   }, []);
+
+  // clean up active sessions when the app goes to background
+  const appStateRef = useRef(AppState.currentState);
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (appStateRef.current.match(/active/) && nextState === "background") {
+        session.endSession();
+      }
+      appStateRef.current = nextState;
+    });
+    return () => subscription.remove();
+  }, [session]);
 
   if (cryptoError) {
     return (

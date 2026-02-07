@@ -44,7 +44,10 @@ export async function discoverReceiver(
       if (found) return;
       found = true;
       for (const t of timeouts) clearTimeout(t);
-      for (const ws of sockets) {
+      // close all sockets — snapshot the array to avoid issues if new
+      // sockets are still being pushed during iteration
+      const snapshot = [...sockets];
+      for (const ws of snapshot) {
         try { ws.close(); } catch { /* best effort */ }
       }
       resolveOuter(result);
@@ -61,8 +64,14 @@ export async function discoverReceiver(
       const ws = new WebSocket(url);
       sockets.push(ws);
 
+      // bail early if finish() was already called (e.g. by abort signal)
+      if (found) {
+        try { ws.close(); } catch { /* best effort */ }
+        continue;
+      }
+
       const timer = setTimeout(() => {
-        ws.close();
+        try { ws.close(); } catch { /* best effort */ }
         if (--pending === 0 && !found) finish(null);
       }, timeout);
       timeouts.push(timer);

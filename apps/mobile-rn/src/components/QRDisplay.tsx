@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { useTranslation } from "react-i18next";
 import QRCode from "react-native-qrcode-svg";
 import { colors } from "../styles/theme";
 
@@ -10,6 +11,8 @@ interface QRDisplayProps {
 }
 
 export function QRDisplay({ value, sessionId, address }: QRDisplayProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.container}>
       <View style={styles.qrWrapper}>
@@ -22,18 +25,18 @@ export function QRDisplay({ value, sessionId, address }: QRDisplayProps) {
       </View>
 
       <Text style={styles.hint}>
-        scan the QR code on the other device
+        {t("qr.hint")}
       </Text>
 
       <View style={styles.codeSection}>
         <View style={styles.codeRow}>
-          <Text style={styles.codeLabel}>code:</Text>
+          <Text style={styles.codeLabel}>{t("qr.codeLabel")}</Text>
           <Text style={styles.codeValue}>{sessionId}</Text>
         </View>
 
         {address && (
           <View style={styles.codeRow}>
-            <Text style={styles.codeLabel}>address:</Text>
+            <Text style={styles.codeLabel}>{t("qr.addressLabel")}</Text>
             <Text style={styles.addressValue}>{address}</Text>
           </View>
         )}

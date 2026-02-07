@@ -41,6 +41,7 @@ import {
   SESSION_TTL as DEFAULT_SESSION_TTL,
   BOOTSTRAP_TTL as DEFAULT_BOOTSTRAP_TTL,
   DEFAULT_PORT,
+  MAX_SEQ_GAP,
 } from "../config.js";
 
 export { DEFAULT_PORT };
@@ -75,6 +76,7 @@ export class Session {
   private listeners: Map<SessionEvent, Set<(...args: any[]) => void>> =
     new Map();
   private flushTimer: ReturnType<typeof setTimeout> | null = null;
+  private closing = false;
 
   constructor(role: SessionRole, config: SessionConfig, id?: string) {
     this.role = role;
@@ -260,7 +262,8 @@ export class Session {
    * so the message actually reaches the wire before the transport is torn down.
    */
   close(): void {
-    if (this.state === SessionState.Closed) return;
+    if (this.state === SessionState.Closed || this.closing) return;
+    this.closing = true;
 
     // cancel any pending flush timer from a previous close() call
     if (this.flushTimer) {
@@ -305,6 +308,13 @@ export class Session {
     // ignore messages after session is closed or rejected
     if (this.state === SessionState.Closed || this.state === SessionState.Rejected) return;
 
+    // enforce session expiry before spending CPU on deserialization
+    if (this.isSessionExpired()) {
+      this.emit(SessionEvent.Error, new Error("session expired"));
+      this.close();
+      return;
+    }
+
     try {
       const msg = deserializeMessage(data);
 
@@ -312,16 +322,14 @@ export class Session {
         return; // wrong session, ignore
       }
 
-      // enforce session expiry on every incoming message
-      if (this.isSessionExpired()) {
-        this.emit(SessionEvent.Error, new Error("session expired"));
-        this.close();
-        return;
-      }
-
-      // validate sequence numbers for replay detection
+      // validate sequence numbers for replay detection and gap attacks
       if (msg.seq <= this.highestSeenSeq) {
         return; // duplicate or replayed message, ignore
+      }
+      if (msg.seq > this.highestSeenSeq + MAX_SEQ_GAP) {
+        this.emit(SessionEvent.Error, new Error("sequence number gap too large"));
+        this.close();
+        return;
       }
       this.highestSeenSeq = msg.seq;
 
@@ -372,7 +380,7 @@ export class Session {
 
     const peerPk = fromBase64(msg.pk);
     if (peerPk.length !== PUBLIC_KEY_LENGTH) {
-      this.emit(SessionEvent.Error, new Error("invalid public key length"));
+      this.emit(SessionEvent.Error, new Error(`invalid public key length: got ${peerPk.length}, expected ${PUBLIC_KEY_LENGTH}`));
       this.close();
       return;
     }
@@ -402,7 +410,7 @@ export class Session {
     if (!this.peerPublicKey) {
       const peerPk = fromBase64(msg.pk);
       if (peerPk.length !== PUBLIC_KEY_LENGTH) {
-        this.emit(SessionEvent.Error, new Error("invalid public key length"));
+        this.emit(SessionEvent.Error, new Error(`invalid public key length: got ${peerPk.length}, expected ${PUBLIC_KEY_LENGTH}`));
         this.close();
         return;
       }
@@ -444,25 +452,26 @@ export class Session {
       true,
     );
 
-    // verify the proof
+    // verify the proof — always zero proof material regardless of outcome
     const proofBytes = fromBase64(msg.proof);
     const proofNonce = proofBytes.slice(0, NONCE_LENGTH);
     const proofCiphertext = proofBytes.slice(NONCE_LENGTH);
 
+    let authValid = false;
     try {
       const decrypted = decrypt(
         { nonce: proofNonce, ciphertext: proofCiphertext },
         this.sharedSecret.encryptionKey,
       );
-
-      // verify decrypted matches our challenge nonce
-      if (!constantTimeEqual(decrypted, this.challengeNonce!)) {
-        throw new Error("challenge proof mismatch");
-      }
+      authValid = constantTimeEqual(decrypted, this.challengeNonce!);
     } catch {
+      authValid = false;
+    } finally {
       zeroMemory(proofBytes);
+    }
+
+    if (!authValid) {
       this.emit(SessionEvent.Error, new Error("auth failed: invalid proof"));
-      // send REJECT and close — bypass rejectPairing() since we're in Handshaking, not PendingApproval
       try {
         this.sendMessage({
           ...createBaseFields(MessageType.REJECT, this.id, this.nextSeq()),
@@ -475,9 +484,6 @@ export class Session {
       this.cleanup();
       return;
     }
-
-    // zero proof material after successful verification
-    zeroMemory(proofBytes);
 
     // auth passed — move to pending approval (receiver decides)
     this.transition(SessionState.PendingApproval);
@@ -560,6 +566,9 @@ export class Session {
   }
 
   private nextSeq(): number {
+    if (this.seq >= Number.MAX_SAFE_INTEGER) {
+      throw new Error("sequence number overflow");
+    }
     return ++this.seq;
   }
 
