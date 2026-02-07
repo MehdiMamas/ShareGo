@@ -32,4 +32,6 @@ export {
   CODE_PLACEHOLDER,
   // strings
   strings,
+  // i18n
+  en,
 } from "@sharego/core";

@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from "react-native";
+import { useTranslation } from "react-i18next";
 import type { PairingRequest } from "../lib/core";
-import { strings } from "../lib/core";
 import { colors } from "../styles/theme";
 
 interface ApprovalDialogProps {
@@ -15,13 +15,15 @@ export function ApprovalDialog({
   onApprove,
   onReject,
 }: ApprovalDialogProps) {
+  const { t } = useTranslation();
+  
   return (
     <Modal transparent animationType="fade" visible>
       <View style={styles.overlay}>
         <View style={styles.dialog}>
-          <Text style={styles.title}>{strings.DIALOG_TITLE}</Text>
+          <Text style={styles.title}>{t("approval.title")}</Text>
           <Text style={styles.message}>
-            {strings.DIALOG_BODY(request.deviceName)}
+            {t("approval.body", { deviceName: request.deviceName })}
           </Text>
 
           <View style={styles.buttons}>
@@ -29,13 +31,13 @@ export function ApprovalDialog({
               style={styles.rejectButton}
               onPress={onReject}
             >
-              <Text style={styles.rejectButtonText}>{strings.BTN_REJECT}</Text>
+              <Text style={styles.rejectButtonText}>{t("approval.reject")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.acceptButton}
               onPress={onApprove}
             >
-              <Text style={styles.acceptButtonText}>{strings.BTN_ACCEPT}</Text>
+              <Text style={styles.acceptButtonText}>{t("approval.accept")}</Text>
             </TouchableOpacity>
           </View>
         </View>

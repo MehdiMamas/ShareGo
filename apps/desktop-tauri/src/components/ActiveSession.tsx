@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { COPY_FEEDBACK_MS, strings } from "../lib/core";
+import { useTranslation } from "react-i18next";
+import { COPY_FEEDBACK_MS } from "../lib/core";
 import { colors } from "../styles/theme";
 import { StatusIndicator } from "./StatusIndicator";
 import type { useSession } from "../hooks/useSession";
@@ -15,6 +16,7 @@ interface ActiveSessionProps {
 }
 
 export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
+  const { t } = useTranslation();
   const [input, setInput] = useState("");
   const [copied, setCopied] = useState<number | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -104,7 +106,7 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
             fontWeight: 600,
           }}
         >
-          {strings.BTN_END_SESSION}
+          {t("session.endSession")}
         </button>
       </div>
 
@@ -145,7 +147,7 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
                     textAlign: "right",
                   }}
                 >
-                  {sent.acked ? strings.STATUS_DELIVERED : strings.STATUS_SENDING}
+                  {sent.acked ? t("session.delivered") : t("session.sending")}
                 </div>
               </div>
             );
@@ -181,7 +183,7 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
                   fontWeight: 500,
                 }}
               >
-                {copied === received.id ? strings.BTN_COPIED : strings.BTN_COPY}
+                {copied === received.id ? t("session.copied") : t("session.copy")}
               </button>
             </div>
           );
@@ -197,7 +199,7 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
             }}
           >
             <p style={{ color: colors.textSecondary, fontSize: 14 }}>
-              {strings.EMPTY_MESSAGES}
+              {t("session.emptyMessages")}
             </p>
           </div>
         )}
@@ -217,7 +219,7 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={strings.INPUT_PLACEHOLDER}
+          placeholder={t("session.inputPlaceholder")}
           style={{
             flex: 1,
             padding: "12px 16px",
@@ -240,7 +242,7 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
             fontWeight: 600,
           }}
         >
-          {strings.BTN_SEND_DATA}
+          {t("session.sendButton")}
         </button>
       </div>
 

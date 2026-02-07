@@ -6,9 +6,9 @@ import {
   StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../App";
-import { strings } from "../lib/core";
 import { colors } from "../styles/theme";
 
 interface Props {
@@ -16,12 +16,14 @@ interface Props {
 }
 
 export function HomeScreen({ navigation }: Props) {
+  const { t } = useTranslation();
+  
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>{strings.APP_TITLE}</Text>
+        <Text style={styles.title}>{t("home.title")}</Text>
         <Text style={styles.subtitle}>
-          {strings.APP_DESCRIPTION}
+          {t("home.description")}
         </Text>
 
         <View style={styles.buttons}>
@@ -30,7 +32,7 @@ export function HomeScreen({ navigation }: Props) {
             activeOpacity={0.8}
             onPress={() => navigation.navigate("Receive")}
           >
-            <Text style={styles.receiveButtonText}>{strings.BTN_RECEIVE}</Text>
+            <Text style={styles.receiveButtonText}>{t("home.receive")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -38,7 +40,7 @@ export function HomeScreen({ navigation }: Props) {
             activeOpacity={0.8}
             onPress={() => navigation.navigate("Send")}
           >
-            <Text style={styles.sendButtonText}>{strings.BTN_SEND}</Text>
+            <Text style={styles.sendButtonText}>{t("home.send")}</Text>
           </TouchableOpacity>
         </View>
       </View>

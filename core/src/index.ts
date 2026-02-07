@@ -68,9 +68,12 @@ export {
 // config
 export * from "./config.js";
 
-// strings
+// strings (legacy — use i18n translations instead)
 import * as _strings from "./strings.js";
 export { _strings as strings };
+
+// i18n translation resources
+export { en, type TranslationResource } from "./i18n/index.js";
 
 // transport
 export {

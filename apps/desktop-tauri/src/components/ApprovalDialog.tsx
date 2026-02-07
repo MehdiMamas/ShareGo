@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { strings } from "../lib/core";
+import { useTranslation } from "react-i18next";
 import { colors } from "../styles/theme";
 import type { PairingRequest } from "../lib/core";
 
@@ -14,6 +14,7 @@ export function ApprovalDialog({
   onApprove,
   onReject,
 }: ApprovalDialogProps) {
+  const { t } = useTranslation();
   // keyboard shortcuts: Enter to approve, Escape to reject
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -59,7 +60,7 @@ export function ApprovalDialog({
             marginBottom: 12,
           }}
         >
-          {strings.DIALOG_TITLE}
+          {t("approval.title")}
         </h3>
 
         <p
@@ -70,7 +71,7 @@ export function ApprovalDialog({
             marginBottom: 24,
           }}
         >
-          {strings.DIALOG_BODY(request.deviceName)}
+          {t("approval.body", { deviceName: request.deviceName })}
         </p>
 
         <div style={{ display: "flex", gap: 12 }}>
@@ -87,7 +88,7 @@ export function ApprovalDialog({
               border: `1px solid ${colors.error}`,
             }}
           >
-            {strings.BTN_REJECT}
+            {t("approval.reject")}
           </button>
           <button
             onClick={onApprove}
@@ -101,7 +102,7 @@ export function ApprovalDialog({
               fontWeight: 600,
             }}
           >
-            {strings.BTN_ACCEPT}
+            {t("approval.accept")}
           </button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import jsQR from "jsqr";
-import { strings } from "../lib/core";
 import { colors } from "../styles/theme";
 
 interface QRScannerProps {
@@ -8,6 +8,7 @@ interface QRScannerProps {
 }
 
 export function QRScanner({ onScanned }: QRScannerProps) {
+  const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -53,7 +54,7 @@ export function QRScanner({ onScanned }: QRScannerProps) {
         }
       } catch {
         if (!cancelled) {
-          setError(strings.CAMERA_ERROR);
+          setError(t("camera.error"));
         }
       }
     }
@@ -127,7 +128,7 @@ export function QRScanner({ onScanned }: QRScannerProps) {
         <canvas ref={canvasRef} style={{ display: "none" }} />
         {!started && !error && (
           <p style={{ fontSize: 13, color: colors.textSecondary }}>
-            {strings.CAMERA_STARTING}
+            {t("camera.starting")}
           </p>
         )}
         {error && (
@@ -144,7 +145,7 @@ export function QRScanner({ onScanned }: QRScannerProps) {
         )}
       </div>
       <p style={{ fontSize: 12, color: colors.textSecondary }}>
-        {strings.CAMERA_HINT}
+        {t("camera.hint")}
       </p>
     </div>
   );

@@ -1,4 +1,4 @@
-import { strings } from "../lib/core";
+import { useTranslation } from "react-i18next";
 import { colors } from "../styles/theme";
 
 interface HomeScreenProps {
@@ -7,6 +7,7 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onReceive, onSend }: HomeScreenProps) {
+  const { t } = useTranslation();
   return (
     <div
       style={{
@@ -28,7 +29,7 @@ export function HomeScreen({ onReceive, onSend }: HomeScreenProps) {
           marginBottom: 12,
         }}
       >
-        {strings.APP_TITLE}
+        {t("home.title")}
       </h1>
 
       <p
@@ -40,7 +41,7 @@ export function HomeScreen({ onReceive, onSend }: HomeScreenProps) {
           lineHeight: 1.5,
         }}
       >
-        {strings.APP_DESCRIPTION}
+        {t("home.description")}
       </p>
 
       <div
@@ -70,7 +71,7 @@ export function HomeScreen({ onReceive, onSend }: HomeScreenProps) {
             (e.currentTarget.style.background = colors.primary)
           }
         >
-          {strings.BTN_RECEIVE}
+          {t("home.receive")}
         </button>
 
         <button
@@ -91,7 +92,7 @@ export function HomeScreen({ onReceive, onSend }: HomeScreenProps) {
             (e.currentTarget.style.background = colors.surface)
           }
         >
-          {strings.BTN_SEND}
+          {t("home.send")}
         </button>
       </div>
     </div>

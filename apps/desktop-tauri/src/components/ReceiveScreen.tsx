@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   SessionState,
   DEFAULT_PORT,
   BOOTSTRAP_TTL,
   REGENERATION_DELAY_MS,
   COUNTDOWN_INTERVAL_MS,
-  strings,
 } from "../lib/core";
 import { colors } from "../styles/theme";
 import { QRDisplay } from "./QRDisplay";
@@ -25,6 +25,7 @@ export function ReceiveScreen({
   transport,
   onBack,
 }: ReceiveScreenProps) {
+  const { t } = useTranslation();
   const bootstrapTtl = BOOTSTRAP_TTL;
   const [started, setStarted] = useState(false);
   const [countdown, setCountdown] = useState(bootstrapTtl);
@@ -40,9 +41,9 @@ export function ReceiveScreen({
     setCountdown(bootstrapTtl);
     setInitError(null);
 
-    const t = transportRef.current.createReceiverTransport();
+    const receiverTransport = transportRef.current.createReceiverTransport();
     sessionRef.current
-      .startReceiver(t, {
+      .startReceiver(receiverTransport, {
         deviceName: "Desktop",
         port: DEFAULT_PORT,
         bootstrapTtl,
@@ -130,7 +131,7 @@ export function ReceiveScreen({
             border: `1px solid ${colors.border}`,
           }}
         >
-          {strings.BTN_BACK}
+          {t("common.back")}
         </button>
         <StatusIndicator state={session.state} />
       </div>
@@ -148,13 +149,13 @@ export function ReceiveScreen({
       >
         {!started && !initError && (
           <p style={{ color: colors.textSecondary, fontSize: 14 }}>
-            {strings.STATUS_STARTING}
+            {t("receive.starting")}
           </p>
         )}
 
         {initError && (
           <p style={{ color: colors.error, fontSize: 14 }}>
-            {strings.ERROR_FAILED_START(initError)}
+            {t("receive.failedStart", { detail: initError })}
           </p>
         )}
 
@@ -167,11 +168,11 @@ export function ReceiveScreen({
             />
             {countdown === 0 ? (
               <div style={{ fontSize: 13, color: colors.textSecondary }}>
-                {strings.STATUS_REGENERATING}
+                {t("receive.regenerating")}
               </div>
             ) : (
               <div style={{ fontSize: 13, color: colors.textSecondary }}>
-                {strings.STATUS_EXPIRES(countdown)}
+                {t("receive.expires", { seconds: countdown })}
               </div>
             )}
           </>
@@ -179,13 +180,13 @@ export function ReceiveScreen({
 
         {started && isWaiting && !session.qrPayload && (
           <p style={{ color: colors.textSecondary, fontSize: 14 }}>
-            {strings.STATUS_WAITING_QR}
+            {t("receive.waitingQr")}
           </p>
         )}
 
         {session.state === SessionState.Handshaking && (
           <p style={{ color: colors.textSecondary, fontSize: 14 }}>
-            {strings.STATUS_HANDSHAKING}
+            {t("receive.handshaking")}
           </p>
         )}
 
@@ -199,7 +200,7 @@ export function ReceiveScreen({
         <ApprovalDialog
           request={session.pairingRequest}
           onApprove={session.approve}
-          onReject={() => session.reject(strings.REJECTION_REASON)}
+          onReject={() => session.reject(t("common.rejectionReason"))}
         />
       )}
     </div>

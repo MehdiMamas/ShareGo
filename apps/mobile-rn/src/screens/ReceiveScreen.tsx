@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useRef, useState, useCallback } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../App";
 import { SessionContext } from "../App";
@@ -10,7 +11,6 @@ import {
   BOOTSTRAP_TTL,
   REGENERATION_DELAY_MS,
   COUNTDOWN_INTERVAL_MS,
-  strings,
 } from "../lib/core";
 import { QRDisplay } from "../components/QRDisplay";
 import { ApprovalDialog } from "../components/ApprovalDialog";
@@ -22,6 +22,7 @@ interface Props {
 }
 
 export function ReceiveScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const ctx = useContext(SessionContext)!;
   const { session, transport } = ctx;
   const bootstrapTtl = BOOTSTRAP_TTL;
@@ -35,9 +36,9 @@ export function ReceiveScreen({ navigation }: Props) {
     setCountdown(bootstrapTtl);
     setInitError(null);
 
-    const t = transport.createReceiverTransport();
+    const transportInstance = transport.createReceiverTransport();
     session
-      .startReceiver(t, {
+      .startReceiver(transportInstance, {
         deviceName: "Mobile",
         port: DEFAULT_PORT,
         bootstrapTtl,
@@ -111,7 +112,7 @@ export function ReceiveScreen({ navigation }: Props) {
             navigation.goBack();
           }}
         >
-          <Text style={styles.backButtonText}>{strings.BTN_BACK}</Text>
+          <Text style={styles.backButtonText}>{t("common.back")}</Text>
         </TouchableOpacity>
         <StatusIndicator state={session.state} />
       </View>
@@ -119,11 +120,11 @@ export function ReceiveScreen({ navigation }: Props) {
       {/* content */}
       <View style={styles.content}>
         {!started && !initError && (
-          <Text style={styles.statusText}>{strings.STATUS_STARTING}</Text>
+          <Text style={styles.statusText}>{t("receive.starting")}</Text>
         )}
 
         {initError && (
-          <Text style={styles.errorText}>{strings.ERROR_FAILED_START(initError)}</Text>
+          <Text style={styles.errorText}>{t("receive.failedStart", { detail: initError })}</Text>
         )}
 
         {isWaiting && session.qrPayload && session.sessionId && (
@@ -134,21 +135,21 @@ export function ReceiveScreen({ navigation }: Props) {
               address={session.localAddress ?? undefined}
             />
             {countdown === 0 ? (
-              <Text style={styles.expires}>{strings.STATUS_REGENERATING}</Text>
+              <Text style={styles.expires}>{t("receive.regenerating")}</Text>
             ) : (
               <Text style={styles.expires}>
-                {strings.STATUS_EXPIRES(countdown)}
+                {t("receive.expires", { seconds: countdown })}
               </Text>
             )}
           </>
         )}
 
         {started && isWaiting && !session.qrPayload && (
-          <Text style={styles.statusText}>{strings.STATUS_WAITING_QR}</Text>
+          <Text style={styles.statusText}>{t("receive.waitingQr")}</Text>
         )}
 
         {session.state === SessionState.Handshaking && (
-          <Text style={styles.statusText}>{strings.STATUS_HANDSHAKING}</Text>
+          <Text style={styles.statusText}>{t("receive.handshaking")}</Text>
         )}
 
         {session.error && (
@@ -161,7 +162,7 @@ export function ReceiveScreen({ navigation }: Props) {
         <ApprovalDialog
           request={session.pairingRequest}
           onApprove={session.approve}
-          onReject={() => session.reject(strings.REJECTION_REASON)}
+          onReject={() => session.reject(t("common.rejectionReason"))}
         />
       )}
     </SafeAreaView>

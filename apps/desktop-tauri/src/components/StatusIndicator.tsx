@@ -1,4 +1,5 @@
-import { SessionState, strings } from "../lib/core";
+import { useTranslation } from "react-i18next";
+import { SessionState } from "../lib/core";
 import { colors } from "../styles/theme";
 
 interface StatusIndicatorProps {
@@ -6,15 +7,25 @@ interface StatusIndicatorProps {
 }
 
 export function StatusIndicator({ state }: StatusIndicatorProps) {
-  const label = strings.STATUS_LABELS[state] ?? state;
-  const colorMap: Record<string, string> = {
-    Created: colors.textSecondary,
-    WaitingForSender: colors.primary,
-    Handshaking: colors.primary,
-    PendingApproval: colors.primary,
-    Active: colors.success,
-    Rejected: colors.error,
-    Closed: colors.textSecondary,
+  const { t } = useTranslation();
+  const labelMap: Record<SessionState, string> = {
+    [SessionState.Created]: t("status.created"),
+    [SessionState.WaitingForSender]: t("status.waitingForSender"),
+    [SessionState.Handshaking]: t("status.handshaking"),
+    [SessionState.PendingApproval]: t("status.pendingApproval"),
+    [SessionState.Active]: t("status.active"),
+    [SessionState.Rejected]: t("status.rejected"),
+    [SessionState.Closed]: t("status.closed"),
+  };
+  const label = labelMap[state] ?? state;
+  const colorMap: Record<SessionState, string> = {
+    [SessionState.Created]: colors.textSecondary,
+    [SessionState.WaitingForSender]: colors.primary,
+    [SessionState.Handshaking]: colors.primary,
+    [SessionState.PendingApproval]: colors.primary,
+    [SessionState.Active]: colors.success,
+    [SessionState.Rejected]: colors.error,
+    [SessionState.Closed]: colors.textSecondary,
   };
   const color = colorMap[state] ?? colors.textSecondary;
   const info = { label, color };

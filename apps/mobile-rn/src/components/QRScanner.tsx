@@ -1,11 +1,11 @@
 import React, { useCallback, useRef, useState, useImperativeHandle, forwardRef } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useTranslation } from "react-i18next";
 import {
   Camera,
   useCameraDevice,
   useCodeScanner,
 } from "react-native-vision-camera";
-import { strings } from "../lib/core";
 import { colors } from "../styles/theme";
 
 export interface QRScannerRef {
@@ -18,6 +18,7 @@ interface QRScannerProps {
 
 export const QRScanner = forwardRef<QRScannerRef, QRScannerProps>(
   function QRScanner({ onScanned }, ref) {
+  const { t } = useTranslation();
   const device = useCameraDevice("back");
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const scannedRef = useRef(false);
@@ -99,7 +100,7 @@ export const QRScanner = forwardRef<QRScannerRef, QRScannerProps>(
           <Text style={styles.retryText}>tap to scan again</Text>
         </TouchableOpacity>
       ) : (
-        <Text style={styles.hint}>{strings.CAMERA_HINT}</Text>
+        <Text style={styles.hint}>{t("camera.hint")}</Text>
       )}
     </View>
   );
