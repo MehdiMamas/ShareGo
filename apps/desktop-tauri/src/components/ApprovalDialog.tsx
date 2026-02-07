@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { strings } from "../lib/core";
 import { colors } from "../styles/theme";
 import type { PairingRequest } from "../lib/core";
 
@@ -58,7 +59,7 @@ export function ApprovalDialog({
             marginBottom: 12,
           }}
         >
-          pairing request
+          {strings.DIALOG_TITLE}
         </h3>
 
         <p
@@ -69,10 +70,7 @@ export function ApprovalDialog({
             marginBottom: 24,
           }}
         >
-          <strong style={{ color: colors.textPrimary }}>
-            {request.deviceName}
-          </strong>{" "}
-          wants to connect. allow this device?
+          {strings.DIALOG_BODY(request.deviceName)}
         </p>
 
         <div style={{ display: "flex", gap: 12 }}>
@@ -89,7 +87,7 @@ export function ApprovalDialog({
               border: `1px solid ${colors.error}`,
             }}
           >
-            reject
+            {strings.BTN_REJECT}
           </button>
           <button
             onClick={onApprove}
@@ -103,7 +101,7 @@ export function ApprovalDialog({
               fontWeight: 600,
             }}
           >
-            accept
+            {strings.BTN_ACCEPT}
           </button>
         </div>
       </div>

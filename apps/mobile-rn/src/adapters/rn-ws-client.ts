@@ -1,4 +1,5 @@
 import type { WebSocketClientAdapter } from "../lib/core";
+import { WS_CONNECT_TIMEOUT_MS } from "../lib/core";
 
 /**
  * websocket client adapter using react native's built-in WebSocket.
@@ -14,7 +15,7 @@ export class RnWsClientAdapter implements WebSocketClientAdapter {
       const timeout = setTimeout(() => {
         this.ws?.close();
         reject(new Error("connection timed out"));
-      }, 10000);
+      }, WS_CONNECT_TIMEOUT_MS);
 
       this.ws = new WebSocket(url);
       this.ws.binaryType = "arraybuffer";

@@ -1,5 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { SessionState, decodeQrPayload, DEFAULT_PORT } from "../lib/core";
+import {
+  SessionState,
+  decodeQrPayload,
+  DEFAULT_PORT,
+  SESSION_CODE_LENGTH,
+  CODE_PLACEHOLDER,
+  strings,
+} from "../lib/core";
 import { discoverReceiver } from "@sharego/core";
 import { colors } from "../styles/theme";
 import { StatusIndicator } from "./StatusIndicator";
@@ -47,7 +54,7 @@ export function SendScreen({ session, transport, onBack }: SendScreenProps) {
       );
     } catch (err) {
       setInputError(
-        err instanceof Error ? err.message : "connection failed",
+        err instanceof Error ? err.message : strings.ERROR_CONNECTION_FAILED,
       );
       setConnecting(false);
     }
@@ -60,14 +67,14 @@ export function SendScreen({ session, transport, onBack }: SendScreenProps) {
       await connectToReceiver(payload.addr, payload.pk, payload.sid);
     } catch (err) {
       setInputError(
-        err instanceof Error ? err.message : "invalid QR code",
+        err instanceof Error ? err.message : strings.ERROR_INVALID_QR,
       );
     }
   };
 
   const handleManualConnect = async () => {
-    if (code.length !== 6) {
-      setInputError("enter a 6-character code");
+    if (code.length !== SESSION_CODE_LENGTH) {
+      setInputError(strings.ERROR_CODE_LENGTH);
       return;
     }
 
@@ -88,7 +95,7 @@ export function SendScreen({ session, transport, onBack }: SendScreenProps) {
       });
       if (controller.signal.aborted) return;
       if (!addr) {
-        setInputError("could not find receiver on your network — make sure both devices are on the same WiFi");
+        setInputError(strings.ERROR_RECEIVER_NOT_FOUND);
         setDiscovering(false);
         return;
       }
@@ -97,7 +104,7 @@ export function SendScreen({ session, transport, onBack }: SendScreenProps) {
     } catch (err) {
       if (controller.signal.aborted) return;
       setInputError(
-        err instanceof Error ? err.message : "discovery failed",
+        err instanceof Error ? err.message : strings.ERROR_DISCOVERY_FAILED,
       );
       setDiscovering(false);
     }
@@ -153,7 +160,7 @@ export function SendScreen({ session, transport, onBack }: SendScreenProps) {
             border: `1px solid ${colors.border}`,
           }}
         >
-          back
+          {strings.BTN_BACK}
         </button>
         <StatusIndicator state={session.state} />
       </div>
@@ -183,7 +190,7 @@ export function SendScreen({ session, transport, onBack }: SendScreenProps) {
             fontWeight: 600,
           }}
         >
-          scan QR
+          {strings.TAB_SCAN}
         </button>
         <button
           onClick={() => setTab("code")}
@@ -197,7 +204,7 @@ export function SendScreen({ session, transport, onBack }: SendScreenProps) {
             fontWeight: 600,
           }}
         >
-          enter code
+          {strings.TAB_CODE}
         </button>
       </div>
 
@@ -221,15 +228,15 @@ export function SendScreen({ session, transport, onBack }: SendScreenProps) {
         {tab === "code" && !isBusy && (
           <>
             <p style={{ fontSize: 13, color: colors.textSecondary, textAlign: "center" }}>
-              enter the 6-character code shown on the receiver
+              {strings.HINT_ENTER_CODE}
             </p>
 
             <input
               type="text"
               value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))}
-              placeholder="ABC123"
-              maxLength={6}
+              onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, SESSION_CODE_LENGTH))}
+              placeholder={CODE_PLACEHOLDER}
+              maxLength={SESSION_CODE_LENGTH}
               style={{
                 width: 200,
                 padding: "14px 20px",
@@ -246,7 +253,7 @@ export function SendScreen({ session, transport, onBack }: SendScreenProps) {
 
             <button
               onClick={handleManualConnect}
-              disabled={code.length !== 6}
+              disabled={code.length !== SESSION_CODE_LENGTH}
               style={{
                 padding: "14px 32px",
                 borderRadius: 10,
@@ -254,10 +261,10 @@ export function SendScreen({ session, transport, onBack }: SendScreenProps) {
                 color: colors.textPrimary,
                 fontSize: 15,
                 fontWeight: 600,
-                opacity: code.length !== 6 ? 0.5 : 1,
+                opacity: code.length !== SESSION_CODE_LENGTH ? 0.5 : 1,
               }}
             >
-              connect
+              {strings.BTN_SEND_DATA}
             </button>
           </>
         )}
@@ -266,7 +273,7 @@ export function SendScreen({ session, transport, onBack }: SendScreenProps) {
         {discovering && (
           <>
             <p style={{ fontSize: 14, color: colors.textSecondary }}>
-              searching for receiver on your network...
+              {strings.STATUS_SEARCHING}
             </p>
             <button
               onClick={handleCancel}
@@ -280,7 +287,7 @@ export function SendScreen({ session, transport, onBack }: SendScreenProps) {
                 border: `1px solid ${colors.error}`,
               }}
             >
-              cancel
+              {strings.BTN_CANCEL}
             </button>
           </>
         )}
@@ -290,8 +297,8 @@ export function SendScreen({ session, transport, onBack }: SendScreenProps) {
           <>
             <p style={{ fontSize: 14, color: colors.textSecondary }}>
               {isWaitingApproval
-                ? "waiting for approval..."
-                : "connecting..."}
+                ? strings.STATUS_WAITING_APPROVAL
+                : strings.STATUS_CONNECTING}
             </p>
             <button
               onClick={handleCancel}
@@ -305,7 +312,7 @@ export function SendScreen({ session, transport, onBack }: SendScreenProps) {
                 border: `1px solid ${colors.error}`,
               }}
             >
-              cancel
+              {strings.BTN_CANCEL}
             </button>
           </>
         )}
@@ -324,7 +331,7 @@ export function SendScreen({ session, transport, onBack }: SendScreenProps) {
 
         {session.state === SessionState.Rejected && (
           <p style={{ color: colors.error, fontSize: 14 }}>
-            connection was rejected by the receiver
+            {strings.ERROR_REJECTED}
           </p>
         )}
       </div>

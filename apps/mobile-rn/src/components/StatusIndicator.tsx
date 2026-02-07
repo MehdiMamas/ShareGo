@@ -1,27 +1,26 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { SessionState } from "../lib/core";
+import { SessionState, strings } from "../lib/core";
 import { colors } from "../styles/theme";
 
 interface StatusIndicatorProps {
   state: SessionState;
 }
 
-const stateLabels: Record<string, { label: string; color: string }> = {
-  Created: { label: "created", color: colors.textSecondary },
-  WaitingForSender: { label: "waiting for sender...", color: colors.primary },
-  Handshaking: { label: "handshaking...", color: colors.primary },
-  PendingApproval: { label: "pending approval", color: colors.primary },
-  Active: { label: "connected", color: colors.success },
-  Rejected: { label: "rejected", color: colors.error },
-  Closed: { label: "closed", color: colors.textSecondary },
+const stateColors: Record<string, string> = {
+  Created: colors.textSecondary,
+  WaitingForSender: colors.primary,
+  Handshaking: colors.primary,
+  PendingApproval: colors.primary,
+  Active: colors.success,
+  Rejected: colors.error,
+  Closed: colors.textSecondary,
 };
 
 export function StatusIndicator({ state }: StatusIndicatorProps) {
-  const info = stateLabels[state] ?? {
-    label: state,
-    color: colors.textSecondary,
-  };
+  const label = strings.STATUS_LABELS[state] ?? state;
+  const color = stateColors[state] ?? colors.textSecondary;
+  const info = { label, color };
 
   return (
     <View style={styles.container}>

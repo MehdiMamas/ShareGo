@@ -1,5 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { SessionState, DEFAULT_PORT } from "../lib/core";
+import {
+  SessionState,
+  DEFAULT_PORT,
+  BOOTSTRAP_TTL,
+  REGENERATION_DELAY_MS,
+  COUNTDOWN_INTERVAL_MS,
+  strings,
+} from "../lib/core";
 import { colors } from "../styles/theme";
 import { QRDisplay } from "./QRDisplay";
 import { ApprovalDialog } from "./ApprovalDialog";
@@ -18,7 +25,7 @@ export function ReceiveScreen({
   transport,
   onBack,
 }: ReceiveScreenProps) {
-  const bootstrapTtl = 90;
+  const bootstrapTtl = BOOTSTRAP_TTL;
   const [started, setStarted] = useState(false);
   const [countdown, setCountdown] = useState(bootstrapTtl);
   const [initError, setInitError] = useState<string | null>(null);
@@ -69,7 +76,7 @@ export function ReceiveScreen({
         }
         return prev - 1;
       });
-    }, 1000);
+    }, COUNTDOWN_INTERVAL_MS);
 
     return () => clearInterval(timerRef.current);
   }, [started]);
@@ -82,7 +89,7 @@ export function ReceiveScreen({
 
     const regen = async () => {
       sessionRef.current.endSession();
-      await new Promise((r) => setTimeout(r, 300));
+      await new Promise((r) => setTimeout(r, REGENERATION_DELAY_MS));
       startSession();
       regeneratingRef.current = false;
     };
@@ -123,7 +130,7 @@ export function ReceiveScreen({
             border: `1px solid ${colors.border}`,
           }}
         >
-          back
+          {strings.BTN_BACK}
         </button>
         <StatusIndicator state={session.state} />
       </div>
@@ -141,13 +148,13 @@ export function ReceiveScreen({
       >
         {!started && !initError && (
           <p style={{ color: colors.textSecondary, fontSize: 14 }}>
-            starting session...
+            {strings.STATUS_STARTING}
           </p>
         )}
 
         {initError && (
           <p style={{ color: colors.error, fontSize: 14 }}>
-            failed to start: {initError}
+            {strings.ERROR_FAILED_START(initError)}
           </p>
         )}
 
@@ -160,11 +167,11 @@ export function ReceiveScreen({
             />
             {countdown === 0 ? (
               <div style={{ fontSize: 13, color: colors.textSecondary }}>
-                regenerating...
+                {strings.STATUS_REGENERATING}
               </div>
             ) : (
               <div style={{ fontSize: 13, color: colors.textSecondary }}>
-                expires in {countdown}s
+                {strings.STATUS_EXPIRES(countdown)}
               </div>
             )}
           </>
@@ -172,13 +179,13 @@ export function ReceiveScreen({
 
         {started && isWaiting && !session.qrPayload && (
           <p style={{ color: colors.textSecondary, fontSize: 14 }}>
-            waiting for QR code...
+            {strings.STATUS_WAITING_QR}
           </p>
         )}
 
         {session.state === SessionState.Handshaking && (
           <p style={{ color: colors.textSecondary, fontSize: 14 }}>
-            handshaking with sender...
+            {strings.STATUS_HANDSHAKING}
           </p>
         )}
 
@@ -192,7 +199,7 @@ export function ReceiveScreen({
         <ApprovalDialog
           request={session.pairingRequest}
           onApprove={session.approve}
-          onReject={() => session.reject("user rejected")}
+          onReject={() => session.reject(strings.REJECTION_REASON)}
         />
       )}
     </div>

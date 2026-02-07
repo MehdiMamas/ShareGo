@@ -12,7 +12,7 @@ import Clipboard from "@react-native-clipboard/clipboard";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../App";
 import { SessionContext } from "../App";
-import { SessionState } from "../lib/core";
+import { SessionState, COPY_FEEDBACK_MS, strings } from "../lib/core";
 import { StatusIndicator } from "../components/StatusIndicator";
 import { colors } from "../styles/theme";
 import type { ReceivedItem, SentItem } from "../hooks/useSession";
@@ -55,7 +55,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
     Clipboard.setString(text);
     setCopied(id);
     if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-    copyTimerRef.current = setTimeout(() => setCopied(null), 2000);
+    copyTimerRef.current = setTimeout(() => setCopied(null), COPY_FEEDBACK_MS);
   };
 
   const items: ListItem[] = [
@@ -84,7 +84,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
         <View style={styles.sentBubble}>
           <Text style={styles.messageText}>{sent.text}</Text>
           <Text style={styles.sentStatus}>
-            {sent.acked ? "delivered" : "sending..."}
+            {sent.acked ? strings.STATUS_DELIVERED : strings.STATUS_SENDING}
           </Text>
         </View>
       );
@@ -102,7 +102,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
           onPress={() => handleCopy(received.text, received.id)}
         >
           <Text style={styles.copyButtonText}>
-            {copied === received.id ? "copied!" : "copy"}
+            {copied === received.id ? strings.BTN_COPIED : strings.BTN_COPY}
           </Text>
         </TouchableOpacity>
       </View>
@@ -123,7 +123,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
           style={styles.endButton}
           onPress={() => session.endSession()}
         >
-          <Text style={styles.endButtonText}>end session</Text>
+          <Text style={styles.endButtonText}>{strings.BTN_END_SESSION}</Text>
         </TouchableOpacity>
       </View>
 
@@ -139,7 +139,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
         renderItem={renderItem}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>no messages yet</Text>
+            <Text style={styles.emptyText}>{strings.EMPTY_MESSAGES}</Text>
           </View>
         }
         contentContainerStyle={
@@ -153,7 +153,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
           style={styles.textInput}
           value={input}
           onChangeText={setInput}
-          placeholder="enter text to send..."
+          placeholder={strings.INPUT_PLACEHOLDER}
           placeholderTextColor={colors.textSecondary}
           returnKeyType="send"
           onSubmitEditing={handleSend}
@@ -166,7 +166,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
           disabled={!input.trim()}
           onPress={handleSend}
         >
-          <Text style={styles.sendButtonText}>send</Text>
+          <Text style={styles.sendButtonText}>{strings.BTN_SEND_DATA}</Text>
         </TouchableOpacity>
       </View>
 

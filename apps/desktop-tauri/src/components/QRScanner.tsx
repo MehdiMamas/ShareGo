@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import jsQR from "jsqr";
+import { strings } from "../lib/core";
 import { colors } from "../styles/theme";
 
 interface QRScannerProps {
@@ -52,7 +53,7 @@ export function QRScanner({ onScanned }: QRScannerProps) {
         }
       } catch {
         if (!cancelled) {
-          setError("camera not available — use manual code entry instead");
+          setError(strings.CAMERA_ERROR);
         }
       }
     }
@@ -126,7 +127,7 @@ export function QRScanner({ onScanned }: QRScannerProps) {
         <canvas ref={canvasRef} style={{ display: "none" }} />
         {!started && !error && (
           <p style={{ fontSize: 13, color: colors.textSecondary }}>
-            starting camera...
+            {strings.CAMERA_STARTING}
           </p>
         )}
         {error && (
@@ -143,7 +144,7 @@ export function QRScanner({ onScanned }: QRScannerProps) {
         )}
       </div>
       <p style={{ fontSize: 12, color: colors.textSecondary }}>
-        point the camera at the QR code
+        {strings.CAMERA_HINT}
       </p>
     </div>
   );

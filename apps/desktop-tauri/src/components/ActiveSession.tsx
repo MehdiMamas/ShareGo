@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { COPY_FEEDBACK_MS, strings } from "../lib/core";
 import { colors } from "../styles/theme";
 import { StatusIndicator } from "./StatusIndicator";
 import type { useSession } from "../hooks/useSession";
@@ -35,7 +36,7 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
       await navigator.clipboard.writeText(text);
       setCopied(id);
       if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-      copyTimerRef.current = setTimeout(() => setCopied(null), 2000);
+      copyTimerRef.current = setTimeout(() => setCopied(null), COPY_FEEDBACK_MS);
     } catch {
       // clipboard api may not be available
     }
@@ -103,7 +104,7 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
             fontWeight: 600,
           }}
         >
-          end session
+          {strings.BTN_END_SESSION}
         </button>
       </div>
 
@@ -144,7 +145,7 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
                     textAlign: "right",
                   }}
                 >
-                  {sent.acked ? "delivered" : "sending..."}
+                  {sent.acked ? strings.STATUS_DELIVERED : strings.STATUS_SENDING}
                 </div>
               </div>
             );
@@ -180,7 +181,7 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
                   fontWeight: 500,
                 }}
               >
-                {copied === received.id ? "copied!" : "copy"}
+                {copied === received.id ? strings.BTN_COPIED : strings.BTN_COPY}
               </button>
             </div>
           );
@@ -196,7 +197,7 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
             }}
           >
             <p style={{ color: colors.textSecondary, fontSize: 14 }}>
-              no messages yet
+              {strings.EMPTY_MESSAGES}
             </p>
           </div>
         )}
@@ -216,7 +217,7 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="enter text to send..."
+          placeholder={strings.INPUT_PLACEHOLDER}
           style={{
             flex: 1,
             padding: "12px 16px",
@@ -239,7 +240,7 @@ export function ActiveSession({ session, onEnd }: ActiveSessionProps) {
             fontWeight: 600,
           }}
         >
-          send
+          {strings.BTN_SEND_DATA}
         </button>
       </div>
 

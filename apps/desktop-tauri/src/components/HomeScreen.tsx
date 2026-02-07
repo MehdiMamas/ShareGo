@@ -1,3 +1,4 @@
+import { strings } from "../lib/core";
 import { colors } from "../styles/theme";
 
 interface HomeScreenProps {
@@ -27,7 +28,7 @@ export function HomeScreen({ onReceive, onSend }: HomeScreenProps) {
           marginBottom: 12,
         }}
       >
-        ShareGo
+        {strings.APP_TITLE}
       </h1>
 
       <p
@@ -39,8 +40,7 @@ export function HomeScreen({ onReceive, onSend }: HomeScreenProps) {
           lineHeight: 1.5,
         }}
       >
-        securely share passwords, OTPs, and sensitive text between devices on
-        the same network
+        {strings.APP_DESCRIPTION}
       </p>
 
       <div
@@ -70,7 +70,7 @@ export function HomeScreen({ onReceive, onSend }: HomeScreenProps) {
             (e.currentTarget.style.background = colors.primary)
           }
         >
-          show QR code / show code
+          {strings.BTN_RECEIVE}
         </button>
 
         <button
@@ -91,7 +91,7 @@ export function HomeScreen({ onReceive, onSend }: HomeScreenProps) {
             (e.currentTarget.style.background = colors.surface)
           }
         >
-          scan QR code / enter code
+          {strings.BTN_SEND}
         </button>
       </div>
     </div>

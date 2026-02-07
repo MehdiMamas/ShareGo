@@ -37,13 +37,13 @@ import {
   deserializeMessage,
   createBaseFields,
 } from "../protocol/index.js";
+import {
+  SESSION_TTL as DEFAULT_SESSION_TTL,
+  BOOTSTRAP_TTL as DEFAULT_BOOTSTRAP_TTL,
+  DEFAULT_PORT,
+} from "../config.js";
 
-/** default session expiry in seconds */
-const DEFAULT_SESSION_TTL = 300;
-/** default QR/code expiry in seconds */
-const DEFAULT_BOOTSTRAP_TTL = 90;
-/** default server port */
-export const DEFAULT_PORT = 4040;
+export { DEFAULT_PORT };
 
 export interface SessionConfig {
   /** session TTL in seconds (default 300) */

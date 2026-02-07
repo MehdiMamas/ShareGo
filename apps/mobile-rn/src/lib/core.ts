@@ -21,4 +21,15 @@ export {
   DEFAULT_PORT,
   encodeQrPayload,
   decodeQrPayload,
+  // config constants
+  BOOTSTRAP_TTL,
+  SESSION_TTL,
+  SESSION_CODE_LENGTH,
+  REGENERATION_DELAY_MS,
+  COPY_FEEDBACK_MS,
+  WS_CONNECT_TIMEOUT_MS,
+  COUNTDOWN_INTERVAL_MS,
+  CODE_PLACEHOLDER,
+  // strings
+  strings,
 } from "@sharego/core";

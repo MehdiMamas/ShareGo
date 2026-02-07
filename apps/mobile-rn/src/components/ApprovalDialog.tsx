@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from "react-native";
 import type { PairingRequest } from "../lib/core";
+import { strings } from "../lib/core";
 import { colors } from "../styles/theme";
 
 interface ApprovalDialogProps {
@@ -18,10 +19,9 @@ export function ApprovalDialog({
     <Modal transparent animationType="fade" visible>
       <View style={styles.overlay}>
         <View style={styles.dialog}>
-          <Text style={styles.title}>pairing request</Text>
+          <Text style={styles.title}>{strings.DIALOG_TITLE}</Text>
           <Text style={styles.message}>
-            <Text style={styles.deviceName}>{request.deviceName}</Text> wants to
-            connect. allow this device?
+            {strings.DIALOG_BODY(request.deviceName)}
           </Text>
 
           <View style={styles.buttons}>
@@ -29,13 +29,13 @@ export function ApprovalDialog({
               style={styles.rejectButton}
               onPress={onReject}
             >
-              <Text style={styles.rejectButtonText}>reject</Text>
+              <Text style={styles.rejectButtonText}>{strings.BTN_REJECT}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.acceptButton}
               onPress={onApprove}
             >
-              <Text style={styles.acceptButtonText}>accept</Text>
+              <Text style={styles.acceptButtonText}>{strings.BTN_ACCEPT}</Text>
             </TouchableOpacity>
           </View>
         </View>

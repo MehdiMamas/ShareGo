@@ -7,6 +7,8 @@
  * (session.ts rejects messages with mismatched session IDs).
  */
 
+import { DISCOVERY_HOST_TIMEOUT_MS } from "../config.js";
+
 export interface DiscoveryOptions {
   /** session code (currently used for signature consistency; validated during handshake) */
   sessionCode: string;
@@ -16,14 +18,14 @@ export interface DiscoveryOptions {
   getLocalIp: () => Promise<string | null>;
   /** optional abort signal to cancel discovery */
   signal?: AbortSignal;
-  /** per-host timeout in ms (default 1500) */
+  /** per-host timeout in ms */
   timeout?: number;
 }
 
 export async function discoverReceiver(
   opts: DiscoveryOptions,
 ): Promise<string | null> {
-  const { port, getLocalIp, signal, timeout = 1500 } = opts;
+  const { port, getLocalIp, signal, timeout = DISCOVERY_HOST_TIMEOUT_MS } = opts;
 
   const localIp = await getLocalIp();
   if (!localIp) return null;

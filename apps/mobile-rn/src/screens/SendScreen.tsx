@@ -11,7 +11,14 @@ import { NetworkInfo } from "react-native-network-info";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../App";
 import { SessionContext } from "../App";
-import { SessionState, decodeQrPayload, DEFAULT_PORT } from "../lib/core";
+import {
+  SessionState,
+  decodeQrPayload,
+  DEFAULT_PORT,
+  SESSION_CODE_LENGTH,
+  CODE_PLACEHOLDER,
+  strings,
+} from "../lib/core";
 import { discoverReceiver } from "@sharego/core";
 import { StatusIndicator } from "../components/StatusIndicator";
 import { QRScanner } from "../components/QRScanner";
@@ -65,7 +72,7 @@ export function SendScreen({ navigation }: Props) {
         );
       } catch (err) {
         setInputError(
-          err instanceof Error ? err.message : "connection failed",
+          err instanceof Error ? err.message : strings.ERROR_CONNECTION_FAILED,
         );
         setConnecting(false);
       }
@@ -80,7 +87,7 @@ export function SendScreen({ navigation }: Props) {
         await connectToReceiver(payload.addr, payload.pk, payload.sid);
       } catch (err) {
         setInputError(
-          err instanceof Error ? err.message : "invalid QR code",
+          err instanceof Error ? err.message : strings.ERROR_INVALID_QR,
         );
       }
     },
@@ -88,8 +95,8 @@ export function SendScreen({ navigation }: Props) {
   );
 
   const handleManualConnect = async () => {
-    if (code.length !== 6) {
-      setInputError("enter a 6-character code");
+    if (code.length !== SESSION_CODE_LENGTH) {
+      setInputError(strings.ERROR_CODE_LENGTH);
       return;
     }
 
@@ -110,9 +117,7 @@ export function SendScreen({ navigation }: Props) {
       });
       if (controller.signal.aborted) return;
       if (!addr) {
-        setInputError(
-          "could not find receiver on your network — make sure both devices are on the same WiFi",
-        );
+        setInputError(strings.ERROR_RECEIVER_NOT_FOUND);
         setDiscovering(false);
         return;
       }
@@ -121,7 +126,7 @@ export function SendScreen({ navigation }: Props) {
     } catch (err) {
       if (controller.signal.aborted) return;
       setInputError(
-        err instanceof Error ? err.message : "discovery failed",
+        err instanceof Error ? err.message : strings.ERROR_DISCOVERY_FAILED,
       );
       setDiscovering(false);
     }
@@ -149,7 +154,7 @@ export function SendScreen({ navigation }: Props) {
             navigation.goBack();
           }}
         >
-          <Text style={styles.backButtonText}>back</Text>
+          <Text style={styles.backButtonText}>{strings.BTN_BACK}</Text>
         </TouchableOpacity>
         <StatusIndicator state={session.state} />
       </View>
@@ -166,7 +171,7 @@ export function SendScreen({ navigation }: Props) {
               tab === "scan" && styles.activeTabText,
             ]}
           >
-            scan QR
+            {strings.TAB_SCAN}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -179,7 +184,7 @@ export function SendScreen({ navigation }: Props) {
               tab === "code" && styles.activeTabText,
             ]}
           >
-            enter code
+            {strings.TAB_CODE}
           </Text>
         </TouchableOpacity>
       </View>
@@ -193,16 +198,16 @@ export function SendScreen({ navigation }: Props) {
         {tab === "code" && !connecting && !discovering && (
           <View style={styles.codeForm}>
             <Text style={styles.hintText}>
-              enter the 6-character code shown on the receiver
+              {strings.HINT_ENTER_CODE}
             </Text>
 
             <TextInput
               style={styles.codeInput}
               value={code}
-              onChangeText={(t) => setCode(t.toUpperCase().slice(0, 6))}
-              placeholder="ABC123"
+              onChangeText={(t) => setCode(t.toUpperCase().slice(0, SESSION_CODE_LENGTH))}
+              placeholder={CODE_PLACEHOLDER}
               placeholderTextColor={colors.textSecondary}
-              maxLength={6}
+              maxLength={SESSION_CODE_LENGTH}
               autoCapitalize="characters"
               autoCorrect={false}
             />
@@ -210,12 +215,12 @@ export function SendScreen({ navigation }: Props) {
             <TouchableOpacity
               style={[
                 styles.connectButton,
-                code.length !== 6 && styles.disabledButton,
+                code.length !== SESSION_CODE_LENGTH && styles.disabledButton,
               ]}
-              disabled={isConnecting || code.length !== 6}
+              disabled={isConnecting || code.length !== SESSION_CODE_LENGTH}
               onPress={handleManualConnect}
             >
-              <Text style={styles.connectButtonText}>connect</Text>
+              <Text style={styles.connectButtonText}>{strings.BTN_SEND_DATA}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -223,13 +228,13 @@ export function SendScreen({ navigation }: Props) {
         {discovering && (
           <>
             <Text style={styles.statusText}>
-              searching for receiver on your network...
+              {strings.STATUS_SEARCHING}
             </Text>
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={handleCancel}
             >
-              <Text style={styles.cancelButtonText}>cancel</Text>
+              <Text style={styles.cancelButtonText}>{strings.BTN_CANCEL}</Text>
             </TouchableOpacity>
           </>
         )}
@@ -238,14 +243,14 @@ export function SendScreen({ navigation }: Props) {
           <>
             <Text style={styles.statusText}>
               {session.state === SessionState.PendingApproval
-                ? "waiting for approval..."
-                : "connecting..."}
+                ? strings.STATUS_WAITING_APPROVAL
+                : strings.STATUS_CONNECTING}
             </Text>
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={handleCancel}
             >
-              <Text style={styles.cancelButtonText}>cancel</Text>
+              <Text style={styles.cancelButtonText}>{strings.BTN_CANCEL}</Text>
             </TouchableOpacity>
           </>
         )}
@@ -256,7 +261,7 @@ export function SendScreen({ navigation }: Props) {
         )}
         {session.state === SessionState.Rejected && (
           <Text style={styles.errorText}>
-            connection was rejected by the receiver
+            {strings.ERROR_REJECTED}
           </Text>
         )}
       </View>

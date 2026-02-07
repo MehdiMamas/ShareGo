@@ -4,9 +4,9 @@ import type {
   TransportStateCallback,
   MessageCallback,
 } from "./types.js";
+import { MAX_MESSAGE_SIZE } from "../config.js";
 
-/** max allowed message size in bytes (64 KB) */
-export const MAX_MESSAGE_SIZE = 65536;
+export { MAX_MESSAGE_SIZE };
 
 /** validate that an address is a valid ipv4:port string */
 function isValidAddress(addr: string): boolean {

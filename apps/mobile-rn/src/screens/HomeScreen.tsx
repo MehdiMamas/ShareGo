@@ -8,6 +8,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../App";
+import { strings } from "../lib/core";
 import { colors } from "../styles/theme";
 
 interface Props {
@@ -18,10 +19,9 @@ export function HomeScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>ShareGo</Text>
+        <Text style={styles.title}>{strings.APP_TITLE}</Text>
         <Text style={styles.subtitle}>
-          securely share passwords, OTPs, and sensitive text between devices on
-          the same network
+          {strings.APP_DESCRIPTION}
         </Text>
 
         <View style={styles.buttons}>
@@ -30,7 +30,7 @@ export function HomeScreen({ navigation }: Props) {
             activeOpacity={0.8}
             onPress={() => navigation.navigate("Receive")}
           >
-            <Text style={styles.receiveButtonText}>show QR code / show code</Text>
+            <Text style={styles.receiveButtonText}>{strings.BTN_RECEIVE}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -38,7 +38,7 @@ export function HomeScreen({ navigation }: Props) {
             activeOpacity={0.8}
             onPress={() => navigation.navigate("Send")}
           >
-            <Text style={styles.sendButtonText}>scan QR code / enter code</Text>
+            <Text style={styles.sendButtonText}>{strings.BTN_SEND}</Text>
           </TouchableOpacity>
         </View>
       </View>

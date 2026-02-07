@@ -4,7 +4,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../App";
 import { SessionContext } from "../App";
-import { SessionState, DEFAULT_PORT } from "../lib/core";
+import {
+  SessionState,
+  DEFAULT_PORT,
+  BOOTSTRAP_TTL,
+  REGENERATION_DELAY_MS,
+  COUNTDOWN_INTERVAL_MS,
+  strings,
+} from "../lib/core";
 import { QRDisplay } from "../components/QRDisplay";
 import { ApprovalDialog } from "../components/ApprovalDialog";
 import { StatusIndicator } from "../components/StatusIndicator";
@@ -17,7 +24,7 @@ interface Props {
 export function ReceiveScreen({ navigation }: Props) {
   const ctx = useContext(SessionContext)!;
   const { session, transport } = ctx;
-  const bootstrapTtl = 90;
+  const bootstrapTtl = BOOTSTRAP_TTL;
   const [started, setStarted] = useState(false);
   const [countdown, setCountdown] = useState(bootstrapTtl);
   const [initError, setInitError] = useState<string | null>(null);
@@ -63,7 +70,7 @@ export function ReceiveScreen({ navigation }: Props) {
         }
         return prev - 1;
       });
-    }, 1000);
+    }, COUNTDOWN_INTERVAL_MS);
     return () => clearInterval(timerRef.current);
   }, [started]);
 
@@ -82,7 +89,7 @@ export function ReceiveScreen({ navigation }: Props) {
 
     const regen = async () => {
       session.endSession();
-      await new Promise((r) => setTimeout(r, 300));
+      await new Promise((r) => setTimeout(r, REGENERATION_DELAY_MS));
       startSession();
       regeneratingRef.current = false;
     };
@@ -104,7 +111,7 @@ export function ReceiveScreen({ navigation }: Props) {
             navigation.goBack();
           }}
         >
-          <Text style={styles.backButtonText}>back</Text>
+          <Text style={styles.backButtonText}>{strings.BTN_BACK}</Text>
         </TouchableOpacity>
         <StatusIndicator state={session.state} />
       </View>
@@ -112,11 +119,11 @@ export function ReceiveScreen({ navigation }: Props) {
       {/* content */}
       <View style={styles.content}>
         {!started && !initError && (
-          <Text style={styles.statusText}>starting session...</Text>
+          <Text style={styles.statusText}>{strings.STATUS_STARTING}</Text>
         )}
 
         {initError && (
-          <Text style={styles.errorText}>failed to start: {initError}</Text>
+          <Text style={styles.errorText}>{strings.ERROR_FAILED_START(initError)}</Text>
         )}
 
         {isWaiting && session.qrPayload && session.sessionId && (
@@ -127,21 +134,21 @@ export function ReceiveScreen({ navigation }: Props) {
               address={session.localAddress ?? undefined}
             />
             {countdown === 0 ? (
-              <Text style={styles.expires}>regenerating...</Text>
+              <Text style={styles.expires}>{strings.STATUS_REGENERATING}</Text>
             ) : (
               <Text style={styles.expires}>
-                expires in {countdown}s
+                {strings.STATUS_EXPIRES(countdown)}
               </Text>
             )}
           </>
         )}
 
         {started && isWaiting && !session.qrPayload && (
-          <Text style={styles.statusText}>waiting for QR code...</Text>
+          <Text style={styles.statusText}>{strings.STATUS_WAITING_QR}</Text>
         )}
 
         {session.state === SessionState.Handshaking && (
-          <Text style={styles.statusText}>handshaking with sender...</Text>
+          <Text style={styles.statusText}>{strings.STATUS_HANDSHAKING}</Text>
         )}
 
         {session.error && (
@@ -154,7 +161,7 @@ export function ReceiveScreen({ navigation }: Props) {
         <ApprovalDialog
           request={session.pairingRequest}
           onApprove={session.approve}
-          onReject={() => session.reject("user rejected")}
+          onReject={() => session.reject(strings.REJECTION_REASON)}
         />
       )}
     </SafeAreaView>

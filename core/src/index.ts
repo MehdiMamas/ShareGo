@@ -65,6 +65,13 @@ export {
   type DiscoveryOptions,
 } from "./utils/index.js";
 
+// config
+export * from "./config.js";
+
+// strings
+import * as _strings from "./strings.js";
+export { _strings as strings };
+
 // transport
 export {
   type ILocalTransport,

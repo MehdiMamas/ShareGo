@@ -5,6 +5,7 @@ import {
   useCameraDevice,
   useCodeScanner,
 } from "react-native-vision-camera";
+import { strings } from "../lib/core";
 import { colors } from "../styles/theme";
 
 export interface QRScannerRef {
@@ -98,7 +99,7 @@ export const QRScanner = forwardRef<QRScannerRef, QRScannerProps>(
           <Text style={styles.retryText}>tap to scan again</Text>
         </TouchableOpacity>
       ) : (
-        <Text style={styles.hint}>point camera at the receiver's QR code</Text>
+        <Text style={styles.hint}>{strings.CAMERA_HINT}</Text>
       )}
     </View>
   );
