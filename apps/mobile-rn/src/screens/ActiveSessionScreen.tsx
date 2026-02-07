@@ -6,10 +6,13 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import Clipboard from "@react-native-clipboard/clipboard";
+import Svg, { Path, Circle, Line } from "react-native-svg";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../App";
 import { SessionContext } from "../App";
@@ -17,6 +20,8 @@ import { SessionState, COPY_FEEDBACK_MS } from "../lib/core";
 import { StatusIndicator } from "../components/StatusIndicator";
 import { colors } from "../styles/theme";
 import type { ReceivedItem, SentItem } from "../hooks/useSession";
+
+const MASKED_TEXT = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
 
 interface Props {
   navigation: NativeStackNavigationProp<RootStackParamList, "ActiveSession">;
@@ -26,12 +31,72 @@ type ListItem =
   | { type: "sent"; data: SentItem }
   | { type: "received"; data: ReceivedItem };
 
+function EyeIcon({
+  size = 16,
+  color = colors.textSecondary,
+}: {
+  size?: number;
+  color?: string;
+}) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Circle
+        cx="12"
+        cy="12"
+        r="3"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function EyeOffIcon({
+  size = 16,
+  color = colors.textSecondary,
+}: {
+  size?: number;
+  color?: string;
+}) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Line
+        x1="1"
+        y1="1"
+        x2="23"
+        y2="23"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 export function ActiveSessionScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const ctx = useContext(SessionContext)!;
   const { session } = ctx;
   const [input, setInput] = useState("");
   const [copied, setCopied] = useState<number | null>(null);
+  const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set());
   const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
@@ -60,6 +125,18 @@ export function ActiveSessionScreen({ navigation }: Props) {
     copyTimerRef.current = setTimeout(() => setCopied(null), COPY_FEEDBACK_MS);
   };
 
+  const toggleVisibility = (key: string) => {
+    setVisibleItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
   const items: ListItem[] = [
     ...session.sentItems.map(
       (s): ListItem => ({ type: "sent", data: s }),
@@ -82,99 +159,136 @@ export function ActiveSessionScreen({ navigation }: Props) {
   const renderItem = ({ item }: { item: ListItem }) => {
     if (item.type === "sent") {
       const sent = item.data as SentItem;
+      const key = `sent-${sent.seq}`;
+      const isVisible = visibleItems.has(key);
       return (
         <View style={styles.sentBubble}>
-          <Text style={styles.messageText}>{sent.text}</Text>
-          <Text style={styles.sentStatus}>
-            {sent.acked ? t("session.delivered") : t("session.sending")}
+          <Text style={styles.messageText}>
+            {isVisible ? sent.text : MASKED_TEXT}
           </Text>
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={styles.eyeButton}
+              onPress={() => toggleVisibility(key)}
+            >
+              {isVisible ? (
+                <EyeOffIcon size={16} color={colors.sentStatusText} />
+              ) : (
+                <EyeIcon size={16} color={colors.sentStatusText} />
+              )}
+            </TouchableOpacity>
+            <Text style={styles.sentStatus}>
+              {sent.acked ? t("session.delivered") : t("session.sending")}
+            </Text>
+          </View>
         </View>
       );
     }
 
     const received = item.data as ReceivedItem;
+    const key = `recv-${received.id}`;
+    const isVisible = visibleItems.has(key);
     return (
       <View style={styles.receivedBubble}>
-        <Text style={styles.messageText}>{received.text}</Text>
-        <TouchableOpacity
-          style={[
-            styles.copyButton,
-            copied === received.id && styles.copiedButton,
-          ]}
-          onPress={() => handleCopy(received.text, received.id)}
-        >
-          <Text style={styles.copyButtonText}>
-            {copied === received.id ? t("session.copied") : t("session.copy")}
-          </Text>
-        </TouchableOpacity>
+        <Text style={styles.messageText}>
+          {isVisible ? received.text : MASKED_TEXT}
+        </Text>
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={styles.eyeButton}
+            onPress={() => toggleVisibility(key)}
+          >
+            {isVisible ? (
+              <EyeOffIcon size={16} color={colors.textSecondary} />
+            ) : (
+              <EyeIcon size={16} color={colors.textSecondary} />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.copyButton,
+              copied === received.id && styles.copiedButton,
+            ]}
+            onPress={() => handleCopy(received.text, received.id)}
+          >
+            <Text style={styles.copyButtonText}>
+              {copied === received.id ? t("session.copied") : t("session.copy")}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.sessionTitle}>
-            session {session.sessionId}
-          </Text>
-          <StatusIndicator state={session.state} />
-        </View>
-        <TouchableOpacity
-          style={styles.endButton}
-          onPress={() => session.endSession()}
-        >
-          <Text style={styles.endButtonText}>{t("session.endSession")}</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* messages */}
-      <FlatList
-        style={styles.messageList}
-        data={items}
-        keyExtractor={(item, index) =>
-          item.type === "sent"
-            ? `sent-${(item.data as SentItem).seq}`
-            : `recv-${(item.data as ReceivedItem).id}-${index}`
-        }
-        renderItem={renderItem}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>{t("session.emptyMessages")}</Text>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        {/* header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.sessionTitle}>
+              session {session.sessionId}
+            </Text>
+            <StatusIndicator state={session.state} />
           </View>
-        }
-        contentContainerStyle={
-          items.length === 0 ? styles.emptyList : undefined
-        }
-      />
+          <TouchableOpacity
+            style={styles.endButton}
+            onPress={() => session.endSession()}
+          >
+            <Text style={styles.endButtonText}>{t("session.endSession")}</Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* input */}
-      <View style={styles.inputRow}>
-        <TextInput
-          style={styles.textInput}
-          value={input}
-          onChangeText={setInput}
-          placeholder={t("session.inputPlaceholder")}
-          placeholderTextColor={colors.textSecondary}
-          returnKeyType="send"
-          onSubmitEditing={handleSend}
+        {/* messages */}
+        <FlatList
+          style={styles.messageList}
+          data={items}
+          keyExtractor={(item, index) =>
+            item.type === "sent"
+              ? `sent-${(item.data as SentItem).seq}`
+              : `recv-${(item.data as ReceivedItem).id}-${index}`
+          }
+          renderItem={renderItem}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>{t("session.emptyMessages")}</Text>
+            </View>
+          }
+          contentContainerStyle={
+            items.length === 0 ? styles.emptyList : undefined
+          }
         />
-        <TouchableOpacity
-          style={[
-            styles.sendButton,
-            !input.trim() && styles.disabledSend,
-          ]}
-          disabled={!input.trim()}
-          onPress={handleSend}
-        >
-          <Text style={styles.sendButtonText}>{t("session.sendButton")}</Text>
-        </TouchableOpacity>
-      </View>
 
-      {session.error && (
-        <Text style={styles.errorText}>{session.error}</Text>
-      )}
+        {/* input */}
+        <View style={styles.inputRow}>
+          <TextInput
+            style={styles.textInput}
+            value={input}
+            onChangeText={setInput}
+            placeholder={t("session.inputPlaceholder")}
+            placeholderTextColor={colors.textSecondary}
+            returnKeyType="send"
+            onSubmitEditing={handleSend}
+          />
+          <TouchableOpacity
+            style={[
+              styles.sendButton,
+              !input.trim() && styles.disabledSend,
+            ]}
+            disabled={!input.trim()}
+            onPress={handleSend}
+          >
+            <Text style={styles.sendButtonText}>{t("session.sendButton")}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {session.error && (
+          <Text style={styles.errorText}>{session.error}</Text>
+        )}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -184,6 +298,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     padding: 24,
+  },
+  keyboardView: {
+    flex: 1,
   },
   header: {
     flexDirection: "row",
@@ -248,19 +365,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textPrimary,
   },
+  actionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 6,
+    gap: 8,
+  },
+  eyeButton: {
+    padding: 4,
+  },
   sentStatus: {
     fontSize: 11,
     color: colors.sentStatusText,
-    marginTop: 4,
-    textAlign: "right",
+    marginLeft: "auto",
   },
   copyButton: {
-    marginTop: 6,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 6,
     backgroundColor: colors.border,
-    alignSelf: "flex-start",
+    marginLeft: "auto",
   },
   copiedButton: {
     backgroundColor: colors.success,
