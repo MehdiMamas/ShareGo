@@ -10,6 +10,13 @@ dist/
 apps/mobile-rn/ios/main.jsbundle
 apps/desktop-tauri/src-tauri/gen/
 
+# android build artifacts
+apps/mobile-rn/android/app/build/
+apps/mobile-rn/android/build/
+apps/mobile-rn/android/.gradle/
+apps/mobile-rn/android/local.properties
+*.keystore
+
 # personal notes and context (not part of the project)
 .progress/
 .cursor/rules/personal-context.mdc
