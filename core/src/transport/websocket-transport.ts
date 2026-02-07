@@ -91,7 +91,13 @@ export class WebSocketTransport implements ILocalTransport {
       this.peer = client;
       this.setState("connected");
 
+      // track whether a real protocol message was received from this client.
+      // discovery probes connect and immediately disconnect without sending
+      // any data — we must not treat those as real peer disconnections.
+      let messageReceived = false;
+
       client.onMessage((data) => {
+        messageReceived = true;
         if (data.length > MAX_MESSAGE_SIZE) return; // drop oversized messages
         for (const cb of this.messageCallbacks) {
           cb(data);
@@ -101,7 +107,9 @@ export class WebSocketTransport implements ILocalTransport {
       client.onClose(() => {
         this.peer = null;
         if (this.state !== "closed") {
-          this.setState("disconnected");
+          // if no protocol messages were exchanged (e.g. discovery probe),
+          // resume listening instead of reporting a disconnection
+          this.setState(messageReceived ? "disconnected" : "listening");
         }
       });
     });
