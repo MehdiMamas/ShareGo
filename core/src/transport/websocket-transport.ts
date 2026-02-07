@@ -33,7 +33,7 @@ function isValidAddress(addr: string): boolean {
  * sender calls connect() — connects to receiver's ip:port.
  *
  * platform-specific WebSocket server/client implementations are injected
- * via the constructor so this module stays platform-agnostic. tauri and
+ * via the constructor so this module stays platform-agnostic. electron and
  * react native each provide their own ws bindings.
  */
 

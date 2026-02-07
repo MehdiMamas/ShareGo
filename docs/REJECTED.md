@@ -96,9 +96,11 @@ This document explains why certain technologies, architectures, and approaches w
 
 ## Electron
 
+**Update (v2):** ShareGo now uses Electron for desktop after the v2 refactor unified the codebase with React Native + react-native-web. The original objections about binary size were outweighed by the benefits of a single JavaScript runtime across all platforms.
+
 **Why considered:** Electron is the most popular cross-platform desktop framework with the largest ecosystem.
 
-**Why rejected:**
+**Why rejected (v1):**
 - Electron bundles Chromium — massive binary size (100MB+) for an app that transfers text
 - Larger attack surface (full browser engine)
 - Higher memory usage

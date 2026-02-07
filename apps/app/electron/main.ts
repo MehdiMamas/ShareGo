@@ -23,13 +23,23 @@ function createWindow(): void {
       nodeIntegration: false,
     },
     title: "ShareGo",
+    icon: path.join(__dirname, "../build/icon-512.png"),
+    backgroundColor: "#0f172a",
+    titleBarStyle: "hiddenInset",
+    trafficLightPosition: { x: 16, y: 16 },
+    show: false,
+  });
+
+  // show window after content loads to avoid white flash
+  mainWindow.once("ready-to-show", () => {
+    mainWindow?.show();
   });
 
   // in dev, load from webpack dev server; in prod, load the built HTML
   if (process.env.ELECTRON_DEV_URL) {
     mainWindow.loadURL(process.env.ELECTRON_DEV_URL);
   } else {
-    mainWindow.loadFile(path.join(__dirname, "../web/index.html"));
+    mainWindow.loadFile(path.join(__dirname, "../web/dist/index.html"));
   }
 
   mainWindow.on("closed", () => {

@@ -17,8 +17,8 @@ description: Guide for debugging ShareGo session issues. Use when troubleshootin
 **files to check:**
 - `core/src/session/session.ts` — `startAsReceiver()`
 - `core/src/transport/websocket-transport.ts` — `listen()`
-- desktop: `apps/desktop-tauri/src/adapters/tauri-ws-server.ts`
-- mobile: `apps/mobile-rn/src/adapters/rn-ws-server.ts`
+- desktop: `apps/app/src/adapters/electron-ws-server.ts`
+- mobile: `apps/app/src/adapters/rn-ws-server.ts`
 
 ### Sender can't connect
 
@@ -30,8 +30,8 @@ description: Guide for debugging ShareGo session issues. Use when troubleshootin
 **files to check:**
 - `core/src/utils/discovery.ts` — `discoverReceiver()`
 - `core/src/transport/websocket-transport.ts` — `connect()`
-- desktop: `apps/desktop-tauri/src/adapters/browser-ws-client.ts`
-- mobile: `apps/mobile-rn/src/adapters/rn-ws-client.ts`
+- desktop: `apps/app/src/adapters/web-ws-client.ts`
+- mobile: `apps/app/src/adapters/rn-ws-client.ts`
 
 ### Handshake fails
 
@@ -78,8 +78,7 @@ the receiver auto-regenerates sessions every `BOOTSTRAP_TTL` (10 seconds):
 4. verify the QR payload updates with the new session ID and public key
 
 **files to check:**
-- `apps/desktop-tauri/src/screens/ReceiveScreen.tsx` — regeneration effect
-- `apps/mobile-rn/src/screens/ReceiveScreen.tsx` — regeneration effect
+- `apps/app/src/screens/ReceiveScreen.tsx` — regeneration effect
 - `core/src/session/session-controller.ts` — `startReceiver()`, `cleanup()`
 
 ## State transition diagram

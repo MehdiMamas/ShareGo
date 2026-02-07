@@ -28,9 +28,7 @@ console.log(`root version: ${version}`);
 
 const jsonTargets = [
   "core/package.json",
-  "apps/desktop-tauri/package.json",
-  "apps/mobile-rn/package.json",
-  "apps/desktop-tauri/src-tauri/tauri.conf.json",
+  "apps/app/package.json",
 ];
 
 let allMatch = true;
@@ -62,31 +60,7 @@ for (const rel of jsonTargets) {
   }
 }
 
-// handle Cargo.toml separately (not JSON)
-const cargoPath = resolve(root, "apps/desktop-tauri/src-tauri/Cargo.toml");
-if (existsSync(cargoPath)) {
-  const cargoContent = readFileSync(cargoPath, "utf-8");
-  const versionMatch = cargoContent.match(/^version\s*=\s*"([^"]+)"/m);
-  const current = versionMatch ? versionMatch[1] : null;
-
-  if (current === version) {
-    console.log(`  ok:   apps/desktop-tauri/src-tauri/Cargo.toml (${current})`);
-  } else {
-    allMatch = false;
-    if (checkOnly) {
-      console.log(`  MISMATCH: apps/desktop-tauri/src-tauri/Cargo.toml (${current} != ${version})`);
-    } else {
-      const updated = cargoContent.replace(
-        /^(version\s*=\s*)"[^"]+"/m,
-        `$1"${version}"`,
-      );
-      writeFileSync(cargoPath, updated);
-      console.log(`  updated: apps/desktop-tauri/src-tauri/Cargo.toml (${current} -> ${version})`);
-    }
-  }
-} else {
-  console.log("  skip: apps/desktop-tauri/src-tauri/Cargo.toml (not found)");
-}
+// Cargo.toml no longer exists (Tauri was removed in v2 refactor)
 
 if (checkOnly && !allMatch) {
   console.error("\nversion mismatch detected. run 'npm run version:sync' to fix.");

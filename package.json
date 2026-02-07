@@ -6,7 +6,7 @@
   "description": "Serverless, end-to-end encrypted, local-network-only sharing for sensitive data",
   "workspaces": [
     "core",
-    "apps/*"
+    "apps/app"
   ],
   "scripts": {
     "build": "turbo run build",

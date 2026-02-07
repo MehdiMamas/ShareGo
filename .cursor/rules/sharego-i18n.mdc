@@ -8,7 +8,7 @@ alwaysApply: false
 
 ## single source of truth
 
-all user-facing text lives in `core/src/i18n/en.ts`. both desktop (Tauri) and mobile (React Native) apps must use translations from this file. never hardcode user-facing strings in app shell code.
+all user-facing text lives in `core/src/i18n/en.ts`. the unified app (desktop + mobile) must use translations from this file. never hardcode user-facing strings in app shell code.
 
 ## structure
 
@@ -30,7 +30,7 @@ translations are organized by screen/feature:
 
 1. add the key to `core/src/i18n/en.ts` in the appropriate namespace
 2. export the type if needed (`TranslationResource`)
-3. use the key in both desktop and mobile screens
+3. use the key in the unified app screens
 4. never add text directly in JSX — always reference a translation key
 
 ## rules

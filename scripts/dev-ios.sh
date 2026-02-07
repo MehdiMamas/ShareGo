@@ -42,7 +42,7 @@ has_cmd() {
 # -- resolve paths --
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-MOBILE_DIR="$PROJECT_ROOT/apps/mobile-rn"
+MOBILE_DIR="$PROJECT_ROOT/apps/app"
 IOS_DIR="$MOBILE_DIR/ios"
 
 # -- check macOS --
@@ -143,10 +143,10 @@ if [ "$SETUP_ONLY" = true ]; then
   printf "${GREEN}${BOLD}✓ iOS setup complete — ready to develop${RESET}\n"
   printf "\n"
   printf "  to run later:\n"
-  printf "    ${CYAN}cd apps/mobile-rn && npx react-native run-ios${RESET}\n"
+  printf "    ${CYAN}cd apps/app && npx react-native run-ios${RESET}\n"
   printf "\n"
   printf "  or open in Xcode:\n"
-  printf "    ${CYAN}open apps/mobile-rn/ios/ShareGo.xcworkspace${RESET}\n"
+  printf "    ${CYAN}open apps/app/ios/ShareGo.xcworkspace${RESET}\n"
   printf "\n"
   exit 0
 fi
@@ -160,7 +160,7 @@ if [ "$RUN_ON_DEVICE" = true ]; then
   step "running on physical device"
   printf "\n"
   printf "  ${BOLD}important:${RESET} to run on a physical iPhone, you need to:\n"
-  printf "    1. open ${CYAN}apps/mobile-rn/ios/ShareGo.xcworkspace${RESET} in Xcode\n"
+  printf "    1. open ${CYAN}apps/app/ios/ShareGo.xcworkspace${RESET} in Xcode\n"
   printf "    2. go to ${BOLD}Signing & Capabilities${RESET} tab\n"
   printf "    3. select your Apple ID as the team\n"
   printf "    4. Xcode will create a provisioning profile automatically\n"

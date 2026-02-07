@@ -38,6 +38,9 @@ import {
   serializeMessage,
   deserializeMessage,
   createBaseFields,
+  serializeBinaryData,
+  deserializeBinaryData,
+  isBinaryDataFrame,
 } from "../protocol/index.js";
 import {
   SESSION_TTL as DEFAULT_SESSION_TTL,
@@ -49,7 +52,6 @@ import type {
   SessionId,
   Base64PublicKey,
   Base64Nonce,
-  Base64Ciphertext,
   Base64Proof,
   SequenceNumber,
 } from "../types/index.js";
@@ -57,7 +59,6 @@ import {
   asSessionId,
   asBase64PublicKey,
   asBase64Nonce,
-  asBase64Ciphertext,
   asSequenceNumber,
 } from "../types/index.js";
 
@@ -78,7 +79,6 @@ export class Session {
   readonly id: SessionId;
   readonly role: SessionRole;
 
-  private state: SessionState = SessionState.Created;
   private keyPair: KeyPair | null = null;
   private sharedSecret: SharedSecret | null = null;
   private peerPublicKey: Uint8Array | null = null;
@@ -118,9 +118,9 @@ export class Session {
     this.machineActor.start();
   }
 
-  /** get current session state */
+  /** get current session state (from XState actor — single source of truth) */
   getState(): SessionState {
-    return this.state;
+    return String(this.machineActor.getSnapshot().value) as SessionState;
   }
 
   /** get our ephemeral public key (base64) */
@@ -190,7 +190,7 @@ export class Session {
     await transport.listen(this.config.port);
 
     // session may have been closed during the async listen (e.g. react strict mode cleanup)
-    if (this.state === SessionState.Closed) return;
+    if (this.getState() === SessionState.Closed) return;
 
     this.transition(SessionState.WaitingForSender);
   }
@@ -246,7 +246,7 @@ export class Session {
     await transport.connect(addr);
 
     // session may have been closed during the async connect
-    if (this.state === SessionState.Closed) return;
+    if (this.getState() === SessionState.Closed) return;
 
     this.transition(SessionState.Handshaking);
 
@@ -273,11 +273,11 @@ export class Session {
     const envelope = encrypt(plaintext, this.sharedSecret.encryptionKey);
     const seq = this.nextSeq();
 
-    this.sendMessage({
-      ...createBaseFields(MessageType.DATA, this.id, seq),
-      ciphertext: asBase64Ciphertext(toBase64(envelope.ciphertext)),
-      nonce: asBase64Nonce(toBase64(envelope.nonce)),
-    });
+    // send DATA as compact binary frame (avoids ~33% base64 overhead)
+    const binaryFrame = serializeBinaryData(seq, envelope.nonce, envelope.ciphertext);
+    if (this.getState() === SessionState.Closed) return seq;
+    if (!this.transport) throw new Error("no transport bound");
+    this.transport.send(binaryFrame);
 
     return seq;
   }
@@ -290,7 +290,7 @@ export class Session {
    * so the message actually reaches the wire before the transport is torn down.
    */
   close(): void {
-    if (this.state === SessionState.Closed || this.closing) return;
+    if (this.getState() === SessionState.Closed || this.closing) return;
     this.closing = true;
 
     // cancel any pending flush timer from a previous close() call
@@ -334,7 +334,7 @@ export class Session {
 
   private handleIncoming(data: Uint8Array): void {
     // ignore messages after session is closed or rejected
-    if (this.state === SessionState.Closed || this.state === SessionState.Rejected) return;
+    if (this.getState() === SessionState.Closed || this.getState() === SessionState.Rejected) return;
 
     // enforce session expiry before spending CPU on deserialization
     if (this.isSessionExpired()) {
@@ -344,6 +344,12 @@ export class Session {
     }
 
     try {
+      // binary DATA frames start with 0x01; JSON messages start with '{' (0x7B)
+      if (isBinaryDataFrame(data)) {
+        this.handleBinaryData(data);
+        return;
+      }
+
       const msg = deserializeMessage(data);
 
       if (msg.sid !== this.id) {
@@ -378,6 +384,7 @@ export class Session {
           this.handleReject();
           break;
         case MessageType.DATA:
+          // legacy JSON DATA support (for backward compat)
           this.handleData(msg as DataMessage);
           break;
         case MessageType.ACK:
@@ -395,10 +402,40 @@ export class Session {
     }
   }
 
+  /** handle binary DATA frame (compact format without base64 overhead) */
+  private handleBinaryData(data: Uint8Array): void {
+    if (this.getState() !== SessionState.Active) return;
+    if (!this.sharedSecret) return;
+
+    const frame = deserializeBinaryData(data);
+
+    // replay detection
+    if (frame.seq <= this.highestSeenSeq) return;
+    if (frame.seq > (this.highestSeenSeq as number) + MAX_SEQ_GAP) {
+      this.emit(SessionEvent.Error, new Error("sequence number gap too large"));
+      this.close();
+      return;
+    }
+    this.highestSeenSeq = frame.seq;
+
+    const plaintext = decrypt(
+      { ciphertext: frame.ciphertext, nonce: frame.nonce },
+      this.sharedSecret.encryptionKey,
+    );
+
+    this.emit(SessionEvent.DataReceived, plaintext);
+
+    // send ACK (still JSON for debuggability)
+    this.sendMessage({
+      ...createBaseFields(MessageType.ACK, this.id, this.nextSeq()),
+      ackSeq: frame.seq,
+    });
+  }
+
   /** receiver handles HELLO from sender */
   private handleHello(msg: HelloMessage): void {
     if (this.role !== SessionRole.Receiver) return;
-    if (this.state !== SessionState.WaitingForSender) return;
+    if (this.getState() !== SessionState.WaitingForSender) return;
     if (this.helloReceived) return; // reject duplicate/replayed HELLO
     this.helloReceived = true;
     if (this.isBootstrapExpired()) {
@@ -428,7 +465,7 @@ export class Session {
   /** sender handles CHALLENGE from receiver */
   private handleChallenge(msg: ChallengeMessage): void {
     if (this.role !== SessionRole.Sender) return;
-    if (this.state !== SessionState.Handshaking) return;
+    if (this.getState() !== SessionState.Handshaking) return;
     if (this.isBootstrapExpired()) {
       this.close();
       return;
@@ -467,7 +504,7 @@ export class Session {
   /** receiver handles AUTH from sender */
   private handleAuth(msg: AuthMessage): void {
     if (this.role !== SessionRole.Receiver) return;
-    if (this.state !== SessionState.Handshaking) return;
+    if (this.getState() !== SessionState.Handshaking) return;
     if (this.isBootstrapExpired()) {
       this.close();
       return;
@@ -524,7 +561,7 @@ export class Session {
   /** sender handles ACCEPT */
   private handleAccept(): void {
     if (this.role !== SessionRole.Sender) return;
-    if (this.state !== SessionState.Handshaking) return;
+    if (this.getState() !== SessionState.Handshaking) return;
     this.transition(SessionState.Active);
   }
 
@@ -537,7 +574,7 @@ export class Session {
 
   /** handle incoming encrypted DATA */
   private handleData(msg: DataMessage): void {
-    if (this.state !== SessionState.Active) return;
+    if (this.getState() !== SessionState.Active) return;
     if (!this.sharedSecret) return;
 
     const ciphertext = fromBase64(msg.ciphertext);
@@ -559,7 +596,7 @@ export class Session {
 
   /** handle ACK */
   private handleAck(msg: AckMessage): void {
-    if (this.state !== SessionState.Active) return;
+    if (this.getState() !== SessionState.Active) return;
     this.emit(SessionEvent.DataAcknowledged, msg.ackSeq);
   }
 
@@ -573,7 +610,7 @@ export class Session {
   // -- transport state --
 
   private handleTransportState(ts: TransportState): void {
-    if (ts === "disconnected" && this.state !== SessionState.Closed && this.state !== SessionState.Rejected) {
+    if (ts === "disconnected" && this.getState() !== SessionState.Closed && this.getState() !== SessionState.Rejected) {
       this.emit(SessionEvent.Error, new Error("transport disconnected"));
       // transition before cleanup so StateChanged event fires while listeners exist
       this.transition(SessionState.Closed);
@@ -584,7 +621,7 @@ export class Session {
   // -- helpers --
 
   private sendMessage(msg: ProtocolMessage): void {
-    if (this.state === SessionState.Closed) {
+    if (this.getState() === SessionState.Closed) {
       return; // silently drop messages after close
     }
     if (!this.transport) {
@@ -602,33 +639,32 @@ export class Session {
   }
 
   private transition(next: SessionState): void {
-    const key = `${this.state}->${next}`;
+    const current = this.getState();
+    const key = `${current}->${next}`;
     const eventType = STATE_TO_EVENT[key];
     if (!eventType) {
       throw new Error(
-        `invalid state transition: ${this.state} -> ${next}`,
+        `invalid state transition: ${current} -> ${next}`,
       );
     }
 
-    // advance the xstate actor and verify it reached the expected state
-    const before = String(this.machineActor.getSnapshot().value);
+    // advance the xstate actor — single source of truth for state
     this.machineActor.send({ type: eventType });
-    const after = String(this.machineActor.getSnapshot().value);
+    const after = this.getState();
 
     if (after !== next) {
       throw new Error(
-        `invalid state transition: ${before} -> ${next} (machine reached ${after})`,
+        `invalid state transition: ${current} -> ${next} (machine reached ${after})`,
       );
     }
 
-    this.state = next;
     this.emit(SessionEvent.StateChanged, next);
   }
 
   private assertState(expected: SessionState): void {
-    if (this.state !== expected) {
+    if (this.getState() !== expected) {
       throw new Error(
-        `expected state ${expected}, got ${this.state}`,
+        `expected state ${expected}, got ${this.getState()}`,
       );
     }
   }

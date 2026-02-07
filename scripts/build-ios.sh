@@ -8,7 +8,7 @@
 #   ./scripts/build-ios.sh --debug --simulator     # debug build (simulator)
 #
 # outputs:
-#   apps/mobile-rn/ios/build/Build/Products/{Release,Debug}-{iphoneos,iphonesimulator}/ShareGo.app
+#   apps/app/ios/build/Build/Products/{Release,Debug}-{iphoneos,iphonesimulator}/ShareGo.app
 
 source "$(dirname "$0")/preflight.sh"
 
@@ -35,7 +35,7 @@ done
 
 banner "build: iOS ($MODE, $SDK_LABEL)"
 
-MOBILE_DIR="$PROJECT_ROOT/apps/mobile-rn"
+MOBILE_DIR="$PROJECT_ROOT/apps/app"
 IOS_DIR="$MOBILE_DIR/ios"
 
 # -- preflight --

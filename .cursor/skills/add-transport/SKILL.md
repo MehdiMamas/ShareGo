@@ -43,9 +43,8 @@ export class WebRTCTransport implements ILocalTransport {
 
 5. **Test** by wiring it into a `Session` and running the handshake
 
-6. **Platform adapters** — if the transport requires platform-specific code (e.g. native sockets), create adapters in each app shell that implement the same interface:
-   - Desktop: `apps/desktop-tauri/src/adapters/`
-   - Mobile: `apps/mobile-rn/src/adapters/`
+6. **Platform adapters** — if the transport requires platform-specific code (e.g. native sockets), create adapters in the unified app that implement the same interface:
+   - `apps/app/src/adapters/`
 
 7. **Update docs** — add the new transport to `docs/ARCHITECTURE.md` (tech stack section) and mention any security implications in `docs/THREAT_MODEL.md`
 

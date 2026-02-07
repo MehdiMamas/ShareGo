@@ -7,9 +7,9 @@
 #   ./scripts/build-android.sh --aab        # release AAB (for Play Store)
 #
 # outputs:
-#   debug APK  → apps/mobile-rn/android/app/build/outputs/apk/debug/
-#   release APK → apps/mobile-rn/android/app/build/outputs/apk/release/
-#   release AAB → apps/mobile-rn/android/app/build/outputs/bundle/release/
+#   debug APK  → apps/app/android/app/build/outputs/apk/debug/
+#   release APK → apps/app/android/app/build/outputs/apk/release/
+#   release AAB → apps/app/android/app/build/outputs/bundle/release/
 
 source "$(dirname "$0")/preflight.sh"
 
@@ -31,7 +31,7 @@ esac
 
 banner "build: android ($MODE${BUILD_AAB:+ AAB})"
 
-MOBILE_DIR="$PROJECT_ROOT/apps/mobile-rn"
+MOBILE_DIR="$PROJECT_ROOT/apps/app"
 ANDROID_DIR="$MOBILE_DIR/android"
 
 # -- preflight --
@@ -140,7 +140,7 @@ if [ ! -d "$ANDROID_DIR" ]; then
   fi
   if [ ! -d "$ANDROID_DIR" ]; then
     die "failed to generate android/ directory. you may need to run:
-     cd apps/mobile-rn && npx @react-native-community/cli init --directory . --skip-install"
+     cd apps/app && npx @react-native-community/cli init --directory . --skip-install"
   fi
   ok "android project generated"
 fi

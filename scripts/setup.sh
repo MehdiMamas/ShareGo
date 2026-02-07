@@ -5,7 +5,7 @@
 #   ./scripts/setup.sh              # setup for all detected platforms
 #   ./scripts/setup.sh ios          # setup for iOS only
 #   ./scripts/setup.sh android      # setup for Android only
-#   ./scripts/setup.sh desktop      # setup for desktop (Tauri) only
+#   ./scripts/setup.sh desktop      # setup for desktop (Electron) only
 #   ./scripts/setup.sh core         # setup core library only
 #
 # this script installs dependencies, builds the core library, and runs
@@ -194,7 +194,7 @@ setup_ios() {
   fi
 
   # pod install
-  IOS_DIR="$PROJECT_ROOT/apps/mobile-rn/ios"
+  IOS_DIR="$PROJECT_ROOT/apps/app/ios"
   if [ -f "$IOS_DIR/Podfile" ]; then
     info "installing ios pods (this may take a minute on first run)..."
     cd "$IOS_DIR"
@@ -210,10 +210,10 @@ setup_ios() {
   printf "  ${BOLD}${GREEN}iOS setup complete!${RESET}\n"
   printf "\n"
   printf "  to run on simulator:\n"
-  printf "    ${CYAN}cd apps/mobile-rn && npx react-native run-ios${RESET}\n"
+  printf "    ${CYAN}cd apps/app && npx react-native run-ios${RESET}\n"
   printf "\n"
   printf "  to run on your iPhone:\n"
-  printf "    1. open ${BOLD}apps/mobile-rn/ios/ShareGo.xcworkspace${RESET} in Xcode\n"
+  printf "    1. open ${BOLD}apps/app/ios/ShareGo.xcworkspace${RESET} in Xcode\n"
   printf "    2. select your team in Signing & Capabilities\n"
   printf "    3. connect your iPhone via USB\n"
   printf "    4. select your device and press Run (⌘R)\n"
@@ -268,7 +268,7 @@ setup_android() {
     warn "java not found — install JDK 17+: brew install openjdk@17"
   fi
 
-  ANDROID_DIR="$PROJECT_ROOT/apps/mobile-rn/android"
+  ANDROID_DIR="$PROJECT_ROOT/apps/app/android"
   if [ -f "$ANDROID_DIR/gradlew" ]; then
     ok "android project ready"
   else
@@ -279,58 +279,27 @@ setup_android() {
   printf "  ${BOLD}${GREEN}Android setup complete!${RESET}\n"
   printf "\n"
   printf "  to run on emulator or device:\n"
-  printf "    ${CYAN}cd apps/mobile-rn && npx react-native run-android${RESET}\n"
+  printf "    ${CYAN}cd apps/app && npx react-native run-android${RESET}\n"
   printf "\n"
 }
 
 # -- desktop --
 setup_desktop() {
-  step "setting up desktop (Tauri)"
+  step "setting up desktop (Electron)"
 
-  if ! has_cmd rustc; then
-    info "rust not found — installing via rustup..."
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-    # shellcheck disable=SC1091
-    source "$HOME/.cargo/env" 2>/dev/null || true
-  fi
+  # electron only needs node.js — already checked above
+  ok "node.js is sufficient for Electron development"
 
-  if has_cmd rustc; then
-    ok "rust $(rustc --version | awk '{print $2}')"
-  else
-    warn "rust installation needs a shell restart — re-run this script after restarting your terminal"
-    return
-  fi
-
-  # platform deps
-  case "$OS" in
-    macos)
-      if ! xcode-select -p &>/dev/null; then
-        xcode-select --install 2>/dev/null || true
-        warn "xcode CLT installing — re-run after installation completes"
-      fi
-      ;;
-    linux)
-      if ! pkg-config --exists webkit2gtk-4.1 2>/dev/null; then
-        info "installing linux dependencies..."
-        if has_cmd apt; then
-          sudo apt update && sudo apt install -y \
-            libwebkit2gtk-4.1-dev build-essential curl wget file \
-            libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
-        else
-          warn "please install webkit2gtk-4.1 and other tauri deps for your distro"
-          warn "see: https://v2.tauri.app/start/prerequisites/#linux"
-        fi
-      fi
-      ;;
-  esac
-
-  ok "desktop prerequisites ready"
+  # build electron main process
+  step "building electron main process"
+  cd "$PROJECT_ROOT/apps/app"
+  npm run build:electron 2>/dev/null && ok "electron main process compiled" || warn "electron build failed — check TypeScript errors"
 
   printf "\n"
   printf "  ${BOLD}${GREEN}Desktop setup complete!${RESET}\n"
   printf "\n"
   printf "  to start development:\n"
-  printf "    ${CYAN}cd apps/desktop-tauri && npm run tauri dev${RESET}\n"
+  printf "    ${CYAN}npm run dev:desktop${RESET}\n"
   printf "\n"
 }
 

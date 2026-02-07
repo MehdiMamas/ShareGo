@@ -101,7 +101,7 @@ npm run build:core
 ### 5. install iOS pods
 
 ```bash
-cd apps/mobile-rn/ios
+cd apps/app/ios
 pod install
 cd ..
 ```
@@ -113,7 +113,7 @@ this creates `ShareGo.xcworkspace` which includes all native module configuratio
 ### 6. run on simulator
 
 ```bash
-cd apps/mobile-rn
+cd apps/app
 npx react-native run-ios
 ```
 
@@ -131,7 +131,7 @@ running on a real device requires code signing. here's how:
 
 #### a. set up code signing in Xcode
 
-1. open `apps/mobile-rn/ios/ShareGo.xcworkspace` in Xcode
+1. open `apps/app/ios/ShareGo.xcworkspace` in Xcode
 2. in the project navigator (left sidebar), click on **ShareGo** (the blue icon at the top)
 3. select the **ShareGo** target
 4. go to the **Signing & Capabilities** tab
@@ -163,7 +163,7 @@ the first time you run a development app, iOS will block it. you need to trust t
 
 from terminal:
 ```bash
-cd apps/mobile-rn
+cd apps/app
 npx react-native run-ios --device
 ```
 
@@ -209,7 +209,7 @@ the Metro bundler isn't running or can't connect.
 
 ```bash
 # start metro manually in a separate terminal
-cd apps/mobile-rn
+cd apps/app
 npx react-native start --reset-cache
 
 # then in another terminal
@@ -227,7 +227,7 @@ npx react-native run-ios
 ### pod install fails
 
 ```bash
-cd apps/mobile-rn/ios
+cd apps/app/ios
 
 # clear caches and retry
 pod deintegrate

@@ -10,7 +10,7 @@
  */
 
 import { WebSocketServer, WebSocket } from "ws";
-import { createServer, Server as NetServer } from "net";
+import http from "http";
 import { getLanIp } from "./net-utils.js";
 
 const MAX_MESSAGE_SIZE = 65536;
@@ -25,7 +25,7 @@ export interface WsServerEvents {
 
 export class ElectronWsServer {
   private wss: WebSocketServer | null = null;
-  private netServer: NetServer | null = null;
+  private httpServer: http.Server | null = null;
   private peer: WebSocket | null = null;
   private boundAddress: string | null = null;
 
@@ -38,7 +38,7 @@ export class ElectronWsServer {
     await this.stop();
 
     const server = await this.bindWithRetry(port, MAX_BIND_RETRIES, BIND_RETRY_DELAY_MS);
-    this.netServer = server;
+    this.httpServer = server;
 
     const localIp = getLanIp();
     if (!localIp) {
@@ -104,11 +104,11 @@ export class ElectronWsServer {
       this.wss = null;
     }
 
-    if (this.netServer) {
+    if (this.httpServer) {
       await new Promise<void>((resolve) => {
-        this.netServer!.close(() => resolve());
+        this.httpServer!.close(() => resolve());
       });
-      this.netServer = null;
+      this.httpServer = null;
     }
 
     this.boundAddress = null;
@@ -128,7 +128,7 @@ export class ElectronWsServer {
     port: number,
     maxAttempts: number,
     delayMs: number,
-  ): Promise<NetServer> {
+  ): Promise<http.Server> {
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -147,13 +147,13 @@ export class ElectronWsServer {
   }
 
   /**
-   * attempt to bind a TCP server with SO_REUSEADDR.
+   * attempt to bind an HTTP server with SO_REUSEADDR.
+   * ws requires an http.Server, not a raw net.Server.
    */
-  private tryBind(port: number): Promise<NetServer> {
+  private tryBind(port: number): Promise<http.Server> {
     return new Promise((resolve, reject) => {
-      const server = createServer();
+      const server = http.createServer();
 
-      // allow address reuse for quick restart
       server.on("error", (err) => reject(err));
 
       server.listen({ port, host: "0.0.0.0", exclusive: false }, () => {

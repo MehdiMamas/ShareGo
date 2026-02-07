@@ -9,8 +9,9 @@ ShareGo is a serverless, end-to-end encrypted, local-network-only app for secure
 
 ## Supported platforms
 
-- Desktop: Windows, macOS, Linux (Tauri v2)
+- Desktop: Windows, macOS, Linux (Electron)
 - Mobile: Android, iOS (React Native bare)
+- Unified app in `apps/app/` using React Native + react-native-web
 
 ## Architecture invariants (never violate these)
 
@@ -27,14 +28,17 @@ ShareGo is a serverless, end-to-end encrypted, local-network-only app for secure
 ## Repo layout
 
 - `core/src/crypto/` — libsodium wrappers (keygen, exchange, encrypt, decrypt)
-- `core/src/protocol/` — message types, serialization, QR payload
-- `core/src/session/` — session state machine, SessionController, lifecycle, events
+- `core/src/protocol/` — message types, serialization, QR payload, binary DATA frames
+- `core/src/session/` — XState state machine, SessionController, lifecycle, events
 - `core/src/transport/` — ILocalTransport interface, WebSocketTransport
-- `core/src/utils/` — subnet discovery helpers
+- `core/src/discovery/` — DiscoveryAdapter interface, mDNS + subnet fallback
+- `core/src/types/` — branded types (SessionId, NetworkAddress, Base64PublicKey, etc.)
+- `core/src/utils/` — legacy subnet discovery helpers (deprecated)
 - `core/src/i18n/` — translation resources (en.ts — single source of truth for all user-facing text)
 - `core/src/config.ts` — shared constants (timeouts, ports, limits — single source of truth)
-- `apps/desktop-tauri/` — Tauri v2 shell (Windows, macOS, Linux)
-- `apps/mobile-rn/` — React Native bare (Android, iOS)
+- `apps/app/` — unified app (desktop + mobile)
+- `apps/app/electron/` — Electron main process (ws-server, net-utils, mdns-adapter)
+- `apps/app/src/` — React Native + react-native-web UI (screens, components, hooks, adapters)
 - `scripts/` — setup, build, check, and dev convenience scripts
 - `docs/` — ARCHITECTURE.md, PROTOCOL.md, THREAT_MODEL.md, REJECTED.md, BUILDING.md, CONTRIBUTING.md, IOS_GUIDE.md
 
@@ -43,7 +47,7 @@ ShareGo is a serverless, end-to-end encrypted, local-network-only app for secure
 - All security logic lives in `@sharego/core` — app shells are thin wrappers
 - Transport is pluggable via `ILocalTransport` interface
 - Every message is typed via the `ProtocolMessage` union
-- Session state transitions are explicit and validated via `VALID_TRANSITIONS`
+- Session state transitions are governed by XState machine in `core/src/session/machine.ts`
 - `SessionController` is the framework-agnostic session manager — hooks thin-wrap it
 - All user-facing text comes from `core/src/i18n/en.ts` — never hardcode strings in app code
 - All timing/config values come from `core/src/config.ts` — never hardcode values in app code

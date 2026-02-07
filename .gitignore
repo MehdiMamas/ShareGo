@@ -1,47 +1,116 @@
+# ============================================================
+# ShareGo — comprehensive .gitignore
+# covers: Node.js, TypeScript, React Native, Electron, Xcode,
+#         Android/Gradle, CocoaPods, Turborepo, Vitest, macOS/Windows
+# ============================================================
+
+# -- dependencies --
 node_modules/
+.pnp
+.pnp.js
+
+# -- build output --
 dist/
-.turbo/
-.DS_Store
-Thumbs.db
-*.tgz
-*.log
 *.tsbuildinfo
-.env
-.env.*
-coverage/
+*.tgz
 
-# platform generated files
-apps/mobile-rn/ios/main.jsbundle
-apps/desktop-tauri/src-tauri/gen/
+# -- turborepo --
+.turbo/
 
-# xcode user data
+# -- electron --
+apps/app/dist-electron/
+apps/app/release/
+**/release/
+
+# -- react native --
+# metro bundler cache
+.metro-health-check*
+# bundled JS assets
+**/ios/main.jsbundle
+**/ios/main.jsbundle.map
+# hermes compiled bytecode
+**/ios/assets/__node_modules/
+
+# -- ios / xcode --
+**/ios/build/
+**/ios/DerivedData/
+**/ios/Pods/
+**/ios/.xcode.env.local
 **/xcuserdata/
 *.xcuserstate
+*.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
 
-# local xcode env (machine-specific, not versioned)
-apps/mobile-rn/ios/.xcode.env.local
+# cocoapods (we commit Podfile.lock but not Pods/)
+# Podfile.lock is committed for reproducible builds
 
-# react native bundled assets from node_modules
-apps/mobile-rn/ios/assets/__node_modules/
-
-# android build artifacts
-apps/mobile-rn/android/app/build/
-apps/mobile-rn/android/build/
-apps/mobile-rn/android/.gradle/
-apps/mobile-rn/android/local.properties
+# -- android / gradle --
+**/android/app/build/
+**/android/build/
+**/android/.gradle/
+**/android/local.properties
+**/android/captures/
+**/android/.cxx/
+*.apk
+*.aab
 *.keystore
+!debug.keystore
 
-# personal notes and context (not part of the project)
-.progress/
-.cursor/rules/personal-context.mdc
-.cursor/plans/
+# -- vitest / jest --
+coverage/
 
-# secrets and credentials (safety net)
+# -- OS files --
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+*~
+*.swp
+*.swo
+
+# -- editor / IDE --
+.idea/
+.vscode/settings.json
+.vscode/launch.json
+*.iml
+
+# -- environment / secrets (safety net) --
+.env
+.env.*
+!.env.example
 *.pem
 *.key
 *.p12
 *.pfx
 credentials.json
 secrets.json
-.env.local
-.env.production
+
+# -- logs --
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# -- test output --
+test-results/
+playwright-report/
+e2e-results/
+
+# -- personal / project management (not part of source) --
+.progress/
+.cursor/rules/personal-context.mdc
+.cursor/plans/
+
+# -- tauri legacy (safe to keep if stale artifacts remain) --
+**/src-tauri/target/
