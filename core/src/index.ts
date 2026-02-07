@@ -59,10 +59,23 @@ export {
   type SnapshotListener,
 } from "./session/index.js";
 
-// utils
+// discovery (new mDNS-capable module — replaces utils/discovery)
 export {
   discoverReceiver,
+  advertiseReceiver,
+  stopAdvertising,
   type DiscoveryOptions,
+  type DiscoveryResult,
+  type DiscoveryAdapter,
+  type DiscoveredService,
+  MDNS_SERVICE_TYPE,
+  MDNS_TXT_KEYS,
+} from "./discovery/index.js";
+
+// utils (legacy subnet discovery — deprecated, use discovery/ instead)
+export {
+  discoverReceiver as legacyDiscoverReceiver,
+  type DiscoveryOptions as LegacyDiscoveryOptions,
 } from "./utils/index.js";
 
 // config
