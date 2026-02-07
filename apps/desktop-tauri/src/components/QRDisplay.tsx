@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { QRCodeSVG } from "qrcode.react";
 import { colors } from "../styles/theme";
 
@@ -8,6 +9,8 @@ interface QRDisplayProps {
 }
 
 export function QRDisplay({ value, sessionId, address }: QRDisplayProps) {
+  const { t } = useTranslation();
+
   return (
     <div
       style={{
@@ -28,7 +31,7 @@ export function QRDisplay({ value, sessionId, address }: QRDisplayProps) {
       </div>
 
       <span style={{ fontSize: 12, color: colors.textSecondary }}>
-        scan the QR code on the other device
+        {t("qr.hint")}
       </span>
 
       <div
@@ -45,7 +48,7 @@ export function QRDisplay({ value, sessionId, address }: QRDisplayProps) {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 12, color: colors.textSecondary }}>
-            code:
+            {t("qr.codeLabel")}
           </span>
           <span
             style={{
@@ -63,7 +66,7 @@ export function QRDisplay({ value, sessionId, address }: QRDisplayProps) {
         {address && (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 12, color: colors.textSecondary }}>
-              address:
+              {t("qr.addressLabel")}
             </span>
             <span
               style={{

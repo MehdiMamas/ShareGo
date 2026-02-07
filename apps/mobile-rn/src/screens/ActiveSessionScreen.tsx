@@ -98,6 +98,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
   const [copied, setCopied] = useState<number | null>(null);
   const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set());
   const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     return () => {
@@ -111,6 +112,14 @@ export function ActiveSessionScreen({ navigation }: Props) {
       navigation.reset({ index: 0, routes: [{ name: "Home" }] });
     }
   }, [session.state, navigation]);
+
+  // auto-scroll to latest message
+  const itemCount = session.sentItems.length + session.receivedItems.length;
+  useEffect(() => {
+    if (itemCount > 0) {
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+    }
+  }, [itemCount]);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -244,6 +253,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
 
         {/* messages */}
         <FlatList
+          ref={flatListRef}
           style={styles.messageList}
           data={items}
           keyExtractor={(item, index) =>
@@ -252,6 +262,8 @@ export function ActiveSessionScreen({ navigation }: Props) {
               : `recv-${(item.data as ReceivedItem).id}-${index}`
           }
           renderItem={renderItem}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>{t("session.emptyMessages")}</Text>

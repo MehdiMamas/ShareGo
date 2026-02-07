@@ -59,6 +59,11 @@ const en = {
     rejected: "rejected",
     closed: "closed",
   },
+  qr: {
+    hint: "scan the QR code on the other device",
+    codeLabel: "code:",
+    addressLabel: "address:",
+  },
   camera: {
     error: "camera not available — use manual code entry instead",
     hint: "point the camera at the QR code",

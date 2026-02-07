@@ -33,8 +33,14 @@ export interface ILocalTransport {
   /** register a callback for incoming messages */
   onMessage(cb: MessageCallback): void;
 
+  /** unregister a message callback */
+  offMessage(cb: MessageCallback): void;
+
   /** register a callback for transport state changes */
   onStateChange(cb: TransportStateCallback): void;
+
+  /** unregister a state change callback */
+  offStateChange(cb: TransportStateCallback): void;
 
   /** close the transport and release resources */
   close(): void;

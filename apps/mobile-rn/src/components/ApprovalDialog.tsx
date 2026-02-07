@@ -74,10 +74,6 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     marginBottom: 24,
   },
-  deviceName: {
-    fontWeight: "700",
-    color: colors.textPrimary,
-  },
   buttons: {
     flexDirection: "row",
     gap: 12,

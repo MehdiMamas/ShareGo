@@ -135,7 +135,7 @@ describe("deserializeMessage validation", () => {
       deserializeMessage(
         makeBytes({ v: PROTOCOL_VERSION, type: "HELLO", sid: "X", seq: 1, deviceName: "d" }),
       ),
-    ).toThrow("HELLO: missing public key");
+    ).toThrow("HELLO: public key: missing");
   });
 
   it("should reject HELLO without device name", () => {
@@ -151,7 +151,7 @@ describe("deserializeMessage validation", () => {
       deserializeMessage(
         makeBytes({ v: PROTOCOL_VERSION, type: "CHALLENGE", sid: "X", seq: 1, pk: "k" }),
       ),
-    ).toThrow("CHALLENGE: missing nonce");
+    ).toThrow("CHALLENGE: nonce: missing");
   });
 
   it("should reject AUTH without proof", () => {
@@ -159,7 +159,7 @@ describe("deserializeMessage validation", () => {
       deserializeMessage(
         makeBytes({ v: PROTOCOL_VERSION, type: "AUTH", sid: "X", seq: 1 }),
       ),
-    ).toThrow("AUTH: missing proof");
+    ).toThrow("AUTH: proof: missing");
   });
 
   it("should reject DATA without ciphertext", () => {
@@ -167,7 +167,7 @@ describe("deserializeMessage validation", () => {
       deserializeMessage(
         makeBytes({ v: PROTOCOL_VERSION, type: "DATA", sid: "X", seq: 1, nonce: "n" }),
       ),
-    ).toThrow("DATA: missing ciphertext");
+    ).toThrow("DATA: ciphertext: missing");
   });
 
   it("should reject DATA without nonce", () => {
@@ -175,7 +175,7 @@ describe("deserializeMessage validation", () => {
       deserializeMessage(
         makeBytes({ v: PROTOCOL_VERSION, type: "DATA", sid: "X", seq: 1, ciphertext: "c" }),
       ),
-    ).toThrow("DATA: missing nonce");
+    ).toThrow("DATA: nonce: missing");
   });
 
   it("should reject ACK without ackSeq", () => {
