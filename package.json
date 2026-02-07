@@ -9,6 +9,10 @@
     "apps/*"
   ],
   "scripts": {
+    "setup": "bash scripts/setup.sh",
+    "setup:ios": "bash scripts/setup.sh ios",
+    "setup:android": "bash scripts/setup.sh android",
+    "setup:desktop": "bash scripts/setup.sh desktop",
     "build:core": "npm run build --workspace=core",
     "test:core": "npm run test --workspace=core",
     "build:desktop": "bash scripts/build-desktop.sh",
@@ -25,7 +29,10 @@
     "check:android": "bash scripts/check.sh android",
     "check:ios": "bash scripts/check.sh ios",
     "dev:desktop": "npm run dev --workspace=sharego-desktop",
-    "dev:mobile": "npm run start --workspace=sharego-mobile"
+    "dev:mobile": "npm run start --workspace=sharego-mobile",
+    "dev:ios": "bash scripts/dev-ios.sh",
+    "dev:ios:device": "bash scripts/dev-ios.sh --device",
+    "dev:android": "npm run android --workspace=sharego-mobile"
   },
   "engines": {
     "node": ">=18.0.0"

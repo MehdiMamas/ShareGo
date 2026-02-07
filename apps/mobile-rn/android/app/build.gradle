@@ -42,7 +42,7 @@ react {
 
     /* Hermes Commands */
     // monorepo: hermesc lives under root node_modules
-    hermesCommand = file("../../../../node_modules/react-native/sdks/hermesc/%OS-BIN%/hermesc")
+    hermesCommand = file("../../../../node_modules/react-native/sdks/hermesc/%OS-BIN%/hermesc").absolutePath
 
     /* Autolinking */
     autolinkLibrariesWithApp()
