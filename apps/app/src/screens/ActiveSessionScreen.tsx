@@ -18,6 +18,7 @@ import { SessionState, COPY_FEEDBACK_MS, en } from "../lib/core";
 import { StatusIndicator } from "../components/StatusIndicator";
 import { EyeIcon, EyeOffIcon } from "../components/Icons";
 import { colors } from "../styles/theme";
+import { isElectron } from "../platform";
 import type { ReceivedItem, SentItem } from "../hooks/useSession";
 
 const MASKED_TEXT = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
@@ -32,7 +33,26 @@ type ListItem =
 
 /** copy text to clipboard (cross-platform) */
 function copyToClipboard(text: string): void {
-  // try modern clipboard API first (works in secure contexts)
+  // electron: use native clipboard via IPC (works without user gesture)
+  if (isElectron && window.electronAPI?.copyToClipboard) {
+    window.electronAPI.copyToClipboard(text);
+    return;
+  }
+
+  // react native: use @react-native-clipboard/clipboard
+  if (Platform.OS !== "web") {
+    try {
+      // dynamic require so web/electron bundles don't try to resolve this
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const RNClipboard = require("@react-native-clipboard/clipboard").default;
+      RNClipboard.setString(text);
+    } catch {
+      // best effort
+    }
+    return;
+  }
+
+  // web: modern clipboard API
   if (typeof navigator !== "undefined" && navigator.clipboard) {
     navigator.clipboard.writeText(text).catch(() => {
       fallbackCopy(text);
@@ -42,7 +62,7 @@ function copyToClipboard(text: string): void {
   fallbackCopy(text);
 }
 
-/** fallback copy using a temporary textarea (works in electron file:// context) */
+/** fallback copy using a temporary textarea (web only) */
 function fallbackCopy(text: string): void {
   if (typeof document === "undefined") return;
   const textarea = document.createElement("textarea");

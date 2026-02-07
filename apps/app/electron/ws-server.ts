@@ -9,7 +9,7 @@
  * - graceful shutdown
  */
 
-import { WebSocketServer, WebSocket } from "ws";
+import ws from "ws";
 import http from "http";
 import { getLanIp } from "./net-utils.js";
 
@@ -24,9 +24,9 @@ export interface WsServerEvents {
 }
 
 export class ElectronWsServer {
-  private wss: WebSocketServer | null = null;
+  private wss: ws.Server | null = null;
   private httpServer: http.Server | null = null;
-  private peer: WebSocket | null = null;
+  private peer: ws | null = null;
   private boundAddress: string | null = null;
 
   /**
@@ -49,7 +49,7 @@ export class ElectronWsServer {
     const actualPort = (server.address() as { port: number }).port;
     this.boundAddress = `${localIp}:${actualPort}`;
 
-    this.wss = new WebSocketServer({ server, maxPayload: MAX_MESSAGE_SIZE });
+    this.wss = new ws.Server({ server, maxPayload: MAX_MESSAGE_SIZE });
 
     this.wss.on("connection", (ws) => {
       // single peer enforcement
@@ -84,7 +84,7 @@ export class ElectronWsServer {
    * send binary data to the connected peer.
    */
   send(data: Buffer | Uint8Array): void {
-    if (!this.peer || this.peer.readyState !== WebSocket.OPEN) {
+    if (!this.peer || this.peer.readyState !== ws.OPEN) {
       throw new Error("no peer connected");
     }
     this.peer.send(data);
