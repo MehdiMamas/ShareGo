@@ -30,6 +30,8 @@ export {
   WS_CONNECT_TIMEOUT_MS,
   COUNTDOWN_INTERVAL_MS,
   CODE_PLACEHOLDER,
+  DEVICE_NAME_RECEIVER,
+  DEVICE_NAME_SENDER,
   // branded types
   type SessionId,
   type NetworkAddress,
@@ -38,8 +40,6 @@ export {
   // discovery
   discoverReceiver,
   type DiscoveryOptions,
-  // strings
-  strings,
   // i18n
   en,
 } from "@sharego/core";

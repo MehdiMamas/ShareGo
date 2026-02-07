@@ -11,4 +11,5 @@ export const colors = {
   white: "#ffffff",
   black: "#000000",
   sentStatusText: "rgba(255,255,255,0.6)",
+  overlay: "rgba(0, 0, 0, 0.6)",
 } as const;
