@@ -16,7 +16,9 @@ import {
   DEFAULT_PORT,
   SESSION_CODE_LENGTH,
   CODE_PLACEHOLDER,
+  DEVICE_NAME_SENDER,
   discoverReceiver,
+  en,
 } from "../lib/core";
 import { StatusIndicator } from "../components/StatusIndicator";
 import { QRScanner } from "../components/QRScanner";
@@ -59,14 +61,14 @@ export function SendScreen({ navigation }: Props) {
         const t = transport.createSenderTransport();
         await session.startSender(
           t,
-          { deviceName: "ShareGo Sender" },
+          { deviceName: DEVICE_NAME_SENDER },
           addr,
           pk,
           sid,
         );
       } catch (err) {
         setInputError(
-          err instanceof Error ? err.message : "connection failed",
+          err instanceof Error ? err.message : en.send.errorConnectionFailed,
         );
         setConnecting(false);
       }
@@ -81,7 +83,7 @@ export function SendScreen({ navigation }: Props) {
         await connectToReceiver(payload.addr as string, payload.pk as string, payload.sid as string);
       } catch (err) {
         setInputError(
-          err instanceof Error ? err.message : "invalid QR code",
+          err instanceof Error ? err.message : en.send.errorInvalidQr,
         );
       }
     },
@@ -90,7 +92,7 @@ export function SendScreen({ navigation }: Props) {
 
   const handleManualConnect = async () => {
     if (code.length !== SESSION_CODE_LENGTH) {
-      setInputError("code must be 6 characters");
+      setInputError(en.send.errorCodeLength);
       return;
     }
 
@@ -110,7 +112,7 @@ export function SendScreen({ navigation }: Props) {
       });
       if (controller.signal.aborted) return;
       if (!result) {
-        setInputError("receiver not found on the network");
+        setInputError(en.send.errorNotFound);
         setDiscovering(false);
         return;
       }
@@ -120,7 +122,7 @@ export function SendScreen({ navigation }: Props) {
     } catch (err) {
       if (controller.signal.aborted) return;
       setInputError(
-        err instanceof Error ? err.message : "discovery failed",
+        err instanceof Error ? err.message : en.send.errorDiscovery,
       );
       setDiscovering(false);
     }
@@ -148,7 +150,7 @@ export function SendScreen({ navigation }: Props) {
             navigation.goBack();
           }}
         >
-          <Text style={styles.backButtonText}>back</Text>
+          <Text style={styles.backButtonText}>{en.common.back}</Text>
         </TouchableOpacity>
         <StatusIndicator state={session.state} />
       </View>
@@ -165,7 +167,7 @@ export function SendScreen({ navigation }: Props) {
               tab === "scan" && styles.activeTabText,
             ]}
           >
-            scan QR
+            {en.send.tabScan}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -178,7 +180,7 @@ export function SendScreen({ navigation }: Props) {
               tab === "code" && styles.activeTabText,
             ]}
           >
-            enter code
+            {en.send.tabCode}
           </Text>
         </TouchableOpacity>
       </View>
@@ -192,7 +194,7 @@ export function SendScreen({ navigation }: Props) {
         {tab === "code" && !connecting && !discovering && (
           <View style={styles.codeForm}>
             <Text style={styles.hintText}>
-              enter the 6-character code shown on the other device
+              {en.send.hintCode}
             </Text>
 
             <TextInput
@@ -214,7 +216,7 @@ export function SendScreen({ navigation }: Props) {
               disabled={isConnecting || code.length !== SESSION_CODE_LENGTH}
               onPress={handleManualConnect}
             >
-              <Text style={styles.connectButtonText}>connect</Text>
+              <Text style={styles.connectButtonText}>{en.send.connectButton}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -222,13 +224,13 @@ export function SendScreen({ navigation }: Props) {
         {discovering && (
           <>
             <Text style={styles.statusText}>
-              searching for receiver...
+              {en.send.searching}
             </Text>
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={handleCancel}
             >
-              <Text style={styles.cancelButtonText}>cancel</Text>
+              <Text style={styles.cancelButtonText}>{en.common.cancel}</Text>
             </TouchableOpacity>
           </>
         )}
@@ -237,14 +239,14 @@ export function SendScreen({ navigation }: Props) {
           <>
             <Text style={styles.statusText}>
               {session.state === SessionState.PendingApproval
-                ? "waiting for approval..."
-                : "connecting..."}
+                ? en.send.waitingApproval
+                : en.send.connecting}
             </Text>
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={handleCancel}
             >
-              <Text style={styles.cancelButtonText}>cancel</Text>
+              <Text style={styles.cancelButtonText}>{en.common.cancel}</Text>
             </TouchableOpacity>
           </>
         )}
@@ -255,7 +257,7 @@ export function SendScreen({ navigation }: Props) {
         )}
         {session.state === SessionState.Rejected && (
           <Text style={styles.errorText}>
-            connection rejected by receiver
+            {en.send.errorRejected}
           </Text>
         )}
       </View>

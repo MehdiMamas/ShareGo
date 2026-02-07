@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import QRCode from "react-native-qrcode-svg";
+import { en } from "../lib/core";
 import { colors } from "../styles/theme";
 
 interface QRDisplayProps {
@@ -22,18 +23,18 @@ export function QRDisplay({ value, sessionId, address }: QRDisplayProps) {
       </View>
 
       <Text style={styles.hint}>
-        scan this QR code with the other device
+        {en.qr.hint}
       </Text>
 
       <View style={styles.codeSection}>
         <View style={styles.codeRow}>
-          <Text style={styles.codeLabel}>code</Text>
+          <Text style={styles.codeLabel}>{en.qr.codeLabel}</Text>
           <Text style={styles.codeValue}>{sessionId}</Text>
         </View>
 
         {address && (
           <View style={styles.codeRow}>
-            <Text style={styles.codeLabel}>address</Text>
+            <Text style={styles.codeLabel}>{en.qr.addressLabel}</Text>
             <Text style={styles.addressValue}>{address}</Text>
           </View>
         )}

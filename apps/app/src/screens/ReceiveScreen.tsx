@@ -10,6 +10,8 @@ import {
   BOOTSTRAP_TTL,
   REGENERATION_DELAY_MS,
   COUNTDOWN_INTERVAL_MS,
+  DEVICE_NAME_RECEIVER,
+  en,
 } from "../lib/core";
 import { QRDisplay } from "../components/QRDisplay";
 import { ApprovalDialog } from "../components/ApprovalDialog";
@@ -37,7 +39,7 @@ export function ReceiveScreen({ navigation }: Props) {
     const transportInstance = transport.createReceiverTransport();
     session
       .startReceiver(transportInstance, {
-        deviceName: "ShareGo",
+        deviceName: DEVICE_NAME_RECEIVER,
         port: DEFAULT_PORT,
         bootstrapTtl,
       })
@@ -110,7 +112,7 @@ export function ReceiveScreen({ navigation }: Props) {
             navigation.goBack();
           }}
         >
-          <Text style={styles.backButtonText}>back</Text>
+          <Text style={styles.backButtonText}>{en.common.back}</Text>
         </TouchableOpacity>
         <StatusIndicator state={session.state} />
       </View>
@@ -118,11 +120,11 @@ export function ReceiveScreen({ navigation }: Props) {
       {/* content */}
       <View style={styles.content}>
         {!started && !initError && (
-          <Text style={styles.statusText}>starting session...</Text>
+          <Text style={styles.statusText}>{en.receive.starting}</Text>
         )}
 
         {initError && (
-          <Text style={styles.errorText}>failed to start: {initError}</Text>
+          <Text style={styles.errorText}>{en.receive.failedStart.replace("{{detail}}", initError)}</Text>
         )}
 
         {isWaiting && session.qrPayload && session.sessionId && (
@@ -133,21 +135,21 @@ export function ReceiveScreen({ navigation }: Props) {
               address={session.localAddress ?? undefined}
             />
             {countdown === 0 ? (
-              <Text style={styles.expires}>regenerating...</Text>
+              <Text style={styles.expires}>{en.receive.regenerating}</Text>
             ) : (
               <Text style={styles.expires}>
-                expires in {countdown}s
+                {en.receive.expires.replace("{{seconds}}", String(countdown))}
               </Text>
             )}
           </>
         )}
 
         {started && isWaiting && !session.qrPayload && (
-          <Text style={styles.statusText}>preparing QR code...</Text>
+          <Text style={styles.statusText}>{en.receive.waitingQr}</Text>
         )}
 
         {session.state === SessionState.Handshaking && (
-          <Text style={styles.statusText}>handshaking...</Text>
+          <Text style={styles.statusText}>{en.receive.handshaking}</Text>
         )}
 
         {session.error && (
@@ -160,7 +162,7 @@ export function ReceiveScreen({ navigation }: Props) {
         <ApprovalDialog
           request={session.pairingRequest}
           onApprove={session.approve}
-          onReject={() => session.reject("user rejected")}
+          onReject={() => session.reject(en.common.rejectionReason)}
         />
       )}
     </SafeAreaView>

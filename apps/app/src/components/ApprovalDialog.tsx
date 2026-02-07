@@ -1,6 +1,7 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from "react-native";
+import React, { useEffect } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Platform } from "react-native";
 import type { PairingRequest } from "../lib/core";
+import { en } from "../lib/core";
 import { colors } from "../styles/theme";
 
 interface ApprovalDialogProps {
@@ -14,13 +15,29 @@ export function ApprovalDialog({
   onApprove,
   onReject,
 }: ApprovalDialogProps) {
+  // keyboard shortcuts for web/electron: Enter=approve, Escape=reject
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        onApprove();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        onReject();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onApprove, onReject]);
+
   return (
     <Modal transparent animationType="fade" visible>
       <View style={styles.overlay}>
         <View style={styles.dialog}>
-          <Text style={styles.title}>pairing request</Text>
+          <Text style={styles.title}>{en.approval.title}</Text>
           <Text style={styles.message}>
-            {`"${request.deviceName}" wants to connect. approve?`}
+            {en.approval.body.replace("{{deviceName}}", request.deviceName)}
           </Text>
 
           <View style={styles.buttons}>
@@ -28,13 +45,13 @@ export function ApprovalDialog({
               style={styles.rejectButton}
               onPress={onReject}
             >
-              <Text style={styles.rejectButtonText}>reject</Text>
+              <Text style={styles.rejectButtonText}>{en.approval.reject}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.acceptButton}
               onPress={onApprove}
             >
-              <Text style={styles.acceptButtonText}>accept</Text>
+              <Text style={styles.acceptButtonText}>{en.approval.accept}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -48,7 +65,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backgroundColor: colors.overlay,
   },
   dialog: {
     backgroundColor: colors.surface,

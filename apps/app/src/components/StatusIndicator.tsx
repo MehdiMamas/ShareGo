@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { SessionState } from "../lib/core";
+import { SessionState, en } from "../lib/core";
 import { colors } from "../styles/theme";
 
 interface StatusIndicatorProps {
@@ -18,13 +18,13 @@ const stateColors: Record<string, string> = {
 };
 
 const stateLabels: Record<string, string> = {
-  [SessionState.Created]: "created",
-  [SessionState.WaitingForSender]: "waiting for sender",
-  [SessionState.Handshaking]: "handshaking",
-  [SessionState.PendingApproval]: "pending approval",
-  [SessionState.Active]: "active",
-  [SessionState.Rejected]: "rejected",
-  [SessionState.Closed]: "closed",
+  [SessionState.Created]: en.status.created,
+  [SessionState.WaitingForSender]: en.status.waitingForSender,
+  [SessionState.Handshaking]: en.status.handshaking,
+  [SessionState.PendingApproval]: en.status.pendingApproval,
+  [SessionState.Active]: en.status.active,
+  [SessionState.Rejected]: en.status.rejected,
+  [SessionState.Closed]: en.status.closed,
 };
 
 export function StatusIndicator({ state }: StatusIndicatorProps) {

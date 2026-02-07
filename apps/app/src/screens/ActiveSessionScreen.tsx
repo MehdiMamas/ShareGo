@@ -14,8 +14,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../App";
 import { SessionContext } from "../App";
-import { SessionState, COPY_FEEDBACK_MS } from "../lib/core";
+import { SessionState, COPY_FEEDBACK_MS, en } from "../lib/core";
 import { StatusIndicator } from "../components/StatusIndicator";
+import { EyeIcon, EyeOffIcon } from "../components/Icons";
 import { colors } from "../styles/theme";
 import type { ReceivedItem, SentItem } from "../hooks/useSession";
 
@@ -141,10 +142,14 @@ export function ActiveSessionScreen({ navigation }: Props) {
               style={styles.eyeButton}
               onPress={() => toggleVisibility(key)}
             >
-              <Text style={styles.eyeText}>{isVisible ? "hide" : "show"}</Text>
+              {isVisible ? (
+                <EyeOffIcon size={16} color={colors.sentStatusText} />
+              ) : (
+                <EyeIcon size={16} color={colors.sentStatusText} />
+              )}
             </TouchableOpacity>
             <Text style={styles.sentStatus}>
-              {sent.acked ? "delivered" : "sending..."}
+              {sent.acked ? en.session.delivered : en.session.sending}
             </Text>
           </View>
         </View>
@@ -164,17 +169,21 @@ export function ActiveSessionScreen({ navigation }: Props) {
             style={styles.eyeButton}
             onPress={() => toggleVisibility(key)}
           >
-            <Text style={styles.eyeText}>{isVisible ? "hide" : "show"}</Text>
+            {isVisible ? (
+              <EyeOffIcon size={16} color={colors.textSecondary} />
+            ) : (
+              <EyeIcon size={16} color={colors.textSecondary} />
+            )}
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.copyButton,
-              copied === received.id && styles.copiedButton,
-            ]}
-            onPress={() => handleCopy(received.text, received.id)}
-          >
-            <Text style={styles.copyButtonText}>
-              {copied === received.id ? "copied!" : "copy"}
+            <TouchableOpacity
+              style={[
+                styles.copyButton,
+                copied === received.id && styles.copiedButton,
+              ]}
+              onPress={() => handleCopy(received.text, received.id)}
+            >
+              <Text style={styles.copyButtonText}>
+                {copied === received.id ? en.session.copied : en.session.copy}
             </Text>
           </TouchableOpacity>
         </View>
@@ -198,7 +207,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
           </View>
           <View style={styles.headerActions}>
             <View style={styles.autoCopyRow}>
-              <Text style={styles.autoCopyLabel}>auto-copy</Text>
+              <Text style={styles.autoCopyLabel}>{en.session.autoCopy}</Text>
               <Switch
                 value={autoCopy}
                 onValueChange={setAutoCopy}
@@ -210,7 +219,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
               style={styles.endButton}
               onPress={() => session.endSession()}
             >
-              <Text style={styles.endButtonText}>end session</Text>
+              <Text style={styles.endButtonText}>{en.session.endSession}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -230,7 +239,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
           keyboardShouldPersistTaps="handled"
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>no messages yet. type below to send.</Text>
+              <Text style={styles.emptyText}>{en.session.emptyHint}</Text>
             </View>
           }
           contentContainerStyle={
@@ -244,7 +253,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
             style={styles.textInput}
             value={input}
             onChangeText={setInput}
-            placeholder="type a password, OTP, or text..."
+            placeholder={en.session.inputPlaceholder}
             placeholderTextColor={colors.textSecondary}
             returnKeyType="send"
             onSubmitEditing={handleSend}
@@ -257,7 +266,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
             disabled={!input.trim()}
             onPress={handleSend}
           >
-            <Text style={styles.sendButtonText}>send</Text>
+            <Text style={styles.sendButtonText}>{en.session.sendButton}</Text>
           </TouchableOpacity>
         </View>
 
@@ -363,10 +372,8 @@ const styles = StyleSheet.create({
   },
   eyeButton: {
     padding: 4,
-  },
-  eyeText: {
-    fontSize: 11,
-    color: colors.textSecondary,
+    alignItems: "center",
+    justifyContent: "center",
   },
   sentStatus: {
     fontSize: 11,

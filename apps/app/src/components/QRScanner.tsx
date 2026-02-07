@@ -6,10 +6,49 @@
 
 import React, { useCallback, useRef, useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from "react-native";
+import { en } from "../lib/core";
 import { colors } from "../styles/theme";
 
 interface QRScannerProps {
   onScanned: (data: string) => void;
+}
+
+/** dynamically imported vision-camera module shape */
+interface VisionCameraModule {
+  Camera: React.ComponentType<Record<string, unknown>>;
+  useCameraDevice: (position: string) => unknown;
+  useCodeScanner: (opts: CodeScannerOptions) => unknown;
+}
+
+interface CodeScannerOptions {
+  codeTypes: string[];
+  onCodeScanned: (codes: ScannedCode[]) => void;
+}
+
+interface ScannedCode {
+  type: string;
+  value?: string;
+}
+
+interface MobileCameraViewProps {
+  Camera: React.ComponentType<Record<string, unknown>>;
+  useCameraDevice: (position: string) => unknown;
+  useCodeScanner: (opts: CodeScannerOptions) => unknown;
+  scannedRef: React.MutableRefObject<boolean>;
+  showRetry: boolean;
+  setShowRetry: (v: boolean) => void;
+  onScanned: (data: string) => void;
+  handleReset: () => void;
+}
+
+interface Html5QrScanner {
+  start: (
+    cameraIdOrConfig: Record<string, unknown>,
+    config: Record<string, unknown>,
+    onSuccess: (text: string) => void,
+    onError: () => void,
+  ) => Promise<void>;
+  stop: () => Promise<void>;
 }
 
 /**
@@ -17,7 +56,7 @@ interface QRScannerProps {
  */
 function MobileQRScanner({ onScanned }: QRScannerProps) {
   // dynamic import to avoid pulling native modules into web bundle
-  const [VisionCamera, setVisionCamera] = useState<any>(null);
+  const [VisionCamera, setVisionCamera] = useState<VisionCameraModule | null>(null);
   const scannedRef = useRef(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [showRetry, setShowRetry] = useState(false);
@@ -45,7 +84,7 @@ function MobileQRScanner({ onScanned }: QRScannerProps) {
   if (!VisionCamera || hasPermission === null) {
     return (
       <View style={styles.placeholder}>
-        <Text style={styles.placeholderText}>requesting camera access...</Text>
+        <Text style={styles.placeholderText}>{en.camera.requesting}</Text>
       </View>
     );
   }
@@ -54,7 +93,7 @@ function MobileQRScanner({ onScanned }: QRScannerProps) {
     return (
       <View style={styles.placeholder}>
         <Text style={styles.placeholderText}>
-          camera access denied. enable it in settings to scan QR codes.
+          {en.camera.denied}
         </Text>
       </View>
     );
@@ -86,14 +125,14 @@ function MobileCameraView({
   setShowRetry,
   onScanned,
   handleReset,
-}: any) {
+}: MobileCameraViewProps) {
   const device = useCameraDevice("back");
 
   const codeScanner = useCodeScanner({
     codeTypes: ["qr"],
-    onCodeScanned: (codes: any[]) => {
+    onCodeScanned: (codes: ScannedCode[]) => {
       if (scannedRef.current) return;
-      const qrCode = codes.find((c: any) => c.type === "qr" && c.value);
+      const qrCode = codes.find((c) => c.type === "qr" && c.value);
       if (qrCode?.value) {
         scannedRef.current = true;
         setShowRetry(true);
@@ -105,7 +144,7 @@ function MobileCameraView({
   if (!device) {
     return (
       <View style={styles.placeholder}>
-        <Text style={styles.placeholderText}>no camera found</Text>
+        <Text style={styles.placeholderText}>{en.camera.notFound}</Text>
       </View>
     );
   }
@@ -123,10 +162,10 @@ function MobileCameraView({
       </View>
       {showRetry ? (
         <TouchableOpacity style={styles.retryButton} onPress={handleReset}>
-          <Text style={styles.retryText}>tap to scan again</Text>
+          <Text style={styles.retryText}>{en.camera.retryHint}</Text>
         </TouchableOpacity>
       ) : (
-        <Text style={styles.hint}>point camera at QR code</Text>
+        <Text style={styles.hint}>{en.camera.hint}</Text>
       )}
     </View>
   );
@@ -136,7 +175,7 @@ function MobileCameraView({
  * web/electron QR scanner using html5-qrcode.
  */
 function WebQRScanner({ onScanned }: QRScannerProps) {
-  const scannerRef = useRef<any>(null);
+  const scannerRef = useRef<Html5QrScanner | null>(null);
   const containerRef = useRef<string>("qr-scanner-" + Date.now());
   const [error, setError] = useState<string | null>(null);
   const scannedRef = useRef(false);
