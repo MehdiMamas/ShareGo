@@ -34,6 +34,13 @@ export default function App() {
     }
   }, [session.state]);
 
+  // navigate home when session closes (e.g. peer ended the session)
+  useEffect(() => {
+    if (session.state === SessionState.Closed && screen === "active") {
+      setScreen("home");
+    }
+  }, [session.state, screen]);
+
   // navigate to a screen, ensuring any previous session is cleaned up
   const navigateTo = useCallback(
     (target: AppScreen) => {
