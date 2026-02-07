@@ -5,6 +5,8 @@ import type { PairingRequest } from "./types.js";
 import type { ILocalTransport } from "../transport/index.js";
 import type { QrPayload } from "../protocol/index.js";
 import { PROTOCOL_VERSION, encodeQrPayload } from "../protocol/index.js";
+import type { SessionId, NetworkAddress, SequenceNumber } from "../types/index.js";
+import { asNetworkAddress } from "../types/index.js";
 
 export interface ReceivedItem {
   id: number;
@@ -13,7 +15,7 @@ export interface ReceivedItem {
 }
 
 export interface SentItem {
-  seq: number;
+  seq: SequenceNumber;
   text: string;
   acked: boolean;
   timestamp: number;
@@ -21,9 +23,9 @@ export interface SentItem {
 
 export interface SessionSnapshot {
   state: SessionState;
-  sessionId: string | null;
+  sessionId: SessionId | null;
   qrPayload: string | null;
-  localAddress: string | null;
+  localAddress: NetworkAddress | null;
   pairingRequest: PairingRequest | null;
   receivedItems: ReceivedItem[];
   sentItems: SentItem[];
@@ -93,7 +95,7 @@ export class SessionController {
       });
     });
 
-    session.on(SessionEvent.DataAcknowledged, (seq: number) => {
+    session.on(SessionEvent.DataAcknowledged, (seq: SequenceNumber) => {
       this.update({
         sentItems: this.snapshot.sentItems.map((item) =>
           item.seq === seq ? { ...item, acked: true } : item,
@@ -141,15 +143,16 @@ export class SessionController {
 
     const addr = transport.getLocalAddress();
     if (addr) {
+      const networkAddr = asNetworkAddress(addr);
       const payload: QrPayload = {
         v: PROTOCOL_VERSION,
         sid: session.id,
-        addr,
+        addr: networkAddr,
         pk: session.getPublicKey()!,
         exp: session.getBootstrapTtl(),
       };
       this.update({
-        localAddress: addr,
+        localAddress: networkAddr,
         qrPayload: encodeQrPayload(payload),
       });
     }
@@ -160,7 +163,7 @@ export class SessionController {
     config: SessionConfig,
     addr: string,
     receiverPk?: string,
-    sid?: string,
+    sid?: SessionId,
   ): Promise<void> {
     this.cleanup();
     this.update({ error: null });

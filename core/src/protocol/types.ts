@@ -1,3 +1,13 @@
+import type {
+  SessionId,
+  Base64PublicKey,
+  Base64Nonce,
+  Base64Ciphertext,
+  Base64Proof,
+  NetworkAddress,
+  SequenceNumber,
+} from "../types/index.js";
+
 /**
  * protocol version — bump on breaking wire format changes.
  */
@@ -34,16 +44,16 @@ export interface BaseMessage {
   /** message type */
   type: MessageType;
   /** session id */
-  sid: string;
+  sid: SessionId;
   /** monotonic sequence number (for ordering and replay detection) */
-  seq: number;
+  seq: SequenceNumber;
 }
 
 /** sender -> receiver: start handshake */
 export interface HelloMessage extends BaseMessage {
   type: MessageType.HELLO;
   /** sender's ephemeral public key (base64) */
-  pk: string;
+  pk: Base64PublicKey;
   /** sender's device name (for display in approval prompt) */
   deviceName: string;
 }
@@ -52,16 +62,16 @@ export interface HelloMessage extends BaseMessage {
 export interface ChallengeMessage extends BaseMessage {
   type: MessageType.CHALLENGE;
   /** random nonce (base64) the sender must sign */
-  nonce: string;
+  nonce: Base64Nonce;
   /** receiver's ephemeral public key (base64) */
-  pk: string;
+  pk: Base64PublicKey;
 }
 
 /** sender -> receiver: proof of key possession */
 export interface AuthMessage extends BaseMessage {
   type: MessageType.AUTH;
   /** the challenge nonce encrypted with the derived shared key (proves possession) */
-  proof: string;
+  proof: Base64Proof;
 }
 
 /** receiver -> sender: pairing accepted */
@@ -80,16 +90,16 @@ export interface RejectMessage extends BaseMessage {
 export interface DataMessage extends BaseMessage {
   type: MessageType.DATA;
   /** encrypted ciphertext (base64) */
-  ciphertext: string;
+  ciphertext: Base64Ciphertext;
   /** nonce used for encryption (base64) */
-  nonce: string;
+  nonce: Base64Nonce;
 }
 
 /** delivery acknowledgement */
 export interface AckMessage extends BaseMessage {
   type: MessageType.ACK;
   /** seq number of the DATA message being acknowledged */
-  ackSeq: number;
+  ackSeq: SequenceNumber;
 }
 
 /** session teardown */
@@ -116,11 +126,11 @@ export interface QrPayload {
   /** protocol version */
   v: number;
   /** session id */
-  sid: string;
+  sid: SessionId;
   /** receiver's LAN address (ip:port) */
-  addr: string;
+  addr: NetworkAddress;
   /** receiver's ephemeral public key (base64) */
-  pk: string;
+  pk: Base64PublicKey;
   /** expiry in seconds from creation */
   exp: number;
 }

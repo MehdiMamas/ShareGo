@@ -1,3 +1,5 @@
+import type { SequenceNumber } from "../types/index.js";
+
 /**
  * session states — matches the lifecycle in the protocol spec.
  *
@@ -47,7 +49,7 @@ export type SessionEventMap = {
   [SessionEvent.StateChanged]: (state: SessionState) => void;
   [SessionEvent.PairingRequest]: (request: PairingRequest) => void;
   [SessionEvent.DataReceived]: (plaintext: Uint8Array) => void;
-  [SessionEvent.DataAcknowledged]: (seq: number) => void;
+  [SessionEvent.DataAcknowledged]: (seq: SequenceNumber) => void;
   [SessionEvent.Error]: (error: Error) => void;
 };
 

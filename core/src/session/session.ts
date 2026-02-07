@@ -43,6 +43,21 @@ import {
   DEFAULT_PORT,
   MAX_SEQ_GAP,
 } from "../config.js";
+import type {
+  SessionId,
+  Base64PublicKey,
+  Base64Nonce,
+  Base64Ciphertext,
+  Base64Proof,
+  SequenceNumber,
+} from "../types/index.js";
+import {
+  asSessionId,
+  asBase64PublicKey,
+  asBase64Nonce,
+  asBase64Ciphertext,
+  asSequenceNumber,
+} from "../types/index.js";
 
 export { DEFAULT_PORT };
 
@@ -58,7 +73,7 @@ export interface SessionConfig {
 }
 
 export class Session {
-  readonly id: string;
+  readonly id: SessionId;
   readonly role: SessionRole;
 
   private state: SessionState = SessionState.Created;
@@ -67,8 +82,8 @@ export class Session {
   private peerPublicKey: Uint8Array | null = null;
   private challengeNonce: Uint8Array | null = null;
   private peerDeviceName: string | null = null;
-  private seq = 0;
-  private highestSeenSeq = 0;
+  private seq: SequenceNumber = asSequenceNumber(0);
+  private highestSeenSeq: SequenceNumber = asSequenceNumber(0);
   private helloReceived = false;
   private createdAt: number;
   private config: Required<SessionConfig>;
@@ -78,9 +93,9 @@ export class Session {
   private flushTimer: ReturnType<typeof setTimeout> | null = null;
   private closing = false;
 
-  constructor(role: SessionRole, config: SessionConfig, id?: string) {
+  constructor(role: SessionRole, config: SessionConfig, id?: SessionId) {
     this.role = role;
-    this.id = id ?? generateSessionId();
+    this.id = id ?? asSessionId(generateSessionId());
     this.createdAt = Date.now();
     this.config = {
       sessionTtl: config.sessionTtl ?? DEFAULT_SESSION_TTL,
@@ -96,8 +111,8 @@ export class Session {
   }
 
   /** get our ephemeral public key (base64) */
-  getPublicKey(): string | null {
-    return this.keyPair ? toBase64(this.keyPair.publicKey) : null;
+  getPublicKey(): Base64PublicKey | null {
+    return this.keyPair ? asBase64PublicKey(toBase64(this.keyPair.publicKey)) : null;
   }
 
   /** get bootstrap TTL (for QR expiry field) */
@@ -225,7 +240,7 @@ export class Session {
     // send HELLO
     this.sendMessage({
       ...createBaseFields(MessageType.HELLO, this.id, this.nextSeq()),
-      pk: toBase64(this.keyPair.publicKey),
+      pk: asBase64PublicKey(toBase64(this.keyPair.publicKey)),
       deviceName: this.config.deviceName,
     });
   }
@@ -236,7 +251,7 @@ export class Session {
    * send sensitive data (password, OTP, text) to the peer.
    * data is encrypted before transmission.
    */
-  sendData(plaintext: Uint8Array): number {
+  sendData(plaintext: Uint8Array): SequenceNumber {
     this.assertState(SessionState.Active);
     if (!this.sharedSecret) {
       throw new Error("no shared secret — handshake incomplete");
@@ -247,8 +262,8 @@ export class Session {
 
     this.sendMessage({
       ...createBaseFields(MessageType.DATA, this.id, seq),
-      ciphertext: toBase64(envelope.ciphertext),
-      nonce: toBase64(envelope.nonce),
+      ciphertext: asBase64Ciphertext(toBase64(envelope.ciphertext)),
+      nonce: asBase64Nonce(toBase64(envelope.nonce)),
     });
 
     return seq;
@@ -326,7 +341,7 @@ export class Session {
       if (msg.seq <= this.highestSeenSeq) {
         return; // duplicate or replayed message, ignore
       }
-      if (msg.seq > this.highestSeenSeq + MAX_SEQ_GAP) {
+      if (msg.seq > (this.highestSeenSeq as number) + MAX_SEQ_GAP) {
         this.emit(SessionEvent.Error, new Error("sequence number gap too large"));
         this.close();
         return;
@@ -392,8 +407,8 @@ export class Session {
     this.challengeNonce = generateNonce();
     this.sendMessage({
       ...createBaseFields(MessageType.CHALLENGE, this.id, this.nextSeq()),
-      nonce: toBase64(this.challengeNonce),
-      pk: toBase64(this.keyPair!.publicKey),
+      nonce: asBase64Nonce(toBase64(this.challengeNonce)),
+      pk: asBase64PublicKey(toBase64(this.keyPair!.publicKey)),
     });
   }
 
@@ -432,7 +447,7 @@ export class Session {
       ...createBaseFields(MessageType.AUTH, this.id, this.nextSeq()),
       proof: toBase64(
         new Uint8Array([...proof.nonce, ...proof.ciphertext]),
-      ),
+      ) as Base64Proof,
     });
   }
 
@@ -565,11 +580,12 @@ export class Session {
     this.transport.send(serializeMessage(msg));
   }
 
-  private nextSeq(): number {
-    if (this.seq >= Number.MAX_SAFE_INTEGER) {
+  private nextSeq(): SequenceNumber {
+    if ((this.seq as number) >= Number.MAX_SAFE_INTEGER) {
       throw new Error("sequence number overflow");
     }
-    return ++this.seq;
+    this.seq = asSequenceNumber((this.seq as number) + 1);
+    return this.seq;
   }
 
   private transition(next: SessionState): void {
