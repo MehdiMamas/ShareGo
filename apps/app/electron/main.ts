@@ -3,7 +3,7 @@
  * creates the app window, registers IPC handlers, and manages the WS server.
  */
 
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, clipboard, ipcMain, session, systemPreferences } from "electron";
 import path from "path";
 import { ElectronWsServer } from "./ws-server.js";
 import { getLanIp } from "./net-utils.js";
@@ -34,6 +34,24 @@ function createWindow(): void {
   mainWindow.once("ready-to-show", () => {
     mainWindow?.show();
   });
+
+  // open devtools in debug mode
+  if (process.env.SHAREGO_DEBUG) {
+    mainWindow.webContents.openDevTools({ mode: "detach" });
+    // pipe renderer console to terminal
+    mainWindow.webContents.on("console-message", (_e, level, message) => {
+      const tag = ["LOG", "WARN", "ERR"][level] ?? "LOG";
+      console.log(`[renderer:${tag}] ${message}`);
+    });
+  }
+
+  // grant camera/microphone permissions automatically
+  mainWindow.webContents.session.setPermissionRequestHandler(
+    (_webContents, permission, callback) => {
+      const allowed = ["media", "camera", "microphone"];
+      callback(allowed.includes(permission));
+    },
+  );
 
   // in dev, load from webpack dev server; in prod, load the built HTML
   if (process.env.ELECTRON_DEV_URL) {
@@ -76,6 +94,11 @@ function registerIpcHandlers(): void {
     // decode base64 back to binary
     const bytes = Buffer.from(data, "base64");
     wsServer.send(bytes);
+  });
+
+  // clipboard
+  ipcMain.on("clipboard:copy", (_event, text: string) => {
+    clipboard.writeText(text);
   });
 
   // network

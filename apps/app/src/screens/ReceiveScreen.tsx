@@ -25,19 +25,25 @@ interface Props {
 export function ReceiveScreen({ navigation }: Props) {
   const ctx = useContext(SessionContext)!;
   const { session, transport } = ctx;
+  // keep refs to avoid stale closures in effects
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
   const bootstrapTtl = BOOTSTRAP_TTL;
   const [started, setStarted] = useState(false);
   const [countdown, setCountdown] = useState(bootstrapTtl);
   const [initError, setInitError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
 
+  const transportRef = useRef(transport);
+  transportRef.current = transport;
+
   const startSession = useCallback(() => {
     setStarted(false);
     setCountdown(bootstrapTtl);
     setInitError(null);
 
-    const transportInstance = transport.createReceiverTransport();
-    session
+    const transportInstance = transportRef.current.createReceiverTransport();
+    sessionRef.current
       .startReceiver(transportInstance, {
         deviceName: DEVICE_NAME_RECEIVER,
         port: DEFAULT_PORT,
@@ -51,7 +57,7 @@ export function ReceiveScreen({ navigation }: Props) {
         console.error("failed to start receiver:", msg);
         setInitError(msg);
       });
-  }, [session, transport]);
+  }, []);
 
   // start on mount
   useEffect(() => {
@@ -82,20 +88,28 @@ export function ReceiveScreen({ navigation }: Props) {
     }
   }, [session.state, navigation]);
 
-  // auto-regenerate when expired
+  // auto-regenerate when expired (only when still waiting — never during handshake/active)
   const regeneratingRef = useRef(false);
   useEffect(() => {
     if (countdown !== 0 || !started || regeneratingRef.current) return;
+    // guard: don't regenerate if the session has already progressed past waiting
+    const state = sessionRef.current.state;
+    if (
+      state !== SessionState.WaitingForSender &&
+      state !== SessionState.Created
+    ) {
+      return;
+    }
     regeneratingRef.current = true;
 
     const regen = async () => {
-      session.endSession();
+      sessionRef.current.endSession();
       await new Promise((r) => setTimeout(r, REGENERATION_DELAY_MS));
       startSession();
       regeneratingRef.current = false;
     };
     regen();
-  }, [countdown, started, session, startSession]);
+  }, [countdown, started, startSession]);
 
   const isWaiting =
     session.state === SessionState.WaitingForSender ||

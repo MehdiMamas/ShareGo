@@ -179,6 +179,10 @@ function WebQRScanner({ onScanned }: QRScannerProps) {
   const containerRef = useRef<string>("qr-scanner-" + Date.now());
   const [error, setError] = useState<string | null>(null);
   const scannedRef = useRef(false);
+  // use a ref for the callback so the effect doesn't re-run when onScanned changes identity
+  const onScannedRef = useRef(onScanned);
+  onScannedRef.current = onScanned;
+  const startedRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -189,26 +193,48 @@ function WebQRScanner({ onScanned }: QRScannerProps) {
       const scanner = new Html5Qrcode(containerRef.current);
       scannerRef.current = scanner;
 
+      const onSuccess = (decodedText: string) => {
+        if (scannedRef.current) return;
+        scannedRef.current = true;
+        onScannedRef.current(decodedText);
+        try { scanner.stop().catch(() => {}); } catch { /* best effort */ }
+      };
+      const onFailure = () => {};
+      const config = { fps: 10, qrbox: { width: 200, height: 200 } };
+
+      // try environment camera first, fall back to user camera (desktop macs have no rear cam)
       scanner.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 200, height: 200 } },
-        (decodedText: string) => {
-          if (scannedRef.current) return;
-          scannedRef.current = true;
-          onScanned(decodedText);
-          scanner.stop().catch(() => {});
-        },
-        () => {},
-      ).catch((err: Error) => {
+        config,
+        onSuccess,
+        onFailure,
+      ).then(() => {
+        startedRef.current = true;
+      }).catch(() => {
+        if (!mounted) return;
+        return scanner.start(
+          { facingMode: "user" },
+          config,
+          onSuccess,
+          onFailure,
+        ).then(() => {
+          startedRef.current = true;
+        });
+      }).catch((err: Error) => {
         if (mounted) setError(err.message);
       });
+    }).catch(() => {
+      if (mounted) setError("failed to load QR scanner");
     });
 
     return () => {
       mounted = false;
-      scannerRef.current?.stop().catch(() => {});
+      // only stop if the scanner was successfully started
+      if (startedRef.current && scannerRef.current) {
+        try { scannerRef.current.stop().catch(() => {}); } catch { /* best effort */ }
+      }
     };
-  }, [onScanned]);
+  }, []); // no deps — mount once, use refs for callbacks
 
   if (error) {
     return (

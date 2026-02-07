@@ -23,6 +23,19 @@ import {
 import { StatusIndicator } from "../components/StatusIndicator";
 import { QRScanner } from "../components/QRScanner";
 import { colors } from "../styles/theme";
+import { isElectron } from "../platform";
+
+/** resolve local LAN IP for subnet discovery fallback */
+async function getLocalIp(): Promise<string | null> {
+  if (isElectron && window.electronAPI) {
+    try {
+      return await window.electronAPI.getLocalIp();
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
 
 interface Props {
   navigation: NativeStackNavigationProp<RootStackParamList, "Send">;
@@ -38,13 +51,18 @@ export function SendScreen({ navigation }: Props) {
   const [inputError, setInputError] = useState<string | null>(null);
   const discoveryAbortRef = useRef<AbortController | null>(null);
 
-  // abort discovery and end session on unmount
+  // keep a ref to session so the unmount cleanup doesn't depend on the object identity
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
+
+  // abort discovery on unmount — never end the session here;
+  // the session is ended explicitly by the user via back/cancel buttons
+  // or by the ActiveSession screen's end button.
   useEffect(() => {
     return () => {
       discoveryAbortRef.current?.abort();
-      session.endSession();
     };
-  }, [session]);
+  }, []);
 
   // navigate to active session when connected
   useEffect(() => {
@@ -107,7 +125,7 @@ export function SendScreen({ navigation }: Props) {
       const result = await discoverReceiver({
         sessionCode: code,
         port: DEFAULT_PORT,
-        getLocalIp: async () => null, // subnet scanning not supported on web
+        getLocalIp,
         signal: controller.signal,
       });
       if (controller.signal.aborted) return;

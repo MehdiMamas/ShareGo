@@ -6,6 +6,10 @@
 import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("electronAPI", {
+  // clipboard (uses electron's native clipboard — works without user gesture)
+  copyToClipboard: (text: string): void =>
+    ipcRenderer.send("clipboard:copy", text),
+
   // ws server control
   startWsServer: (port: number): Promise<string> =>
     ipcRenderer.invoke("ws:start", port),

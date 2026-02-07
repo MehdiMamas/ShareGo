@@ -32,9 +32,31 @@ type ListItem =
 
 /** copy text to clipboard (cross-platform) */
 function copyToClipboard(text: string): void {
+  // try modern clipboard API first (works in secure contexts)
   if (typeof navigator !== "undefined" && navigator.clipboard) {
-    navigator.clipboard.writeText(text).catch(() => {});
+    navigator.clipboard.writeText(text).catch(() => {
+      fallbackCopy(text);
+    });
+    return;
   }
+  fallbackCopy(text);
+}
+
+/** fallback copy using a temporary textarea (works in electron file:// context) */
+function fallbackCopy(text: string): void {
+  if (typeof document === "undefined") return;
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    document.execCommand("copy");
+  } catch {
+    // best effort
+  }
+  document.body.removeChild(textarea);
 }
 
 export function ActiveSessionScreen({ navigation }: Props) {

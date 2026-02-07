@@ -3,6 +3,7 @@
  * the renderer process accesses these via window.electronAPI.
  */
 export interface ElectronAPI {
+  copyToClipboard(text: string): void;
   startWsServer(port: number): Promise<string>;
   stopWsServer(): Promise<void>;
   wsSend(data: string): Promise<void>;
