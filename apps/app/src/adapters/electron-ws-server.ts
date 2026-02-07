@@ -1,0 +1,100 @@
+/**
+ * websocket server adapter for Electron.
+ * communicates with the main process WS server via IPC (window.electronAPI).
+ */
+
+import type {
+  WebSocketServerAdapter,
+  WebSocketClientAdapter,
+  ConnectionHandler,
+} from "../lib/core";
+
+/**
+ * wraps a single peer connection exposed via Electron IPC.
+ */
+class ElectronWsClient implements WebSocketClientAdapter {
+  private messageHandler: ((data: Uint8Array) => void) | null = null;
+  private closeHandler: (() => void) | null = null;
+  private unsubMessage: (() => void) | null = null;
+  private unsubClose: (() => void) | null = null;
+
+  constructor() {
+    const api = window.electronAPI!;
+
+    this.unsubMessage = api.onWsMessage((base64: string) => {
+      if (this.messageHandler) {
+        // decode base64 from IPC back to binary
+        const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+        this.messageHandler(binary);
+      }
+    });
+
+    this.unsubClose = api.onWsClose(() => {
+      if (this.closeHandler) this.closeHandler();
+    });
+  }
+
+  async connect(_url: string): Promise<void> {
+    // not used for server-side client
+  }
+
+  send(data: Uint8Array): void {
+    // encode binary to base64 for IPC transport
+    let binary = "";
+    for (let i = 0; i < data.length; i++) {
+      binary += String.fromCharCode(data[i]);
+    }
+    const base64 = btoa(binary);
+    window.electronAPI!.wsSend(base64);
+  }
+
+  onMessage(handler: (data: Uint8Array) => void): void {
+    this.messageHandler = handler;
+  }
+
+  onClose(handler: () => void): void {
+    this.closeHandler = handler;
+  }
+
+  close(): void {
+    this.unsubMessage?.();
+    this.unsubClose?.();
+    this.messageHandler = null;
+    this.closeHandler = null;
+  }
+}
+
+/**
+ * electron websocket server adapter.
+ * delegates to the main process via IPC for actual networking.
+ */
+export class ElectronWsServerAdapter implements WebSocketServerAdapter {
+  private connectionHandler: ConnectionHandler | null = null;
+  private unsubConnection: (() => void) | null = null;
+
+  async start(port: number): Promise<string> {
+    const api = window.electronAPI!;
+    const address = await api.startWsServer(port);
+
+    // listen for incoming connections from main process
+    this.unsubConnection = api.onWsConnection(() => {
+      if (this.connectionHandler) {
+        const client = new ElectronWsClient();
+        this.connectionHandler(client);
+      }
+    });
+
+    return address;
+  }
+
+  onConnection(handler: ConnectionHandler): void {
+    this.connectionHandler = handler;
+  }
+
+  async stop(): Promise<void> {
+    this.unsubConnection?.();
+    this.unsubConnection = null;
+    this.connectionHandler = null;
+    await window.electronAPI!.stopWsServer();
+  }
+}
