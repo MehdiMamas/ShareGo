@@ -90,9 +90,10 @@ export function deserializeMessage(data: Uint8Array): ProtocolMessage {
       assertBase64Field(parsed.nonce, "DATA: nonce");
       break;
     case MessageType.ACK:
-      if (typeof parsed.ackSeq !== "number") {
-        throw new Error("ACK: missing ackSeq");
+      if (typeof parsed.ackSeq !== "number" || parsed.ackSeq < 0 || !Number.isFinite(parsed.ackSeq)) {
+        throw new Error("ACK: missing or invalid ackSeq");
       }
+      parsed.ackSeq = asSequenceNumber(parsed.ackSeq);
       break;
   }
 

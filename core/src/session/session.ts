@@ -265,6 +265,9 @@ export class Session {
    * data is encrypted before transmission.
    */
   sendData(plaintext: Uint8Array): SequenceNumber {
+    if (this.closing) {
+      throw new Error("session is closing");
+    }
     this.assertState(SessionState.Active);
     if (!this.sharedSecret) {
       throw new Error("no shared secret — handshake incomplete");
@@ -602,6 +605,12 @@ export class Session {
 
   /** handle CLOSE from peer */
   private handleClose(): void {
+    this.closing = true;
+    // cancel any pending flush timer from a prior close() call
+    if (this.flushTimer) {
+      clearTimeout(this.flushTimer);
+      this.flushTimer = null;
+    }
     // transition before cleanup so StateChanged event fires while listeners exist
     this.transition(SessionState.Closed);
     this.cleanup();
@@ -692,6 +701,10 @@ export class Session {
   }
 
   private cleanup(): void {
+    if (this.flushTimer) {
+      clearTimeout(this.flushTimer);
+      this.flushTimer = null;
+    }
     this.cleanupKeys();
 
     // close transport

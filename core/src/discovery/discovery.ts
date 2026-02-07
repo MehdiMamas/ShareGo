@@ -11,7 +11,7 @@
 
 import type { DiscoveryAdapter, DiscoveredService } from "./types.js";
 import { MDNS_SERVICE_TYPE, MDNS_TXT_KEYS } from "./types.js";
-import { DISCOVERY_HOST_TIMEOUT_MS } from "../config.js";
+import { DISCOVERY_HOST_TIMEOUT_MS, MDNS_BROWSE_TIMEOUT_MS } from "../config.js";
 import type { SessionId, Base64PublicKey, NetworkAddress } from "../types/index.js";
 import { asSessionId, asBase64PublicKey, asNetworkAddress } from "../types/index.js";
 import { PROTOCOL_VERSION } from "../protocol/types.js";
@@ -75,14 +75,13 @@ async function discoverViaMdns(
 ): Promise<DiscoveryResult | null> {
   if (signal?.aborted) return null;
 
-  const browseTimeout = 5000; // 5 seconds to find via mDNS
   const results = adapter.browse(MDNS_SERVICE_TYPE);
 
   return new Promise<DiscoveryResult | null>(async (resolve) => {
     const timer = setTimeout(() => {
       adapter.stopBrowsing();
       resolve(null);
-    }, browseTimeout);
+    }, MDNS_BROWSE_TIMEOUT_MS);
 
     const abortHandler = () => {
       clearTimeout(timer);
@@ -97,8 +96,6 @@ async function discoverViaMdns(
     try {
       for await (const service of results) {
         if (service.sessionId === sessionCode) {
-          clearTimeout(timer);
-          signal?.removeEventListener("abort", abortHandler);
           adapter.stopBrowsing();
           resolve({
             address: service.address,
@@ -110,10 +107,11 @@ async function discoverViaMdns(
       }
     } catch {
       // browsing ended or errored
+    } finally {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", abortHandler);
     }
 
-    clearTimeout(timer);
-    signal?.removeEventListener("abort", abortHandler);
     resolve(null);
   });
 }

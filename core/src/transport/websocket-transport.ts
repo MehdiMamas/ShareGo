@@ -155,6 +155,7 @@ export class WebSocketTransport implements ILocalTransport {
       await client.connect(url);
     } catch (err) {
       // don't leave transport in inconsistent state on connection failure
+      try { client.close(); } catch { /* best effort */ }
       throw err;
     }
 

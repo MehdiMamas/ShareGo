@@ -44,3 +44,12 @@ export const MAX_DEVICE_NAME_LENGTH = 256;
 
 /** session code placeholder text shown in input fields */
 export const CODE_PLACEHOLDER = "ABC123";
+
+/** mDNS browse timeout in ms */
+export const MDNS_BROWSE_TIMEOUT_MS = 5000;
+
+/** default device name for the receiver */
+export const DEVICE_NAME_RECEIVER = "ShareGo";
+
+/** default device name for the sender */
+export const DEVICE_NAME_SENDER = "ShareGo Sender";
