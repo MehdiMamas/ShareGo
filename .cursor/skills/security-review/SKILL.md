@@ -48,9 +48,33 @@ When reviewing any code change in ShareGo, check:
 - [ ] Error messages do not leak secret material
 - [ ] Changes documented in THREAT_MODEL.md if they affect the security surface
 
+### Config & i18n
+
+- [ ] Timing values (TTLs, timeouts) come from `core/src/config.ts`, not hardcoded
+- [ ] User-facing text comes from `core/src/i18n/en.ts`, not hardcoded in app shells
+- [ ] No sensitive data appears in translation strings or config constants
+
+### Platform parity
+
+- [ ] Changes applied to both desktop and mobile (if applicable)
+- [ ] Platform adapters don't contain any crypto or protocol logic
+- [ ] Both platforms use the same `SessionController` from core
+
+## How to run a review
+
+1. Read the diff carefully — focus on `core/` changes first
+2. Walk through each checklist item above
+3. For crypto changes: verify against `docs/THREAT_MODEL.md` crypto table
+4. For protocol changes: verify against `docs/PROTOCOL.md` message specs
+5. For transport changes: verify the `ILocalTransport` interface contract
+6. Flag any item that fails with a clear explanation of the risk
+
 ## Reference
 
 - Full threat model: `docs/THREAT_MODEL.md`
 - Crypto primitives: `core/src/crypto/crypto.ts`
 - Protocol spec: `docs/PROTOCOL.md`
 - Rejected alternatives: `docs/REJECTED.md`
+- Config constants: `core/src/config.ts`
+- Translation strings: `core/src/i18n/en.ts`
+- Session controller: `core/src/session/session-controller.ts`

@@ -19,6 +19,9 @@ These are non-negotiable. Do not submit changes that violate them:
 4. All crypto via libsodium only
 5. Ephemeral keys — never persisted
 6. Supports all 5 platforms: Windows, macOS, Linux, Android, iOS
+7. Feature and UI parity between desktop and mobile — no exceptions
+8. All user-facing text in `core/src/i18n/en.ts` — never hardcoded in app shells
+9. All timing/config values in `core/src/config.ts` — never hardcoded in app code
 
 ## Code standards
 
@@ -68,10 +71,14 @@ App shells are thin wrappers. They should:
 - Provide UI (React for Tauri, React Native for mobile)
 - Provide platform permissions (camera, local network)
 - **Not** contain any crypto or protocol logic
+- **Not** hardcode user-facing text — use translations from `core/src/i18n/en.ts`
+- **Not** hardcode timing or config values — use constants from `core/src/config.ts`
+
+**UI parity rule:** when changing any screen, component, or behavior on one platform, you must apply the equivalent change to the other platform. See `.cursor/rules/ui-parity.mdc` for details.
 
 ## Pull request process
 
-1. Branch from `main`
+1. Branch from `main` (the default branch)
 2. Make your changes
 3. Run type check: `cd core && npx tsc --noEmit`
 4. Run tests: `cd core && npm test`
@@ -93,3 +100,7 @@ Every PR that touches `core/` should be reviewed against the security checklist 
 - Do not persist keys or secrets
 - Do not add dependencies without justification
 - Do not bypass receiver approval for pairing
+- Do not hardcode user-facing text in JSX — always use i18n translations
+- Do not hardcode timing or config values — always import from `core/src/config.ts`
+- Do not add features to one platform without adding them to the other
+- Do not add `console.log` of secrets, keys, or sensitive data

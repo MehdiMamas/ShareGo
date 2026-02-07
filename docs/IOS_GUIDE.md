@@ -7,7 +7,7 @@ complete guide for running ShareGo on an iPhone or iOS simulator.
 | requirement | minimum | recommended |
 |---|---|---|
 | macOS | 13 (Ventura) | 14+ (Sonoma) |
-| Xcode | 15.0 | latest from App Store |
+| Xcode | 15.0 | 16+ (latest from App Store) |
 | iOS device | iOS 13.4+ | iOS 16+ |
 | CocoaPods | 1.14+ | latest |
 | Node.js | 18 | 20 LTS |
@@ -55,7 +55,7 @@ if not installed:
 verify:
 ```bash
 xcodebuild -version
-# should print something like: Xcode 16.2 Build version 16C5032a
+# should print something like: Xcode 16.x Build version xxxxxxx
 ```
 
 ### 2. install Xcode command line tools
@@ -302,6 +302,7 @@ ShareGo supports **iOS 13.4 and later**, which covers:
 
 | device | iOS support |
 |---|---|
+| iPhone 16 / 16 Pro / 16 Pro Max / 16e | ✓ |
 | iPhone 15 / 15 Pro / 15 Pro Max | ✓ |
 | iPhone 14 / 14 Pro / 14 Pro Max | ✓ |
 | iPhone 13 / 13 Pro / 13 Pro Max / 13 mini | ✓ |
@@ -311,7 +312,7 @@ ShareGo supports **iOS 13.4 and later**, which covers:
 | iPhone X | ✓ |
 | iPhone 8 / 8 Plus | ✓ |
 | iPhone 7 / 7 Plus | ✓ |
-| iPhone SE (1st, 2nd, 3rd gen) | ✓ |
+| iPhone SE (1st, 2nd, 3rd, 4th gen) | ✓ |
 | iPhone 6s / 6s Plus | ✓ |
 
 > iPhone 6 and earlier are **not supported** (they can't run iOS 13).

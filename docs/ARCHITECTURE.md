@@ -10,13 +10,13 @@ No cloud servers. No relay. No signaling. No internet required.
 
 ShareGo runs on all five major platforms from a single shared core:
 
-| Platform | Shell           | Build target              |
-|----------|-----------------|---------------------------|
-| Windows  | Tauri           | MSVC native binary        |
-| macOS    | Tauri           | Universal binary (x64+ARM)|
-| Linux    | Tauri           | AppImage / .deb           |
-| Android  | React Native    | Native APK/AAB            |
-| iOS      | React Native    | Native IPA                |
+| Platform | Shell              | Build target              |
+|----------|--------------------|---------------------------|
+| Windows  | Tauri v2           | MSVC native binary        |
+| macOS    | Tauri v2           | Universal binary (x64+ARM)|
+| Linux    | Tauri v2           | AppImage / .deb           |
+| Android  | React Native bare  | Native APK/AAB            |
+| iOS      | React Native bare  | Native IPA                |
 
 Desktop and mobile share the same TypeScript core (crypto, protocol, session, transport). Each platform shell is a thin wrapper that provides native APIs (WebSocket server, camera, clipboard) and a UI layer.
 
@@ -32,6 +32,7 @@ These are non-negotiable constraints. If a platform cannot meet them, the platfo
 6. **Ephemeral secrets, in-memory only** — keys are never persisted to disk
 7. **v1: sensitive text only** — passwords, OTPs, short text. Files/images are a future extension.
 8. **All 5 platforms** — Windows, macOS, Linux, Android, iOS
+9. **Auto-regenerating bootstrap** — QR codes and session codes expire after 10 seconds and auto-regenerate with fresh keys. Sessions expire after 5 minutes total.
 
 ## Tech stack decisions
 
@@ -41,14 +42,16 @@ One implementation of crypto, protocol, session logic, and transport abstraction
 
 - Crypto: `libsodium-wrappers-sumo` (browser/Node compatible, audited)
 - Protocol: custom binary-over-JSON wire format
-- Session: state machine with event emitter
+- Session: state machine with event emitter + framework-agnostic `SessionController`
 - Transport: `ILocalTransport` interface, v1 = WebSocket
+- Config: shared constants in `core/src/config.ts` (TTLs, ports, limits)
+- i18n: all user-facing text in `core/src/i18n/en.ts` (single source of truth for both platforms)
 
-### Desktop: Tauri (Windows, macOS, Linux)
+### Desktop: Tauri v2 (Windows, macOS, Linux)
 
 - Smallest attack surface of any desktop framework (no Chromium bundled engine, uses system webview)
-- Native LAN access (WebSocket server/client)
-- No camera needed on desktops — use manual pairing code or phone scans desktop QR
+- Native LAN access (WebSocket server via Tauri Rust backend, WebSocket client via browser API)
+- Webcam-based QR scanning via jsQR (fallback: manual pairing code)
 - Builds to native binary per OS
 
 ### Mobile: React Native bare (Android, iOS)
@@ -78,23 +81,47 @@ One implementation of crypto, protocol, session logic, and transport abstraction
 ShareGo/
   core/
     src/
-      crypto/        libsodium wrappers, key exchange, encrypt/decrypt
-      protocol/      message types, serialization, validation
-      session/       session state machine, lifecycle, event emitter
-      transport/     ILocalTransport interface + WebSocketTransport
-      index.ts       barrel export
+      crypto/           libsodium wrappers, key exchange, encrypt/decrypt
+      protocol/         message types, serialization, validation
+      session/          session state machine, session controller, events
+      transport/        ILocalTransport interface + WebSocketTransport
+      utils/            subnet discovery helpers
+      i18n/             translation resources (en.ts) — single source of truth for all user-facing text
+      config.ts         shared constants (TTLs, ports, limits) — single source of truth
+      strings.ts        legacy strings (deprecated — use i18n)
+      index.ts          barrel export
     package.json
     tsconfig.json
   apps/
-    desktop-tauri/   Tauri shell + web UI (Windows, macOS, Linux)
-    mobile-rn/       React Native bare app (Android, iOS)
+    desktop-tauri/      Tauri shell + web UI (Windows, macOS, Linux)
+    mobile-rn/          React Native bare app (Android, iOS)
+  scripts/
+    setup.sh            one-command dev environment setup
+    dev-ios.sh          iOS simulator/device convenience script
+    build-ios.sh        iOS production build
+    build-android.sh    Android production build
+    build-desktop.sh    desktop production build
+    build-core.sh       core library build
+    check.sh            prerequisite checker for all platforms
+    preflight.sh        pre-build validation
   docs/
-    ARCHITECTURE.md  this file
-    PROTOCOL.md      wire format, message types, session lifecycle
-    THREAT_MODEL.md  threats, mitigations, crypto choices
-    REJECTED.md      why NOT certain alternatives
-  package.json       monorepo root
-  tsconfig.base.json shared TypeScript config
+    ARCHITECTURE.md     this file
+    BUILDING.md         build instructions for all platforms
+    CONTRIBUTING.md     contribution guidelines and code standards
+    IOS_GUIDE.md        complete iOS setup, device deployment, troubleshooting
+    PROTOCOL.md         wire format, message types, session lifecycle
+    THREAT_MODEL.md     threats, mitigations, crypto choices
+    REJECTED.md         why NOT certain alternatives
+  .github/
+    CODEOWNERS          code ownership for review routing
+    PULL_REQUEST_TEMPLATE.md  PR checklist template
+    ISSUE_TEMPLATE/     bug report and feature request templates
+    workflows/          CI/CD (release builds for all platforms)
+  package.json          monorepo root (npm workspaces)
+  tsconfig.base.json    shared TypeScript config
+  SECURITY.md           vulnerability reporting policy
+  CODE_OF_CONDUCT.md    contributor code of conduct
+  LICENSE               MIT license
 ```
 
 ## Platform-specific notes
@@ -139,3 +166,5 @@ ShareGo/
 3. **Transport is pluggable** — v1 WebSocket, v2 WebRTC, same interface
 4. **No shortcuts** — no cloud fallback, no "just this once" relay
 5. **Platform adapts to model** — if a platform can't meet an invariant, we work around the platform, not weaken the model
+6. **Feature and UI parity** — desktop and mobile must be identical in features, behavior, and appearance
+7. **Centralized strings** — all user-facing text lives in `core/src/i18n/en.ts`, never hardcoded in app shells

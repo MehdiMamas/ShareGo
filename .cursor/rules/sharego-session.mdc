@@ -1,0 +1,86 @@
+---
+description: Session lifecycle, state machine, and SessionController conventions
+globs: "**/session/**,**/hooks/**"
+alwaysApply: false
+---
+
+# session conventions
+
+## state machine
+
+sessions follow this lifecycle:
+
+```
+Created -> WaitingForSender -> Handshaking -> PendingApproval -> Active -> Closed
+                                                   \-> Rejected -> Closed
+```
+
+valid transitions are defined in `VALID_TRANSITIONS` in `core/src/session/types.ts`. never skip states or create transitions that aren't in this map.
+
+## roles
+
+| role | behavior |
+|---|---|
+| `Receiver` | creates session, listens for sender, approves/rejects pairing |
+| `Sender` | joins session, performs key exchange, sends/receives data |
+
+## SessionController
+
+`SessionController` in `core/src/session/session-controller.ts` is the **framework-agnostic** session manager. it encapsulates:
+
+- session lifecycle (start, approve, reject, send, end)
+- snapshot-based state management
+- listener management (subscribe/unsubscribe)
+- cleanup and memory zeroing
+
+### usage pattern
+
+platform hooks (`useSession`) are thin wrappers that:
+1. create a `SessionController` instance
+2. subscribe to snapshot changes via `controller.subscribe()`
+3. map snapshot fields to React state
+4. call controller methods for user actions
+
+never put session logic in hooks or components — always delegate to the controller.
+
+## snapshot
+
+`SessionSnapshot` is the single state object:
+
+| field | type | description |
+|---|---|---|
+| `state` | `SessionState` | current lifecycle state |
+| `sessionId` | `string \| null` | 6-char session code |
+| `qrPayload` | `string \| null` | encoded QR data (JSON string) |
+| `localAddress` | `string \| null` | receiver's ip:port |
+| `pairingRequest` | `PairingRequest \| null` | pending approval info |
+| `receivedItems` | `ReceivedItem[]` | messages received from peer |
+| `sentItems` | `SentItem[]` | messages sent to peer (with ack status) |
+| `error` | `string \| null` | last error message |
+
+## events
+
+| event | when | payload |
+|---|---|---|
+| `StateChanged` | any state transition | new `SessionState` |
+| `PairingRequest` | sender's HELLO verified | `PairingRequest` (deviceName, publicKey) |
+| `DataReceived` | decrypted DATA message | `Uint8Array` plaintext |
+| `DataAcknowledged` | ACK received for sent data | sequence number |
+| `Error` | any error | `Error` object |
+
+## cleanup rules
+
+- `cleanup()` must be called on every exit path: close, reject, error, disconnect
+- `cleanup()` calls `session.close()` which zeros all key material
+- `destroy()` clears all listeners in addition to cleanup
+- auto-regeneration on bootstrap expiry creates a new session (old one is cleaned up)
+
+## config values
+
+all session timing comes from `core/src/config.ts`:
+
+| constant | value | purpose |
+|---|---|---|
+| `BOOTSTRAP_TTL` | 10s | QR/code expiry before auto-regeneration |
+| `SESSION_TTL` | 300s | maximum session lifetime |
+| `REGENERATION_DELAY_MS` | 300ms | delay between expiry and regeneration |

@@ -26,7 +26,7 @@ the script auto-detects your OS and installs all required dependencies.
 ## quick start (core only)
 
 ```bash
-git clone <repo-url> ShareGo
+git clone https://github.com/MehdiMamas/ShareGo.git
 cd ShareGo
 npm install
 npm run build:core

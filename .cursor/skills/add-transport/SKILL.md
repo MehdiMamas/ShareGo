@@ -21,7 +21,9 @@ export class WebRTCTransport implements ILocalTransport {
   async connect(addr: string): Promise<void> { /* ... */ }
   send(data: Uint8Array): void { /* ... */ }
   onMessage(cb: MessageCallback): void { /* ... */ }
+  offMessage(cb: MessageCallback): void { /* ... */ }
   onStateChange(cb: TransportStateCallback): void { /* ... */ }
+  offStateChange(cb: TransportStateCallback): void { /* ... */ }
   close(): void { /* ... */ }
   getState(): TransportState { /* ... */ }
   getLocalAddress(): string | null { /* ... */ }
@@ -41,12 +43,23 @@ export class WebRTCTransport implements ILocalTransport {
 
 5. **Test** by wiring it into a `Session` and running the handshake
 
+6. **Platform adapters** — if the transport requires platform-specific code (e.g. native sockets), create adapters in each app shell that implement the same interface:
+   - Desktop: `apps/desktop-tauri/src/adapters/`
+   - Mobile: `apps/mobile-rn/src/adapters/`
+
+7. **Update docs** — add the new transport to `docs/ARCHITECTURE.md` (tech stack section) and mention any security implications in `docs/THREAT_MODEL.md`
+
 ## Checklist
 
-- [ ] Implements all `ILocalTransport` methods
+- [ ] Implements all `ILocalTransport` methods (including `offMessage` and `offStateChange`)
 - [ ] Rejects second peer connection
 - [ ] Fires state callbacks: idle -> listening/connected -> disconnected -> closed
 - [ ] `send()` throws when no peer connected
 - [ ] `close()` releases all resources
-- [ ] Exported from transport barrel
+- [ ] `offMessage()` and `offStateChange()` properly unregister callbacks
+- [ ] Exported from transport barrel (`core/src/transport/index.ts`)
 - [ ] Works on all target platforms for this transport type
+- [ ] Platform adapters created for desktop and mobile (if needed)
+- [ ] Unit tests covering connection, messaging, disconnection, and rejection
+- [ ] `docs/ARCHITECTURE.md` updated
+- [ ] `docs/THREAT_MODEL.md` updated if security surface changes

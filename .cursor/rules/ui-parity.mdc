@@ -12,7 +12,7 @@ the desktop and mobile apps MUST be identical in features, behavior, and appeara
 | screen | purpose | required elements |
 |---|---|---|
 | HomeScreen | landing / entry | app title, description text, "show QR code / show code" button, "scan QR code / enter code" button |
-| ReceiveScreen | receiver flow | QR code display, session code, local address, 90-second countdown, status indicator, approval dialog |
+| ReceiveScreen | receiver flow | QR code display, session code, local address, 10-second auto-regen countdown, status indicator, approval dialog |
 | SendScreen | sender flow | QR scanner (camera), manual code input (6-char), address input, connect button, status indicator |
 | ActiveSession | data exchange | message list (sent + received), text input, send button, delivery status, copy button, end session button |
 
@@ -37,8 +37,9 @@ the desktop and mobile apps MUST be identical in features, behavior, and appeara
 2. **same typography** — font sizes, weights, and line heights must match across platforms
 3. **same spacing** — padding, margin, gap, and border-radius values must be identical
 4. **same layout** — flexbox direction, alignment, and structure must match
-5. **same copy** — all user-facing text (labels, descriptions, error messages, status labels) must be word-for-word identical
+5. **same copy** — all user-facing text must come from `core/src/i18n/en.ts` translations, never hardcoded in app shells. both platforms use the same translation keys.
 6. **same flow** — screen transitions, state-driven UI changes, and user interaction patterns must match
+7. **same config** — timing values (bootstrap TTL, session TTL, timeouts) come from `core/src/config.ts`. never hardcode timing values in app shells.
 
 ## allowed differences (only these)
 

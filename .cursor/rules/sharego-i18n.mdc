@@ -1,0 +1,46 @@
+---
+description: i18n and user-facing text conventions for ShareGo
+globs: "**/i18n/**,**/screens/**,**/components/**"
+alwaysApply: false
+---
+
+# i18n conventions
+
+## single source of truth
+
+all user-facing text lives in `core/src/i18n/en.ts`. both desktop (Tauri) and mobile (React Native) apps must use translations from this file. never hardcode user-facing strings in app shell code.
+
+## structure
+
+translations are organized by screen/feature:
+
+| key namespace | scope |
+|---|---|
+| `home` | HomeScreen labels and buttons |
+| `receive` | ReceiveScreen status messages |
+| `send` | SendScreen labels, errors, status |
+| `session` | ActiveSession labels and actions |
+| `approval` | pairing approval dialog |
+| `status` | session state display labels |
+| `qr` | QR display labels |
+| `camera` | camera/scanner messages |
+| `common` | shared labels (back, cancel, etc.) |
+
+## adding new text
+
+1. add the key to `core/src/i18n/en.ts` in the appropriate namespace
+2. export the type if needed (`TranslationResource`)
+3. use the key in both desktop and mobile screens
+4. never add text directly in JSX — always reference a translation key
+
+## rules
+
+- all translation values are **lowercase** (matches project comment style)
+- interpolation uses `{{variable}}` syntax (i18next format)
+- error messages must be user-friendly — no stack traces or internal details
+- status messages should be concise (< 10 words)
+- button labels should be action-oriented ("send", "copy", "end session")
+
+## legacy strings
+
+`core/src/strings.ts` is deprecated. it exists for backward compatibility only. all new text must go in `core/src/i18n/en.ts`. do not add to `strings.ts`.

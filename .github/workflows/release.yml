@@ -88,7 +88,7 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: "ShareGo ${{ github.ref_name }}"
           releaseBody: |
-            See the [changelog](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md) for details.
+            See the [changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
           releaseDraft: true
           prerelease: false
 

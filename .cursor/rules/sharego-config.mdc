@@ -1,0 +1,38 @@
+---
+description: Shared configuration constants and their usage across platforms
+globs: "**/config.ts,**/config/**"
+alwaysApply: false
+---
+
+# configuration conventions
+
+## single source of truth
+
+`core/src/config.ts` defines all shared constants. both desktop and mobile apps import from this file. never duplicate or hardcode these values in app shell code.
+
+## constants
+
+| constant | value | usage |
+|---|---|---|
+| `BOOTSTRAP_TTL` | 10 | QR/code expiry in seconds |
+| `SESSION_TTL` | 300 | session lifetime in seconds |
+| `DEFAULT_PORT` | 4040 | websocket server port |
+| `SESSION_CODE_LENGTH` | 6 | alphanumeric session code length |
+| `REGENERATION_DELAY_MS` | 300 | delay before regenerating session (ms) |
+| `COPY_FEEDBACK_MS` | 2000 | "copied!" feedback duration (ms) |
+| `WS_CONNECT_TIMEOUT_MS` | 10000 | websocket connection timeout (ms) |
+| `DISCOVERY_HOST_TIMEOUT_MS` | 1500 | per-host discovery scan timeout (ms) |
+| `COUNTDOWN_INTERVAL_MS` | 1000 | countdown tick interval (ms) |
+| `MAX_MESSAGE_SIZE` | 65536 | max websocket message size (64 KB) |
+| `MAX_SEQ_GAP` | 100 | max sequence number gap allowed |
+| `MAX_BASE64_FIELD_LENGTH` | 131072 | max base64 field length |
+| `MAX_DEVICE_NAME_LENGTH` | 256 | max device name characters |
+| `CODE_PLACEHOLDER` | "ABC123" | placeholder text for code input |
+
+## rules
+
+- never hardcode timing, size, or limit values in app code — always import from config
+- if you need a new constant, add it to `core/src/config.ts` and export it
+- config values are compile-time constants — they do not change at runtime
+- document each constant with a JSDoc comment explaining its purpose
+- when updating protocol docs, check that config values match the documentation

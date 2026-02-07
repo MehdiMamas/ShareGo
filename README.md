@@ -23,7 +23,7 @@ share passwords, OTPs, and sensitive text between exactly two devices on the sam
 ### one-command setup
 
 ```bash
-git clone <repo-url> ShareGo
+git clone https://github.com/MehdiMamas/ShareGo.git
 cd ShareGo
 
 # auto-detect your platform and set everything up
@@ -201,6 +201,7 @@ all security logic lives in `@sharego/core`. app shells are thin wrappers that p
 | `npm run check` | check all prerequisites |
 | `npm run check:ios` | check iOS prerequisites |
 | `npm run check:android` | check Android prerequisites |
+| `npm run check:desktop` | check desktop prerequisites |
 
 ## environment
 
