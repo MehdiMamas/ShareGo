@@ -112,6 +112,15 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      # cache gradle dependencies and build outputs
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('apps/mobile-rn/android/**/*.gradle*', 'apps/mobile-rn/android/gradle.properties') }}
+          restore-keys: gradle-
+
       - run: npm ci
 
       # download pre-built core
@@ -137,7 +146,7 @@ jobs:
           SHAREGO_KEY_PASSWORD: ${{ secrets.SHAREGO_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleRelease --no-daemon --build-cache
 
       - name: Upload APK to release
         uses: softprops/action-gh-release@v2
