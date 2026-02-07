@@ -48,7 +48,13 @@
       "icon": "build/icon-1024.png",
       "category": "public.app-category.utilities",
       "darkModeSupport": true,
-      "hardenedRuntime": true
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.inherit.plist",
+      "extendInfo": {
+        "NSCameraUsageDescription": "ShareGo uses the camera to scan QR codes for secure device pairing.",
+        "NSMicrophoneUsageDescription": "ShareGo does not use the microphone."
+      }
     },
     "win": {
       "target": [
