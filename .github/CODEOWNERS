@@ -1,0 +1,14 @@
+# default owner for everything
+* @MehdiMamas
+
+# security-critical paths require owner review
+/core/src/crypto/ @MehdiMamas
+/core/src/protocol/ @MehdiMamas
+/core/src/session/ @MehdiMamas
+/core/src/transport/ @MehdiMamas
+/docs/THREAT_MODEL.md @MehdiMamas
+/docs/PROTOCOL.md @MehdiMamas
+/SECURITY.md @MehdiMamas
+
+# ci/cd and release
+/.github/ @MehdiMamas

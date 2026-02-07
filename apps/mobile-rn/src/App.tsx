@@ -6,6 +6,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { initCrypto } from "./lib/core";
 import { useSession } from "./hooks/useSession";
 import { useTransport } from "./hooks/useTransport";
+import { useHaptics } from "./hooks/useHaptics";
 import { HomeScreen } from "./screens/HomeScreen";
 import { ReceiveScreen } from "./screens/ReceiveScreen";
 import { SendScreen } from "./screens/SendScreen";
@@ -32,6 +33,7 @@ export default function App() {
   const [cryptoError, setCryptoError] = useState<string | null>(null);
   const session = useSession();
   const transport = useTransport();
+  useHaptics(session);
 
   useEffect(() => {
     initCrypto()
