@@ -1,6 +1,18 @@
-pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
+// monorepo: node_modules may be hoisted to repo root or live in apps/app/node_modules
+// try the local path first, then walk up to repo root
+def findGradlePlugin() {
+    def local = new File(settingsDir, "../node_modules/@react-native/gradle-plugin")
+    if (local.exists()) return local.absolutePath
+    def root = new File(settingsDir, "../../../node_modules/@react-native/gradle-plugin")
+    if (root.exists()) return root.absolutePath
+    throw new GradleException("Could not find @react-native/gradle-plugin in node_modules")
+}
+
+def pluginPath = findGradlePlugin()
+
+pluginManagement { includeBuild(pluginPath) }
 plugins { id("com.facebook.react.settings") }
 extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
 rootProject.name = 'ShareGo'
 include ':app'
-includeBuild('../node_modules/@react-native/gradle-plugin')
+includeBuild(pluginPath)

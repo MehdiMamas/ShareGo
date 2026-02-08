@@ -6,13 +6,22 @@ apply plugin: "com.facebook.react"
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
  */
+// monorepo: node_modules may be hoisted to repo root or live in apps/app/node_modules
+def findNodeModules() {
+    def local = new File(projectDir, "../../node_modules/react-native")
+    if (local.exists()) return file("../../node_modules")
+    def root = new File(projectDir, "../../../../node_modules/react-native")
+    if (root.exists()) return file("../../../../node_modules")
+    throw new GradleException("Could not find react-native in node_modules")
+}
+def nm = findNodeModules()
+
 react {
     /* Folders */
-    // monorepo: RN project root is apps/app, node_modules is at apps/app/node_modules
     root = file("../../")
-    reactNativeDir = file("../../node_modules/react-native")
-    codegenDir = file("../../node_modules/@react-native/codegen")
-    cliFile = file("../../node_modules/react-native/cli.js")
+    reactNativeDir = new File(nm, "react-native")
+    codegenDir = new File(nm, "@react-native/codegen")
+    cliFile = new File(nm, "react-native/cli.js")
 
     /* Variants */
     //   The list of variants to that are debuggable. For those we're going to
@@ -41,7 +50,7 @@ react {
     // extraPackagerArgs = []
 
     /* Hermes Commands */
-    hermesCommand = file("../../node_modules/react-native/sdks/hermesc/%OS-BIN%/hermesc").absolutePath
+    hermesCommand = new File(nm, "react-native/sdks/hermesc/%OS-BIN%/hermesc").absolutePath
 
     /* Autolinking */
     autolinkLibrariesWithApp()

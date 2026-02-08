@@ -132,13 +132,25 @@ jobs:
         run: |
           echo "$SHAREGO_KEYSTORE_BASE64" | base64 -d > apps/app/android/app/sharego-release.keystore
 
-      # react-native-libsodium is hoisted to root node_modules but its gradle
-      # plugin walks up looking for node_modules/react-native which lives in
-      # apps/app/node_modules — create a symlink so resolution succeeds
+      # npm workspace hoisting is unpredictable — ensure react-native deps
+      # are accessible from both root and app-level node_modules
       - name: Fix monorepo node_modules resolution
         run: |
-          ln -sf ${{ github.workspace }}/apps/app/node_modules/react-native node_modules/react-native
-          ln -sf ${{ github.workspace }}/apps/app/node_modules/@react-native node_modules/@react-native
+          # ensure react-native is findable at root (for hoisted native modules like libsodium)
+          if [ ! -d node_modules/react-native ]; then
+            ln -sf ${{ github.workspace }}/apps/app/node_modules/react-native node_modules/react-native
+          fi
+          if [ ! -d node_modules/@react-native ]; then
+            ln -sf ${{ github.workspace }}/apps/app/node_modules/@react-native node_modules/@react-native
+          fi
+          # ensure react-native is findable at app level (for settings.gradle)
+          mkdir -p apps/app/node_modules
+          if [ ! -d apps/app/node_modules/react-native ]; then
+            ln -sf ${{ github.workspace }}/node_modules/react-native apps/app/node_modules/react-native
+          fi
+          if [ ! -d apps/app/node_modules/@react-native ]; then
+            ln -sf ${{ github.workspace }}/node_modules/@react-native apps/app/node_modules/@react-native
+          fi
 
       - name: Build release APK
         working-directory: apps/app/android
