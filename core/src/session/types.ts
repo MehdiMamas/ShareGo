@@ -1,3 +1,5 @@
+import type { SequenceNumber } from "../types/index.js";
+
 /**
  * session states — matches the lifecycle in the protocol spec.
  *
@@ -47,11 +49,15 @@ export type SessionEventMap = {
   [SessionEvent.StateChanged]: (state: SessionState) => void;
   [SessionEvent.PairingRequest]: (request: PairingRequest) => void;
   [SessionEvent.DataReceived]: (plaintext: Uint8Array) => void;
-  [SessionEvent.DataAcknowledged]: (seq: number) => void;
+  [SessionEvent.DataAcknowledged]: (seq: SequenceNumber) => void;
   [SessionEvent.Error]: (error: Error) => void;
 };
 
-/** valid state transitions */
+/**
+ * valid state transitions — kept for backward compatibility.
+ * the xstate machine in machine.ts is the authoritative source of truth;
+ * a test validates that these stay in sync.
+ */
 export const VALID_TRANSITIONS: Record<SessionState, SessionState[]> = {
   [SessionState.Created]: [SessionState.WaitingForSender, SessionState.Handshaking, SessionState.Closed],
   [SessionState.WaitingForSender]: [

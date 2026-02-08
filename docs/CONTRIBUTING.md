@@ -68,7 +68,7 @@ See `.cursor/skills/add-transport/SKILL.md` for adding a new transport.
 
 App shells are thin wrappers. They should:
 - Provide platform-native WebSocket server/client adapters
-- Provide UI (React for Tauri, React Native for mobile)
+- Provide UI (React Native + react-native-web for all platforms)
 - Provide platform permissions (camera, local network)
 - **Not** contain any crypto or protocol logic
 - **Not** hardcode user-facing text — use translations from `core/src/i18n/en.ts`

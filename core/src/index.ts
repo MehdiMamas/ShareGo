@@ -39,6 +39,12 @@ export {
   encodeQrPayload,
   decodeQrPayload,
   createBaseFields,
+  serializeBinaryData,
+  deserializeBinaryData,
+  isBinaryDataFrame,
+  BINARY_DATA_TYPE,
+  BINARY_HEADER_SIZE,
+  type BinaryDataMessage,
 } from "./protocol/index.js";
 
 // session
@@ -59,18 +65,21 @@ export {
   type SnapshotListener,
 } from "./session/index.js";
 
-// utils
+// discovery (new mDNS-capable module — replaces utils/discovery)
 export {
   discoverReceiver,
+  advertiseReceiver,
+  stopAdvertising,
   type DiscoveryOptions,
-} from "./utils/index.js";
+  type DiscoveryResult,
+  type DiscoveryAdapter,
+  type DiscoveredService,
+  MDNS_SERVICE_TYPE,
+  MDNS_TXT_KEYS,
+} from "./discovery/index.js";
 
 // config
 export * from "./config.js";
-
-// strings (legacy — use i18n translations instead)
-import * as _strings from "./strings.js";
-export { _strings as strings };
 
 // i18n translation resources
 export { en, type TranslationResource } from "./i18n/index.js";
@@ -87,3 +96,21 @@ export {
   type WebSocketClientAdapter,
   type ConnectionHandler,
 } from "./transport/index.js";
+
+// branded types
+export {
+  type SessionId,
+  type NetworkAddress,
+  type Base64PublicKey,
+  type Base64Ciphertext,
+  type Base64Nonce,
+  type Base64Proof,
+  type SequenceNumber,
+  asSessionId,
+  asNetworkAddress,
+  asBase64PublicKey,
+  asBase64Ciphertext,
+  asBase64Nonce,
+  asBase64Proof,
+  asSequenceNumber,
+} from "./types/index.js";

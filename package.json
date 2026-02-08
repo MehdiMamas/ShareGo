@@ -6,15 +6,24 @@
   "description": "Serverless, end-to-end encrypted, local-network-only sharing for sensitive data",
   "workspaces": [
     "core",
-    "apps/*"
+    "apps/app"
   ],
   "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:core": "turbo run test --filter=@sharego/core",
+    "test:e2e": "turbo run test:e2e",
+    "lint": "turbo run lint",
+    "dev:desktop": "turbo run dev --filter=sharego-desktop",
+    "dev:mobile": "npm run start --workspace=sharego-mobile",
+    "dev:ios": "bash scripts/dev-ios.sh",
+    "dev:ios:device": "bash scripts/dev-ios.sh --device",
+    "dev:android": "npm run android --workspace=sharego-mobile",
     "setup": "bash scripts/setup.sh",
     "setup:ios": "bash scripts/setup.sh ios",
     "setup:android": "bash scripts/setup.sh android",
     "setup:desktop": "bash scripts/setup.sh desktop",
-    "build:core": "npm run build --workspace=core",
-    "test:core": "npm run test --workspace=core",
+    "build:core": "turbo run build --filter=@sharego/core",
     "build:desktop": "bash scripts/build-desktop.sh",
     "build:desktop:debug": "bash scripts/build-desktop.sh --debug",
     "build:android": "bash scripts/build-android.sh",
@@ -23,19 +32,19 @@
     "build:ios": "bash scripts/build-ios.sh",
     "build:ios:debug": "bash scripts/build-ios.sh --debug",
     "build:ios:simulator": "bash scripts/build-ios.sh --simulator",
-    "build:all": "bash scripts/build-core.sh && bash scripts/build-desktop.sh",
+    "build:all": "turbo run build",
     "check": "bash scripts/check.sh",
     "check:desktop": "bash scripts/check.sh desktop",
     "check:android": "bash scripts/check.sh android",
     "check:ios": "bash scripts/check.sh ios",
-    "dev:desktop": "npm run dev --workspace=sharego-desktop",
-    "dev:mobile": "npm run start --workspace=sharego-mobile",
-    "dev:ios": "bash scripts/dev-ios.sh",
-    "dev:ios:device": "bash scripts/dev-ios.sh --device",
-    "dev:android": "npm run android --workspace=sharego-mobile"
+    "version:sync": "node scripts/sync-version.mjs"
   },
+  "packageManager": "npm@10.9.3",
   "engines": {
     "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "turbo": "^2.8.3"
   },
   "overrides": {
     "react-native-screens": "3.35.0",

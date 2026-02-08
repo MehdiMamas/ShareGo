@@ -1,13 +1,13 @@
 ---
-description: Enforce full feature and UI parity between desktop (Tauri) and mobile (React Native) apps
+description: Enforce full feature and UI parity across all platforms via the unified app
 alwaysApply: true
 ---
 
 # feature and UI parity rules (HIGHEST PRIORITY RULE)
 
-the desktop and mobile apps MUST be identical in features, behavior, and appearance. this is the #1 project rule. when adding or changing ANY feature, logic, or UI element on one platform, the equivalent MUST be applied to the other platform in the same session — no exceptions. the only allowed differences are platform primitives and responsive layout.
+all platforms (desktop, mobile) share a SINGLE unified codebase in `apps/app/`. the UI is built with React Native + react-native-web, meaning components are written once and render on all platforms. the only allowed differences are platform-specific adapters and responsive layout.
 
-## screen contract (both apps must implement these identically)
+## screen contract (all platforms implement these identically)
 
 | screen | purpose | required elements |
 |---|---|---|
@@ -16,57 +16,48 @@ the desktop and mobile apps MUST be identical in features, behavior, and appeara
 | SendScreen | sender flow | QR scanner (camera), manual code input (6-char), address input, connect button, status indicator |
 | ActiveSession | data exchange | message list (sent + received), text input, send button, delivery status, copy button, end session button |
 
-## feature parity rules
+## unified codebase rules
 
-1. **same features** — every feature available on desktop must be available on mobile and vice versa. no platform-exclusive features unless physically impossible (e.g. native camera vs webcam)
-2. **same logic** — business logic, validation, error handling, and session flow must be identical. shared logic lives in `@sharego/core` (SessionController, discovery, crypto)
-3. **same error handling** — error messages, retry behavior, and fallback states must match exactly
-4. **same data flow** — both platforms use the same `SessionController` from core. hooks are thin wrappers over the shared controller
+1. **one codebase** — all UI code lives in `apps/app/src/`. there is no separate desktop or mobile UI project
+2. **shared components** — every component in `apps/app/src/components/` renders on all platforms via react-native-web
+3. **shared screens** — every screen in `apps/app/src/screens/` is used on all platforms
+4. **shared hooks** — `useSession` and `useTransport` are the same hooks on all platforms
+5. **platform detection** — use `apps/app/src/platform.ts` (`isElectron`, `isMobile`, `isWeb`) for conditional logic
+6. **platform adapters** — `useTransport` dynamically selects the correct transport adapter per platform
 
 ## backend parity rules
 
-1. **same core** — both platforms import from `@sharego/core`. crypto, session, protocol, and transport logic is shared. never duplicate core logic into platform code
-2. **same transport behavior** — both platform adapters (tauri ws server, rn ws server, browser ws client, rn ws client) must implement the same `WebSocketServerAdapter` and `WebSocketClientAdapter` interfaces with identical behavior
-3. **same discovery** — both platforms use the shared `discoverReceiver()` from core, injecting only the platform-specific IP resolver
+1. **same core** — all platforms import from `@sharego/core`. crypto, session, protocol, and transport logic is shared. never duplicate core logic into platform code
+2. **same transport behavior** — platform adapters (electron ws server, rn ws server, web ws client, rn ws client) must implement the same `WebSocketServerAdapter` and `WebSocketClientAdapter` interfaces
+3. **same discovery** — all platforms use the shared `discoverReceiver()` from core, injecting platform-specific `DiscoveryAdapter` or IP resolver
 4. **same security** — crypto, key exchange, encryption, and validation logic is exclusively in core. platform adapters NEVER touch security primitives
 5. **same protocol** — message serialization, validation, and handling is in core. platform adapters only do raw byte transport
 
 ## visual parity rules
 
-1. **same theme** — both apps use the identical `colors` object from `styles/theme.ts`. never define colors inline or use platform-specific color values
-2. **same typography** — font sizes, weights, and line heights must match across platforms
-3. **same spacing** — padding, margin, gap, and border-radius values must be identical
-4. **same layout** — flexbox direction, alignment, and structure must match
-5. **same copy** — all user-facing text must come from `core/src/i18n/en.ts` translations, never hardcoded in app shells. both platforms use the same translation keys.
-6. **same flow** — screen transitions, state-driven UI changes, and user interaction patterns must match
-7. **same config** — timing values (bootstrap TTL, session TTL, timeouts) come from `core/src/config.ts`. never hardcode timing values in app shells.
+1. **same theme** — all platforms use the identical `colors` object from `apps/app/src/styles/theme.ts`. never define colors inline
+2. **same typography** — font sizes, weights, and line heights are defined once in the shared components
+3. **same spacing** — padding, margin, gap, and border-radius values are identical across platforms
+4. **same layout** — flexbox direction, alignment, and structure are shared React Native components
+5. **same copy** — all user-facing text comes from `core/src/i18n/en.ts`, never hardcoded in app code
+6. **same flow** — screen transitions, state-driven UI changes, and user interaction patterns are shared
+7. **same config** — timing values come from `core/src/config.ts`. never hardcode timing values in app code
 
 ## allowed differences (only these)
 
-1. **responsive layout** — desktop may use `maxWidth` constraints for large screens; mobile uses full-width. desktop uses `100vh`, mobile uses `flex: 1`
-2. **platform navigation** — desktop uses callback props (`onReceive`, `onSend`), mobile uses react-navigation
-3. **platform primitives** — `<div>` vs `<View>`, `<button>` vs `<TouchableOpacity>`, `<input>` vs `<TextInput>`, etc.
-4. **platform-specific components** — `SafeAreaView` (mobile only), hover states (desktop only), native camera scanner (mobile-specific library)
-5. **platform adapters** — `useTransport` returns different adapter implementations per platform
-
-## change propagation rule
-
-when modifying UI on one platform, you MUST apply the equivalent change to the other platform in the same session. this includes:
-- adding or removing a screen
-- changing button labels or description text
-- adjusting colors, spacing, or layout
-- adding or removing UI elements
-- changing state-driven behavior (loading, error, empty states)
-
-if a change is platform-specific (e.g. adding `SafeAreaView` padding on mobile), document why it doesn't apply to the other platform.
+1. **responsive layout** — desktop may use `maxWidth` constraints for large screens; mobile uses full-width
+2. **platform adapters** — `useTransport` returns different adapter implementations per platform (electron IPC vs native RN vs browser WebSocket)
+3. **QR scanning** — mobile uses `react-native-vision-camera`, desktop uses `html5-qrcode` (abstracted in `QRScanner` component)
+4. **mDNS discovery** — electron uses `bonjour-service`, mobile uses `react-native-zeroconf` (abstracted via `DiscoveryAdapter` interface)
+5. **native wrappers** — `SafeAreaView` (mobile only), window chrome (desktop only)
 
 ## hook parity
 
-`useSession` and `useTransport` must expose the same API surface on both platforms:
+`useSession` and `useTransport` expose the same API surface on all platforms:
 - same state fields: `state`, `sessionId`, `qrPayload`, `localAddress`, `pairingRequest`, `receivedItems`, `sentItems`, `error`
 - same methods: `startReceiver()`, `startSender()`, `approve()`, `reject()`, `sendData()`, `endSession()`
 - same event handling behavior
 
 ## shared design tokens
 
-the `styles/theme.ts` file is the single source of truth for colors. if you need new tokens (e.g. font sizes, spacing scale), add them to BOTH theme files simultaneously and keep them identical.
+`apps/app/src/styles/theme.ts` is the single source of truth for colors and design tokens. since there is only one theme file now, parity is automatic.

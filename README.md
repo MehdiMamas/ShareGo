@@ -12,9 +12,9 @@ share passwords, OTPs, and sensitive text between exactly two devices on the sam
 
 | platform | shell | status |
 |----------|-------|--------|
-| windows | tauri v2 | code complete |
-| macOS | tauri v2 | code complete |
-| linux | tauri v2 | code complete |
+| windows | electron | code complete |
+| macOS | electron | code complete |
+| linux | electron | code complete |
 | android | react native bare | code complete |
 | iOS | react native bare | code complete |
 
@@ -37,7 +37,7 @@ the setup script installs all dependencies, builds the core library, and runs pl
 ```bash
 ./scripts/setup.sh ios        # iOS only
 ./scripts/setup.sh android    # Android only
-./scripts/setup.sh desktop    # desktop (Tauri) only
+./scripts/setup.sh desktop    # desktop (Electron) only
 ./scripts/setup.sh core       # core library only
 ```
 
@@ -77,7 +77,7 @@ iOS requires macOS, Xcode, and CocoaPods. the minimum iOS version is **13.4** (i
 ```bash
 npm install                            # install all dependencies
 npm run build:core                     # build shared core library
-cd apps/mobile-rn/ios && pod install   # install native iOS deps
+cd apps/app/ios && pod install         # install native iOS deps
 cd ..
 npx react-native run-ios              # run on simulator
 npx react-native run-ios --device     # run on iPhone
@@ -85,7 +85,7 @@ npx react-native run-ios --device     # run on iPhone
 
 ### running on a physical iPhone
 
-1. open `apps/mobile-rn/ios/ShareGo.xcworkspace` in Xcode
+1. open `apps/app/ios/ShareGo.xcworkspace` in Xcode
 2. go to **Signing & Capabilities** and select your Apple ID as the team
 3. connect your iPhone via USB and tap "Trust This Computer"
 4. on your iPhone: **Settings > General > VPN & Device Management** — trust your developer certificate
@@ -99,7 +99,7 @@ requires Android Studio, JDK 17+, and Android SDK (API 34).
 
 ```bash
 ./scripts/setup.sh android           # check prerequisites
-cd apps/mobile-rn
+cd apps/app
 npx react-native run-android         # run on emulator or device
 ```
 
@@ -107,20 +107,17 @@ see [docs/BUILDING.md](docs/BUILDING.md) for detailed Android setup.
 
 ## desktop setup
 
-requires Rust toolchain and platform-specific dependencies.
-
 ```bash
-./scripts/setup.sh desktop    # install Rust + platform deps
+./scripts/setup.sh desktop    # install platform deps
 
 # development
-cd apps/desktop-tauri
-npm run tauri dev
+npm run dev:desktop
 
 # production build
-npm run tauri build
+npm run build:desktop
 ```
 
-build outputs: `.dmg` (macOS), `.msi`/`.exe` (Windows), `.deb`/`.AppImage` (Linux).
+build outputs: `.dmg` (macOS), `.exe`/NSIS (Windows), `.AppImage`/`.deb` (Linux).
 
 see [docs/BUILDING.md](docs/BUILDING.md) for detailed desktop setup.
 
@@ -166,15 +163,10 @@ see [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for the full threat analysis.
 ```
 core/               shared typescript library (crypto, protocol, session, transport)
 apps/
-  desktop-tauri/    tauri v2 desktop app (rust backend + react frontend)
-  mobile-rn/        react native bare mobile app (android + iOS)
-scripts/
-  setup.sh          one-command development setup
-  dev-ios.sh        iOS development convenience script
-  build-ios.sh      iOS production build
-  build-android.sh  android production build
-  build-desktop.sh  desktop production build
-  check.sh          prerequisite checker
+  app/              unified app (electron desktop + react native mobile)
+  app/electron/     electron main process (ws server, ipc, mdns)
+  app/src/          react native + react-native-web UI (all platforms)
+scripts/            setup, build, check, dev convenience scripts
 docs/               architecture, protocol spec, threat model, ios guide
 ```
 
@@ -214,7 +206,7 @@ no `.env` files. no API keys. no cloud services. all crypto keys are ephemeral a
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md) — system design and platform notes
 - [PROTOCOL.md](docs/PROTOCOL.md) — wire format, message types, session lifecycle
 - [THREAT_MODEL.md](docs/THREAT_MODEL.md) — threats, mitigations, crypto surface
-- [REJECTED.md](docs/REJECTED.md) — why not cloud, expo, electron, bluetooth, etc.
+- [REJECTED.md](docs/REJECTED.md) — historical context on design decisions
 - [CONTRIBUTING.md](docs/CONTRIBUTING.md) — contribution guidelines
 
 ## license

@@ -23,47 +23,24 @@ check_core_built
 
 # ---------- desktop ----------
 if [ "$TARGET" = "all" ] || [ "$TARGET" = "desktop" ]; then
-  step "desktop (tauri) prerequisites"
-  require_cmd rustc "install via https://rustup.rs"
-  require_cmd cargo "install via https://rustup.rs"
+  step "desktop (electron) prerequisites"
 
-  if has_cmd rustc; then
-    rust_version=$(rustc --version | awk '{print $2}')
-    rust_minor=$(echo "$rust_version" | cut -d. -f2)
-    if [ "$rust_minor" -ge 77 ]; then
-      ok "rust $rust_version (>= 1.77 required)"
-    else
-      fail "rust $rust_version too old — need >= 1.77 (run 'rustup update')"
-    fi
-  fi
+  # electron only needs node.js — already checked in common
+  ok "node.js is sufficient for Electron"
 
-  if npx tauri --version &>/dev/null; then
-    ok "tauri cli found ($(npx tauri --version 2>/dev/null | head -1))"
+  # check electron is installed
+  if [ -d "$PROJECT_ROOT/apps/app/node_modules/electron" ] || [ -d "$PROJECT_ROOT/node_modules/electron" ]; then
+    ok "electron package installed"
   else
-    fail "tauri cli not found — run 'npm install'"
+    fail "electron not installed — run 'npm install'"
   fi
 
-  if [ -f "$PROJECT_ROOT/apps/desktop-tauri/src-tauri/Cargo.toml" ]; then
-    ok "Cargo.toml found"
+  # check electron main process compiles
+  if [ -f "$PROJECT_ROOT/apps/app/dist-electron/main.js" ]; then
+    ok "electron main process built"
   else
-    fail "Cargo.toml missing"
+    warn "electron main process not built — run 'npm run build:electron' in apps/app"
   fi
-
-  case "$OS" in
-    macos)
-      if xcode-select -p &>/dev/null; then ok "xcode CLT installed"; else fail "xcode CLT missing — run 'xcode-select --install'"; fi
-      ;;
-    linux)
-      if pkg-config --exists webkit2gtk-4.1 2>/dev/null || pkg-config --exists webkit2gtk-4.0 2>/dev/null; then
-        ok "webkit2gtk found"
-      else
-        fail "webkit2gtk missing — see https://v2.tauri.app/start/prerequisites/#linux"
-      fi
-      ;;
-    windows)
-      info "ensure WebView2 and VS Build Tools are installed"
-      ;;
-  esac
 fi
 
 # ---------- android ----------
@@ -95,9 +72,9 @@ if [ "$TARGET" = "all" ] || [ "$TARGET" = "android" ]; then
     fail "android SDK not found — set ANDROID_HOME or install Android Studio"
   fi
 
-  if [ -d "$PROJECT_ROOT/apps/mobile-rn/android" ]; then
+  if [ -d "$PROJECT_ROOT/apps/app/android" ]; then
     ok "android/ project exists"
-    [ -f "$PROJECT_ROOT/apps/mobile-rn/android/gradlew" ] && ok "gradlew found" || fail "gradlew missing"
+    [ -f "$PROJECT_ROOT/apps/app/android/gradlew" ] && ok "gradlew found" || fail "gradlew missing"
   else
     warn "android/ directory doesn't exist yet — will be generated on first build"
   fi
@@ -122,8 +99,8 @@ if [ "$TARGET" = "all" ] || [ "$TARGET" = "ios" ]; then
       fail "cocoapods missing — run 'sudo gem install cocoapods' or 'brew install cocoapods'"
     fi
 
-    [ -f "$PROJECT_ROOT/apps/mobile-rn/ios/ShareGo.xcodeproj/project.pbxproj" ] && ok "xcodeproj found" || fail "xcodeproj missing"
-    [ -f "$PROJECT_ROOT/apps/mobile-rn/ios/Podfile" ] && ok "Podfile found" || fail "Podfile missing"
+    [ -f "$PROJECT_ROOT/apps/app/ios/ShareGo.xcodeproj/project.pbxproj" ] && ok "xcodeproj found" || fail "xcodeproj missing"
+    [ -f "$PROJECT_ROOT/apps/app/ios/Podfile" ] && ok "Podfile found" || fail "Podfile missing"
   fi
 fi
 

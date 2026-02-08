@@ -183,7 +183,7 @@ describe("deserializeMessage validation", () => {
       deserializeMessage(
         makeBytes({ v: PROTOCOL_VERSION, type: "ACK", sid: "X", seq: 1 }),
       ),
-    ).toThrow("ACK: missing ackSeq");
+    ).toThrow("ACK: missing or invalid ackSeq");
   });
 });
 

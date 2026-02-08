@@ -5,6 +5,9 @@
     "moduleResolution": "bundler",
     "lib": ["ES2022", "DOM"],
     "strict": true,
+    // todo: enable these in a follow-up (requires fixing ~12 type errors across 5 files)
+    // "exactOptionalPropertyTypes": true,
+    // "noUncheckedIndexedAccess": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

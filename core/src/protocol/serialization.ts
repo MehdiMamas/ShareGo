@@ -4,6 +4,8 @@ import {
   MessageType,
   PROTOCOL_VERSION,
 } from "./types.js";
+import type { SessionId, SequenceNumber } from "../types/index.js";
+import { asSessionId, asSequenceNumber } from "../types/index.js";
 import {
   MAX_MESSAGE_SIZE,
   MAX_BASE64_FIELD_LENGTH,
@@ -61,6 +63,10 @@ export function deserializeMessage(data: Uint8Array): ProtocolMessage {
     throw new Error("missing or invalid sequence number");
   }
 
+  // brand boundary values at the deserialization boundary
+  parsed.sid = asSessionId(parsed.sid);
+  parsed.seq = asSequenceNumber(parsed.seq);
+
   // validate type-specific required fields with length checks
   switch (parsed.type) {
     case MessageType.HELLO:
@@ -84,9 +90,10 @@ export function deserializeMessage(data: Uint8Array): ProtocolMessage {
       assertBase64Field(parsed.nonce, "DATA: nonce");
       break;
     case MessageType.ACK:
-      if (typeof parsed.ackSeq !== "number") {
-        throw new Error("ACK: missing ackSeq");
+      if (typeof parsed.ackSeq !== "number" || parsed.ackSeq < 0 || !Number.isFinite(parsed.ackSeq)) {
+        throw new Error("ACK: missing or invalid ackSeq");
       }
+      parsed.ackSeq = asSequenceNumber(parsed.ackSeq);
       break;
   }
 
@@ -137,9 +144,9 @@ export function decodeQrPayload(raw: string): QrPayload {
  */
 export function createBaseFields<T extends MessageType>(
   type: T,
-  sid: string,
-  seq: number,
-): { v: number; type: T; sid: string; seq: number } {
+  sid: SessionId,
+  seq: SequenceNumber,
+): { v: number; type: T; sid: SessionId; seq: SequenceNumber } {
   return {
     v: PROTOCOL_VERSION,
     type,

@@ -1,11 +1,11 @@
 ---
 name: add-screen
-description: Guide for adding a new screen to both desktop and mobile apps. Use when adding a new page/view to ShareGo, ensuring UI parity between platforms.
+description: Guide for adding a new screen to the unified ShareGo app. Use when adding a new page/view to ShareGo.
 ---
 
 # Adding a new screen
 
-ShareGo enforces strict UI parity between desktop (Tauri) and mobile (React Native). Adding a screen requires changes in both app shells simultaneously.
+ShareGo uses a single unified codebase in `apps/app/`. Screens are written once with React Native components and render on all platforms via react-native-web.
 
 ## Steps
 
@@ -30,31 +30,9 @@ settings: {
 },
 ```
 
-### 3. Create the desktop screen
+### 3. Create the screen
 
-file: `apps/desktop-tauri/src/screens/SettingsScreen.tsx`
-
-```typescript
-import { useTranslation } from "react-i18next";
-
-interface SettingsScreenProps {
-  onBack: () => void;
-}
-
-export function SettingsScreen({ onBack }: SettingsScreenProps) {
-  const { t } = useTranslation();
-  return (
-    <div style={{ /* use theme colors */ }}>
-      <h1>{t("settings.title")}</h1>
-      {/* screen content */}
-    </div>
-  );
-}
-```
-
-### 4. Create the mobile screen
-
-file: `apps/mobile-rn/src/screens/SettingsScreen.tsx`
+file: `apps/app/src/screens/SettingsScreen.tsx`
 
 ```typescript
 import { useTranslation } from "react-i18next";
@@ -66,22 +44,16 @@ export function SettingsScreen({ navigation }: any) {
     <SafeAreaView style={{ flex: 1 }}>
       <View>
         <Text>{t("settings.title")}</Text>
-        {/* screen content — same elements as desktop */}
+        {/* screen content */}
       </View>
     </SafeAreaView>
   );
 }
 ```
 
-### 5. Wire up navigation
+### 4. Wire up navigation
 
-**desktop** (`App.tsx`): add a new case to the screen state and navigation callbacks
-
-```typescript
-type Screen = "home" | "receive" | "send" | "active" | "settings";
-```
-
-**mobile** (`App.tsx`): add a new screen to the React Navigation stack
+add a new screen to the React Navigation stack in `apps/app/src/App.tsx`:
 
 ```typescript
 <Stack.Screen name="Settings" component={SettingsScreen} />
@@ -91,21 +63,12 @@ type Screen = "home" | "receive" | "send" | "active" | "settings";
 
 add the new screen to the screen contract table in `.cursor/rules/ui-parity.mdc`.
 
-## Parity checklist
+## Checklist
 
-- [ ] Screen exists in both `apps/desktop-tauri/src/screens/` and `apps/mobile-rn/src/screens/`
+- [ ] Screen exists in `apps/app/src/screens/`
 - [ ] All user-facing text comes from `core/src/i18n/en.ts`
-- [ ] Same elements, labels, and behavior on both platforms
-- [ ] Colors from `styles/theme.ts`, not hardcoded
+- [ ] Uses React Native components (`View`, `Text`, `TouchableOpacity`, etc.)
+- [ ] Colors from `apps/app/src/styles/theme.ts`, not hardcoded
 - [ ] Timing values from `core/src/config.ts`, not hardcoded
-- [ ] Navigation wired in both `App.tsx` files
+- [ ] Navigation wired in `apps/app/src/App.tsx`
 - [ ] Screen contract updated in `.cursor/rules/ui-parity.mdc`
-- [ ] Desktop uses callback props for navigation, mobile uses react-navigation
-
-## Allowed differences
-
-- `<div>` vs `<View>`, `<button>` vs `<TouchableOpacity>`, etc.
-- `SafeAreaView` wrapper on mobile only
-- `maxWidth` constraints on desktop for large screens
-- hover states on desktop only
-- desktop uses `100vh`, mobile uses `flex: 1`

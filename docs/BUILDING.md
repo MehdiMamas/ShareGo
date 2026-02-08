@@ -58,7 +58,7 @@ npm install
 npm run build:core
 
 # install iOS native deps
-cd apps/mobile-rn/ios
+cd apps/app/ios
 pod install
 cd ..
 
@@ -73,7 +73,7 @@ npx react-native run-ios --device
 ```
 
 **physical device setup:**
-1. open `apps/mobile-rn/ios/ShareGo.xcworkspace` in Xcode
+1. open `apps/app/ios/ShareGo.xcworkspace` in Xcode
 2. select your Apple ID under **Signing & Capabilities > Team**
 3. connect iPhone via USB, tap "Trust This Computer"
 4. on iPhone: **Settings > General > VPN & Device Management** — trust developer
@@ -105,7 +105,7 @@ a free Apple ID works for development (apps expire after 7 days).
 **quick start:**
 ```bash
 ./scripts/setup.sh android
-cd apps/mobile-rn
+cd apps/app
 npx react-native run-android
 ```
 
@@ -114,13 +114,13 @@ npx react-native run-android
 npm install
 npm run build:core
 
-cd apps/mobile-rn
+cd apps/app
 npx react-native run-android         # dev build on emulator/device
 ```
 
 **release build:**
 ```bash
-cd apps/mobile-rn/android
+cd apps/app/android
 ./gradlew assembleRelease            # APK
 ./gradlew bundleRelease              # AAB (for Play Store)
 ```
@@ -141,94 +141,50 @@ export PATH=$ANDROID_HOME/platform-tools:$PATH
 export PATH=$ANDROID_HOME/emulator:$PATH
 ```
 
-### desktop — Tauri (windows, macOS, linux)
+### desktop — Electron (windows, macOS, linux)
 
-Tauri requires Rust and platform-specific system dependencies.
+Electron requires only Node.js — no Rust or system webview needed.
 
-**all desktop platforms:**
-```bash
-# install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
-or use the setup script:
+**quick start:**
 ```bash
 ./scripts/setup.sh desktop
+npm run dev:desktop
 ```
 
-#### windows
-
-- install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (MSVC workload)
-- WebView2 is included in Windows 10/11
-- install [Node.js LTS](https://nodejs.org/)
-
+**manual setup:**
 ```bash
-cd apps/desktop-tauri
 npm install
-npm run tauri dev    # development
-npm run tauri build  # production (outputs .msi / .exe)
+npm run build:core
+
+# build electron main process
+cd apps/app
+npm run build:electron
+
+# run in development
+npm run dev:electron
 ```
 
-#### macOS
-
-- install Xcode Command Line Tools: `xcode-select --install`
-- WebKit is system-provided (WKWebView)
-
+**production build:**
 ```bash
-cd apps/desktop-tauri
-npm install
-npm run tauri dev    # development
-npm run tauri build  # production (outputs .dmg / .app)
+# build for current platform
+npm run build:desktop
+
+# build with debug info
+npm run build:desktop:debug
 ```
 
-for universal binary (x64 + ARM):
-```bash
-rustup target add aarch64-apple-darwin x86_64-apple-darwin
-npm run tauri build -- --target universal-apple-darwin
-```
-
-#### linux
-
-install system dependencies:
-
-**ubuntu/debian:**
-```bash
-sudo apt update
-sudo apt install -y \
-  libwebkit2gtk-4.1-dev \
-  build-essential \
-  curl wget file \
-  libssl-dev \
-  libgtk-3-dev \
-  libayatana-appindicator3-dev \
-  librsvg2-dev
-```
-
-**fedora:**
-```bash
-sudo dnf install webkit2gtk4.1-devel openssl-devel curl wget file \
-  libappindicator-gtk3-devel librsvg2-devel
-```
-
-**arch:**
-```bash
-sudo pacman -S webkit2gtk-4.1 base-devel curl wget file openssl \
-  appmenu-gtk-module libappindicator-gtk3 librsvg
-```
-
-```bash
-cd apps/desktop-tauri
-npm install
-npm run tauri dev    # development
-npm run tauri build  # production (outputs .deb / .AppImage)
-```
+electron-builder outputs:
+- **macOS:** `.dmg`, `.app` in `apps/app/release/`
+- **Windows:** `.exe`, `.msi` in `apps/app/release/`
+- **Linux:** `.AppImage`, `.deb` in `apps/app/release/`
 
 ## monorepo structure
 
-this is an npm workspaces monorepo. the `core` package is shared between desktop and mobile apps.
+this is an npm workspaces monorepo powered by Turborepo. the `core` package is shared between desktop and mobile.
 
 ```bash
 npm install          # installs all workspaces
+turbo run build      # builds all packages (core first, then app)
 npm run build:core   # builds core only
 npm run test:core    # tests core only
 ```

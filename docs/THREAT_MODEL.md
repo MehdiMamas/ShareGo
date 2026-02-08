@@ -147,4 +147,4 @@ Auto-accept would allow anyone on the same network who obtains the session ID to
 
 ### Why best-effort memory zeroing
 
-JavaScript/TypeScript does not guarantee memory zeroing — the garbage collector may copy buffers, and we cannot control the JIT compiler's behavior. We use `sodium.memzero()` as the best available option, knowing it is not a cryptographic guarantee. For truly sensitive deployments, the core could be reimplemented in Rust (via Tauri's backend) with guaranteed memory zeroing.
+JavaScript/TypeScript does not guarantee memory zeroing — the garbage collector may copy buffers, and we cannot control the JIT compiler's behavior. We use `sodium.memzero()` as the best available option, knowing it is not a cryptographic guarantee. For truly sensitive deployments, the core could be reimplemented in Rust (via a native Node.js addon) with guaranteed memory zeroing.

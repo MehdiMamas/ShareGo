@@ -33,7 +33,7 @@ function isValidAddress(addr: string): boolean {
  * sender calls connect() — connects to receiver's ip:port.
  *
  * platform-specific WebSocket server/client implementations are injected
- * via the constructor so this module stays platform-agnostic. tauri and
+ * via the constructor so this module stays platform-agnostic. electron and
  * react native each provide their own ws bindings.
  */
 
@@ -155,6 +155,7 @@ export class WebSocketTransport implements ILocalTransport {
       await client.connect(url);
     } catch (err) {
       // don't leave transport in inconsistent state on connection failure
+      try { client.close(); } catch { /* best effort */ }
       throw err;
     }
 

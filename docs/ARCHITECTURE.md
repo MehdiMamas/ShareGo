@@ -12,13 +12,13 @@ ShareGo runs on all five major platforms from a single shared core:
 
 | Platform | Shell              | Build target              |
 |----------|--------------------|---------------------------|
-| Windows  | Tauri v2           | MSVC native binary        |
-| macOS    | Tauri v2           | Universal binary (x64+ARM)|
-| Linux    | Tauri v2           | AppImage / .deb           |
+| Windows  | Electron           | .exe / .msi (NSIS)        |
+| macOS    | Electron           | .dmg / .app               |
+| Linux    | Electron           | .AppImage / .deb          |
 | Android  | React Native bare  | Native APK/AAB            |
 | iOS      | React Native bare  | Native IPA                |
 
-Desktop and mobile share the same TypeScript core (crypto, protocol, session, transport). Each platform shell is a thin wrapper that provides native APIs (WebSocket server, camera, clipboard) and a UI layer.
+All platforms share a unified React Native + react-native-web codebase in `apps/app/`. The TypeScript core (crypto, protocol, session, transport) lives in `@sharego/core`. Desktop uses Electron for the native shell (Node.js main process for WebSocket server, mDNS). Mobile uses React Native bare.
 
 ## Core invariants
 
@@ -41,24 +41,28 @@ These are non-negotiable constraints. If a platform cannot meet them, the platfo
 One implementation of crypto, protocol, session logic, and transport abstraction. No duplicated security logic across platforms.
 
 - Crypto: `libsodium-wrappers-sumo` (browser/Node compatible, audited)
-- Protocol: custom binary-over-JSON wire format
-- Session: state machine with event emitter + framework-agnostic `SessionController`
+- Protocol: binary DATA frames + JSON control messages
+- Session: XState v5 state machine + event emitter + framework-agnostic `SessionController`
 - Transport: `ILocalTransport` interface, v1 = WebSocket
+- Discovery: `DiscoveryAdapter` interface (mDNS preferred, subnet scan fallback)
+- Types: branded types for compile-time safety (`SessionId`, `NetworkAddress`, `Base64PublicKey`, etc.)
 - Config: shared constants in `core/src/config.ts` (TTLs, ports, limits)
 - i18n: all user-facing text in `core/src/i18n/en.ts` (single source of truth for both platforms)
 
-### Desktop: Tauri v2 (Windows, macOS, Linux)
+### Desktop: Electron (Windows, macOS, Linux)
 
-- Smallest attack surface of any desktop framework (no Chromium bundled engine, uses system webview)
-- Native LAN access (WebSocket server via Tauri Rust backend, WebSocket client via browser API)
-- Webcam-based QR scanning via jsQR (fallback: manual pairing code)
-- Builds to native binary per OS
+- Node.js main process runs WebSocket server and mDNS discovery natively
+- Renderer process uses react-native-web for UI parity with mobile
+- Webcam-based QR scanning via html5-qrcode (fallback: manual pairing code)
+- Packaged via electron-builder for all three desktop OSes
+- IPC bridge (contextBridge + ipcRenderer/ipcMain) for secure renderer↔main communication
 
 ### Mobile: React Native bare (Android, iOS)
 
 - No Expo managed workflow — bare gives full control over native modules
-- Camera access for QR scanning
+- Camera access for QR scanning via react-native-vision-camera
 - Local network access (LAN WebSocket)
+- mDNS discovery via react-native-zeroconf
 - Clipboard access with auto-clear capability
 - Native builds per OS
 
@@ -82,28 +86,43 @@ ShareGo/
   core/
     src/
       crypto/           libsodium wrappers, key exchange, encrypt/decrypt
-      protocol/         message types, serialization, validation
-      session/          session state machine, session controller, events
+      protocol/         message types, serialization, validation, binary DATA frames
+      session/          XState state machine, session controller, events
       transport/        ILocalTransport interface + WebSocketTransport
-      utils/            subnet discovery helpers
-      i18n/             translation resources (en.ts) — single source of truth for all user-facing text
+      discovery/        DiscoveryAdapter interface, mDNS + subnet fallback
+      types/            branded types (SessionId, NetworkAddress, etc.)
+      utils/            legacy subnet discovery helpers (deprecated)
+      i18n/             translation resources (en.ts) — single source of truth
       config.ts         shared constants (TTLs, ports, limits) — single source of truth
-      strings.ts        legacy strings (deprecated — use i18n)
       index.ts          barrel export
     package.json
     tsconfig.json
+    vitest.config.ts
   apps/
-    desktop-tauri/      Tauri shell + web UI (Windows, macOS, Linux)
-    mobile-rn/          React Native bare app (Android, iOS)
+    app/                unified app (desktop + mobile)
+      electron/         Electron main process (ws-server, net-utils, mdns-adapter, preload)
+      src/
+        adapters/       platform-specific transport adapters
+        components/     shared React Native components
+        hooks/          useSession, useTransport
+        screens/        HomeScreen, ReceiveScreen, SendScreen, ActiveSessionScreen
+        styles/         theme.ts (shared design tokens)
+        lib/            core re-exports
+        platform.ts     runtime platform detection
+        App.tsx         entry point
+      e2e/              Playwright tests (Electron E2E)
+      e2e-mobile/       Detox tests (mobile E2E)
+      package.json
   scripts/
     setup.sh            one-command dev environment setup
     dev-ios.sh          iOS simulator/device convenience script
     build-ios.sh        iOS production build
     build-android.sh    Android production build
-    build-desktop.sh    desktop production build
+    build-desktop.sh    Electron desktop build
     build-core.sh       core library build
     check.sh            prerequisite checker for all platforms
     preflight.sh        pre-build validation
+    sync-version.mjs    version synchronization across packages
   docs/
     ARCHITECTURE.md     this file
     BUILDING.md         build instructions for all platforms
@@ -113,11 +132,9 @@ ShareGo/
     THREAT_MODEL.md     threats, mitigations, crypto choices
     REJECTED.md         why NOT certain alternatives
   .github/
-    CODEOWNERS          code ownership for review routing
-    PULL_REQUEST_TEMPLATE.md  PR checklist template
-    ISSUE_TEMPLATE/     bug report and feature request templates
     workflows/          CI/CD (release builds for all platforms)
-  package.json          monorepo root (npm workspaces)
+  turbo.json            Turborepo task pipeline
+  package.json          monorepo root (npm workspaces + turbo)
   tsconfig.base.json    shared TypeScript config
   SECURITY.md           vulnerability reporting policy
   CODE_OF_CONDUCT.md    contributor code of conduct
@@ -128,21 +145,20 @@ ShareGo/
 
 ### Windows
 
-- Tauri uses Edge WebView2 (preinstalled on Windows 10+)
-- WebSocket server listens on all LAN interfaces
+- Electron bundles Chromium — no system webview dependency
+- Node.js main process runs WebSocket server (ws library)
 - No special permissions needed for LAN access
 
 ### macOS
 
-- Tauri uses WKWebView (system-provided)
-- App Sandbox: local network access is allowed by default for non-App Store distribution
-- For App Store: `com.apple.security.network.client` and `com.apple.security.network.server` entitlements
+- Electron app, signed for distribution
+- Node.js main process handles WebSocket server and mDNS (bonjour-service)
+- For App Store: local network entitlements needed
 
 ### Linux
 
-- Tauri uses WebKitGTK
+- Electron app, distributed as AppImage or .deb
 - No special permissions for LAN access
-- Distributable as AppImage (portable) or .deb
 
 ### Android
 
