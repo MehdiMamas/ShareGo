@@ -52,7 +52,8 @@ class ElectronWsClient implements WebSocketClientAdapter {
       binary += String.fromCharCode(data[i]);
     }
     const base64 = btoa(binary);
-    getElectronAPI().wsSend(base64);
+    // catch IPC rejection if peer disconnected between send calls
+    getElectronAPI().wsSend(base64).catch(() => {});
   }
 
   onMessage(handler: (data: Uint8Array) => void): void {
@@ -78,24 +79,35 @@ class ElectronWsClient implements WebSocketClientAdapter {
 export class ElectronWsServerAdapter implements WebSocketServerAdapter {
   private connectionHandler: ConnectionHandler | null = null;
   private unsubConnection: (() => void) | null = null;
+  private pendingConnection = false;
 
   async start(port: number): Promise<string> {
     const api = getElectronAPI();
-    const address = await api.startWsServer(port);
 
-    // listen for incoming connections from main process
+    // subscribe to connection events BEFORE starting the server to avoid
+    // race where a peer connects before the handler is registered
     this.unsubConnection = api.onWsConnection(() => {
       if (this.connectionHandler) {
         const client = new ElectronWsClient();
         this.connectionHandler(client);
+      } else {
+        // handler not set yet — flag it for when onConnection() is called
+        this.pendingConnection = true;
       }
     });
 
+    const address = await api.startWsServer(port);
     return address;
   }
 
   onConnection(handler: ConnectionHandler): void {
     this.connectionHandler = handler;
+    // if a connection arrived before the handler was set, fire it now
+    if (this.pendingConnection) {
+      this.pendingConnection = false;
+      const client = new ElectronWsClient();
+      handler(client);
+    }
   }
 
   async stop(): Promise<void> {

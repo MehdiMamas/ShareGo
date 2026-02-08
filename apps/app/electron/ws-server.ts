@@ -85,7 +85,10 @@ export class ElectronWsServer {
    */
   send(data: Buffer | Uint8Array): void {
     if (!this.peer || this.peer.readyState !== ws.OPEN) {
-      throw new Error("no peer connected");
+      // peer disconnected between session deciding to send and IPC arriving —
+      // log and drop instead of crashing with an uncaught promise rejection
+      console.warn("[ws-server] send called but no peer connected, dropping message");
+      return;
     }
     this.peer.send(data);
   }
