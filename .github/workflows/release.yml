@@ -132,6 +132,14 @@ jobs:
         run: |
           echo "$SHAREGO_KEYSTORE_BASE64" | base64 -d > apps/app/android/app/sharego-release.keystore
 
+      # react-native-libsodium is hoisted to root node_modules but its gradle
+      # plugin walks up looking for node_modules/react-native which lives in
+      # apps/app/node_modules — create a symlink so resolution succeeds
+      - name: Fix monorepo node_modules resolution
+        run: |
+          ln -sf ${{ github.workspace }}/apps/app/node_modules/react-native node_modules/react-native
+          ln -sf ${{ github.workspace }}/apps/app/node_modules/@react-native node_modules/@react-native
+
       - name: Build release APK
         working-directory: apps/app/android
         env:
