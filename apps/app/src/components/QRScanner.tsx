@@ -232,10 +232,21 @@ function WebQRScanner({ onScanned }: QRScannerProps) {
 
     return () => {
       mounted = false;
-      // only stop if the scanner was successfully started
+      // stop the html5-qrcode scanner
       if (startedRef.current && scannerRef.current) {
         try { scannerRef.current.stop().catch(() => {}); } catch { /* best effort */ }
       }
+      // force-release all camera tracks in case html5-qrcode doesn't
+      try {
+        const videos = document.querySelectorAll("video");
+        videos.forEach((video) => {
+          const stream = (video as HTMLVideoElement).srcObject as MediaStream | null;
+          if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+            (video as HTMLVideoElement).srcObject = null;
+          }
+        });
+      } catch { /* best effort */ }
     };
   }, []); // no deps — mount once, use refs for callbacks
 
