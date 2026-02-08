@@ -8,11 +8,11 @@ apply plugin: "com.facebook.react"
  */
 react {
     /* Folders */
-    // monorepo: RN project root is apps/mobile-rn, node_modules is at repo root
+    // monorepo: RN project root is apps/app, node_modules is at apps/app/node_modules
     root = file("../../")
-    reactNativeDir = file("../../../../node_modules/react-native")
-    codegenDir = file("../../../../node_modules/@react-native/codegen")
-    cliFile = file("../../../../node_modules/react-native/cli.js")
+    reactNativeDir = file("../../node_modules/react-native")
+    codegenDir = file("../../node_modules/@react-native/codegen")
+    cliFile = file("../../node_modules/react-native/cli.js")
 
     /* Variants */
     //   The list of variants to that are debuggable. For those we're going to
@@ -41,8 +41,7 @@ react {
     // extraPackagerArgs = []
 
     /* Hermes Commands */
-    // monorepo: hermesc lives under root node_modules
-    hermesCommand = file("../../../../node_modules/react-native/sdks/hermesc/%OS-BIN%/hermesc").absolutePath
+    hermesCommand = file("../../node_modules/react-native/sdks/hermesc/%OS-BIN%/hermesc").absolutePath
 
     /* Autolinking */
     autolinkLibrariesWithApp()
