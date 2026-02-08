@@ -4,7 +4,7 @@
  */
 
 /** qr/code expiry in seconds — how long a QR code is valid before auto-regeneration */
-export const BOOTSTRAP_TTL = 10;
+export const BOOTSTRAP_TTL = 30;
 
 /** session expiry in seconds — how long a session can live after creation */
 export const SESSION_TTL = 300;
