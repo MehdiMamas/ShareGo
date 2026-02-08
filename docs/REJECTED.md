@@ -94,20 +94,18 @@ This document explains why certain technologies, architectures, and approaches w
 
 **Verdict:** WebSocket for v1. WebRTC as a future v2 transport option.
 
-## Electron
+## Tauri (v1 desktop shell — replaced by Electron in v2)
 
-**Update (v2):** ShareGo now uses Electron for desktop after the v2 refactor unified the codebase with React Native + react-native-web. The original objections about binary size were outweighed by the benefits of a single JavaScript runtime across all platforms.
+**Why used in v1:** Tauri uses the system webview, resulting in 5-10MB binaries and a smaller attack surface than Electron. For a security-focused app, minimizing attack surface was a priority.
 
-**Why considered:** Electron is the most popular cross-platform desktop framework with the largest ecosystem.
+**Why replaced in v2:**
+- The v2 architecture unified desktop and mobile into a single React Native + react-native-web codebase
+- Electron's Node.js main process provides native WebSocket server and mDNS discovery without Rust FFI
+- Sharing the same JavaScript runtime across all platforms eliminated an entire class of cross-platform bugs
+- The binary size trade-off (100MB+ vs 5-10MB) was acceptable given the benefits of a single codebase and runtime
+- Electron's ecosystem (electron-builder, auto-update, code signing) is far more mature for distribution
 
-**Why rejected (v1):**
-- Electron bundles Chromium — massive binary size (100MB+) for an app that transfers text
-- Larger attack surface (full browser engine)
-- Higher memory usage
-- Tauri uses the system webview, resulting in 5-10MB binaries and much smaller attack surface
-- For a security-focused app, minimizing attack surface is a priority
-
-**Verdict:** Tauri for desktop. Smallest binary, smallest attack surface.
+**Verdict:** Electron for desktop (v2). The benefits of a unified JS runtime and mature tooling outweigh the binary size cost.
 
 ## Flutter
 
@@ -115,8 +113,8 @@ This document explains why certain technologies, architectures, and approaches w
 
 **Why rejected:**
 - Dart ecosystem for crypto is less mature than TypeScript/libsodium
-- Flutter desktop is less mature than Tauri for native system access
+- Flutter desktop is less mature than Electron for native system access
 - TypeScript core is more widely auditable (more developers can review it)
-- React Native (mobile) + Tauri (desktop) + shared TypeScript core gives better platform-specific control
+- React Native + react-native-web + Electron + shared TypeScript core gives a single unified codebase across all platforms
 
-**Verdict:** TypeScript core with Tauri + React Native shells.
+**Verdict:** TypeScript core with Electron (desktop) + React Native (mobile) shells.

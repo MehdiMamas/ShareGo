@@ -62,10 +62,10 @@ jobs:
           name: core-dist
           path: core/dist/
 
-      # build electron main process
+      # build electron main process + vite web bundle
       - name: Build Electron
         working-directory: apps/app
-        run: npx tsc -p electron/tsconfig.json
+        run: npm run build:electron
 
       # package with electron-builder
       - name: Package desktop app
