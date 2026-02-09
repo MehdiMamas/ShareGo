@@ -19,6 +19,9 @@ export function HomeScreen({ navigation }: Props) {
 
         <View style={styles.buttons}>
           <TouchableOpacity
+            testID="receive-button"
+            accessibilityRole="button"
+            accessibilityLabel={en.home.receive}
             style={styles.receiveButton}
             activeOpacity={0.8}
             onPress={() => navigation.navigate("Receive")}
@@ -27,6 +30,9 @@ export function HomeScreen({ navigation }: Props) {
           </TouchableOpacity>
 
           <TouchableOpacity
+            testID="send-button"
+            accessibilityRole="button"
+            accessibilityLabel={en.home.send}
             style={styles.sendButton}
             activeOpacity={0.8}
             onPress={() => navigation.navigate("Send")}
