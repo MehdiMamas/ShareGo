@@ -19,7 +19,7 @@ export async function launchApp(): Promise<{ app: ElectronApplication; page: Pag
   const mainPath = path.resolve(__dirname, "../dist-electron/main.js");
 
   electronApp = await electron.launch({
-    args: [mainPath],
+    args: [mainPath, "--no-sandbox"],
     env: {
       ...process.env,
       NODE_ENV: "test",
