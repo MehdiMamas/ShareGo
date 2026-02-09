@@ -3,7 +3,7 @@
  * creates the app window, registers IPC handlers, and manages the WS server.
  */
 
-import { app, BrowserWindow, clipboard, ipcMain, session, systemPreferences } from "electron";
+import { app, BrowserWindow, clipboard, ipcMain } from "electron";
 import path from "path";
 import { ElectronWsServer } from "./ws-server.js";
 import { getLanIp } from "./net-utils.js";
@@ -45,24 +45,24 @@ function createWindow(): void {
     });
   }
 
-  // grant camera/microphone permissions automatically
+  // grant only camera permission (needed for QR scanning)
   mainWindow.webContents.session.setPermissionRequestHandler(
     (_webContents, permission, callback) => {
-      const allowed = ["media", "camera", "microphone"];
-      callback(allowed.includes(permission));
+      callback(permission === "media");
     },
   );
 
-  // allow permission checks (Electron 12+)
+  // allow only media permission checks
   mainWindow.webContents.session.setPermissionCheckHandler(
     (_webContents, permission) => {
-      const allowed = ["media", "camera", "microphone", "mediaKeySystem"];
-      return allowed.includes(permission);
+      return permission === "media";
     },
   );
 
-  // allow device access (needed for getUserMedia on some Electron versions)
-  mainWindow.webContents.session.setDevicePermissionHandler(() => true);
+  // allow device enumeration (needed for getUserMedia on some Electron versions)
+  // device permission handler covers HID/serial/USB — not camera (camera is
+  // handled by the permission request handler above). grant none of these.
+  mainWindow.webContents.session.setDevicePermissionHandler(() => false);
 
   // in dev, load from webpack dev server; in prod, load the built HTML
   if (process.env.ELECTRON_DEV_URL) {
@@ -81,6 +81,9 @@ function createWindow(): void {
 function registerIpcHandlers(): void {
   // ws server control
   ipcMain.handle("ws:start", async (_event, port: number) => {
+    if (typeof port !== "number" || !Number.isInteger(port) || port < 1 || port > 65535) {
+      throw new Error("invalid port — must be integer 1-65535");
+    }
     const address = await wsServer.start(port, {
       onConnection: () => {
         mainWindow?.webContents.send("ws:connection");
@@ -102,13 +105,16 @@ function registerIpcHandlers(): void {
   });
 
   ipcMain.handle("ws:send", async (_event, data: string) => {
-    // decode base64 back to binary
+    if (typeof data !== "string" || data.length === 0) {
+      throw new Error("invalid data — must be non-empty base64 string");
+    }
     const bytes = Buffer.from(data, "base64");
     wsServer.send(bytes);
   });
 
   // clipboard
   ipcMain.on("clipboard:copy", (_event, text: string) => {
+    if (typeof text !== "string" || text.length > 1_048_576) return;
     clipboard.writeText(text);
   });
 

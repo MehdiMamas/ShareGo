@@ -18,6 +18,7 @@ export {
   KEY_LENGTH,
   NONCE_LENGTH,
   AEAD_TAG_LENGTH,
+  constantTimeEqual,
 } from "./crypto/index.js";
 
 // protocol

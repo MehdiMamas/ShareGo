@@ -22,6 +22,7 @@ import {
   fromBase64,
   PUBLIC_KEY_LENGTH,
   NONCE_LENGTH,
+  constantTimeEqual,
 } from "../crypto/index.js";
 import {
   type ILocalTransport,
@@ -640,7 +641,7 @@ export class Session {
   }
 
   private nextSeq(): SequenceNumber {
-    if ((this.seq as number) >= Number.MAX_SAFE_INTEGER) {
+    if ((this.seq as number) >= 0xFFFFFFFF) {
       throw new Error("sequence number overflow");
     }
     this.seq = asSequenceNumber((this.seq as number) + 1);
@@ -711,14 +712,4 @@ export class Session {
     this.transport?.close();
     this.transport = null;
   }
-}
-
-/** constant-time comparison to prevent timing attacks */
-function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) {
-    diff |= a[i] ^ b[i];
-  }
-  return diff === 0;
 }

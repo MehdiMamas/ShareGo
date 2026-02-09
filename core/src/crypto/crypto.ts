@@ -217,3 +217,13 @@ function assertReady(): void {
     throw new Error("crypto not initialized — call initCrypto() first");
   }
 }
+
+/** constant-time comparison to prevent timing attacks on secret data */
+export function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a[i] ^ b[i];
+  }
+  return diff === 0;
+}

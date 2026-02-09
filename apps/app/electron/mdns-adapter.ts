@@ -14,16 +14,35 @@ import {
   asNetworkAddress,
 } from "@sharego/core";
 
-// bonjour-service types (lazy import to avoid bundling in renderer)
-let Bonjour: any;
-let bonjourInstance: any;
+// bonjour-service types
+interface BonjourTxt { [key: string]: string }
+interface BonjourService {
+  name?: string;
+  addresses?: string[];
+  port: number;
+  txt?: BonjourTxt;
+  stop?: () => void;
+}
+interface BonjourBrowser {
+  stop?: () => void;
+}
+interface BonjourInstance {
+  publish(opts: { name: string; type: string; port: number; txt: Record<string, string> }): BonjourService;
+  find(opts: { type: string }, cb: (service: BonjourService) => void): BonjourBrowser;
+}
+interface BonjourConstructor {
+  new(): BonjourInstance;
+}
 
-async function getBonjourInstance() {
+let BonjourClass: BonjourConstructor | null = null;
+let bonjourInstance: BonjourInstance | null = null;
+
+async function getBonjourInstance(): Promise<BonjourInstance> {
   if (!bonjourInstance) {
     // dynamic import so this only loads in the main process
     const mod = await import("bonjour-service");
-    Bonjour = mod.Bonjour || mod.default;
-    bonjourInstance = new Bonjour();
+    BonjourClass = (mod.Bonjour || mod.default) as unknown as BonjourConstructor;
+    bonjourInstance = new BonjourClass();
   }
   return bonjourInstance;
 }
@@ -33,8 +52,8 @@ async function getBonjourInstance() {
  * this runs in the main process and is exposed to the renderer via IPC.
  */
 export class ElectronMdnsAdapter implements DiscoveryAdapter {
-  private service: any = null;
-  private browser: any = null;
+  private service: BonjourService | null = null;
+  private browser: BonjourBrowser | null = null;
 
   async advertise(
     serviceName: string,
@@ -60,7 +79,7 @@ export class ElectronMdnsAdapter implements DiscoveryAdapter {
 
     this.browser = bonjour.find({
       type: serviceName.replace(/^_/, "").replace(/\._tcp$/, ""),
-    }, (service: any) => {
+    }, (service: BonjourService) => {
       if (done) return;
 
       const txt = service.txt || {};
