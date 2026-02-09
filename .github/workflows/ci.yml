@@ -44,27 +44,43 @@ jobs:
       - name: Core unit tests
         run: pnpm run test:core
 
-  # ── desktop build verification ────────────────────────────────────
-  # PRs: linux only (fast feedback)
-  # main: all 3 platforms (full coverage)
-  build-electron:
+  # ── desktop build verification (always: linux) ────────────────────
+  build-electron-linux:
+    name: Electron (Linux)
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build core
+        run: pnpm run build:core
+
+      - name: Build Electron app
+        working-directory: apps/app
+        run: pnpm run build:electron
+
+  # ── desktop build verification (main only: macOS + Windows) ──────
+  build-electron-platform:
     name: Electron (${{ matrix.label }})
     needs: quality
+    if: github.event_name == 'push'
     strategy:
       fail-fast: false
       matrix:
         include:
-          - label: Linux
-            runner: ubuntu-latest
-            pr: true
           - label: macOS
             runner: macos-latest
-            pr: false
           - label: Windows
             runner: windows-latest
-            pr: false
-    # skip macOS/Windows on PRs to save CI minutes
-    if: ${{ github.event_name == 'push' || matrix.pr }}
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
