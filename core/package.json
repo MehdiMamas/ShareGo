@@ -15,11 +15,11 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "libsodium-wrappers-sumo": "^0.7.15",
+    "libsodium-wrappers-sumo": "^0.8.2",
     "xstate": "^5.26.0"
   },
   "devDependencies": {
-    "@types/libsodium-wrappers-sumo": "^0.7.8",
+    "@types/libsodium-wrappers-sumo": "^0.8.2",
     "fast-check": "^4.5.3",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
