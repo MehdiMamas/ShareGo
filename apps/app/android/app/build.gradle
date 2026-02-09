@@ -119,6 +119,12 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+    // prevent duplicate native lib conflicts when multiple RN modules bundle libc++_shared.so
+    packaging {
+        jniLibs {
+            pickFirst '**/*.so'
+        }
+    }
 }
 
 dependencies {
