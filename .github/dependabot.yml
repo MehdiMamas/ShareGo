@@ -19,11 +19,22 @@ updates:
           - "@react-native/*"
           - "@react-native-*/*"
     # react-native upgrades are breaking even for minor bumps — handle manually
+    # major bumps on core framework deps require coordinated migration — handle manually
     ignore:
       - dependency-name: "react-native"
-        update-types: ["version-update:semver-minor"]
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
       - dependency-name: "@react-native/*"
-        update-types: ["version-update:semver-minor"]
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@react-navigation/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "electron"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "electron-builder"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
 
