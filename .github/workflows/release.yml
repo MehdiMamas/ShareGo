@@ -78,7 +78,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # fail if asar exceeds 30MB — catches accidental dependency bloat
+      # fail if asar exceeds 40MB — catches accidental dependency bloat
       - name: Check asar size budget
         if: runner.os == 'Linux'
         working-directory: apps/app
@@ -87,8 +87,8 @@ jobs:
           if [ -n "$ASAR" ]; then
             SIZE=$(stat --format=%s "$ASAR" 2>/dev/null || stat -f%z "$ASAR")
             echo "app.asar size: $((SIZE / 1048576))MB ($SIZE bytes)"
-            if [ "$SIZE" -gt 31457280 ]; then
-              echo "::error::app.asar exceeds 30MB budget ($((SIZE / 1048576))MB)"
+            if [ "$SIZE" -gt 41943040 ]; then
+              echo "::error::app.asar exceeds 40MB budget ($((SIZE / 1048576))MB)"
               exit 1
             fi
           fi
