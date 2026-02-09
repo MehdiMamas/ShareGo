@@ -18,11 +18,16 @@ buildscript {
     }
 }
 
+// detox ships its android library as a local maven repo inside the npm package.
+// pnpm hoists detox to the monorepo root node_modules, so we resolve the path dynamically.
+def detoxMaven = ["$rootDir/../node_modules/detox/Detox-android",
+                  "$rootDir/../../../node_modules/detox/Detox-android"].find {
+    new File(it).exists()
+}
 allprojects {
     repositories {
-        // detox ships its android library as a local maven repo inside the npm package
-        maven {
-            url("$rootDir/../node_modules/detox/Detox-android")
+        if (detoxMaven != null) {
+            maven { url(detoxMaven) }
         }
     }
 }
