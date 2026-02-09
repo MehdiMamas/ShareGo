@@ -63,7 +63,7 @@ export class WebWsClientAdapter implements WebSocketClientAdapter {
   }
 
   send(data: Uint8Array): void {
-    if (!this.ws) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       throw new Error("websocket not connected");
     }
     this.ws.send(data.buffer);
@@ -78,7 +78,13 @@ export class WebWsClientAdapter implements WebSocketClientAdapter {
   }
 
   close(): void {
-    this.ws?.close();
+    if (this.ws) {
+      this.ws.onopen = null;
+      this.ws.onerror = null;
+      this.ws.onmessage = null;
+      this.ws.onclose = null;
+      this.ws.close();
+    }
     this.ws = null;
     this.messageHandler = null;
     this.closeHandler = null;

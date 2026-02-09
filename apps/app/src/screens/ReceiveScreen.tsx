@@ -58,7 +58,7 @@ export function ReceiveScreen({ navigation }: Props) {
       })
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err);
-        console.error("failed to start receiver:", msg);
+        log.error("[receive] failed to start receiver:", msg);
         setInitError(msg);
       });
   }, []);
@@ -143,7 +143,9 @@ export function ReceiveScreen({ navigation }: Props) {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => {
-            session.endSession();
+            if (session.state !== SessionState.Closed) {
+              session.endSession();
+            }
             navigation.goBack();
           }}
         >

@@ -108,7 +108,15 @@ function registerIpcHandlers(): void {
     if (typeof data !== "string" || data.length === 0) {
       throw new Error("invalid data — must be non-empty base64 string");
     }
+    // validate size before decoding to prevent memory abuse
+    // base64 expands ~33%, so max base64 length ≈ 65536 * 4/3 ≈ 87382
+    if (data.length > 90_000) {
+      throw new Error("data too large");
+    }
     const bytes = Buffer.from(data, "base64");
+    if (bytes.length > 65_536) {
+      throw new Error("decoded data exceeds 64KB limit");
+    }
     wsServer.send(bytes);
   });
 

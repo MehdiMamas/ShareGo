@@ -44,6 +44,7 @@ let nextItemId = 1;
  */
 export class SessionController {
   private session: Session | null = null;
+  private starting = false;
   private snapshot: SessionSnapshot = {
     state: SessionState.Created,
     sessionId: null,
@@ -109,6 +110,7 @@ export class SessionController {
     });
 
     session.on(SessionEvent.Error, (err: Error) => {
+      log.warn(`[session-controller] error: ${err.message}`);
       this.update({ error: err.message });
     });
   }
@@ -130,33 +132,59 @@ export class SessionController {
   }
 
   async startReceiver(transport: ILocalTransport, config: SessionConfig): Promise<void> {
-    this.cleanup();
-    this.update({ error: null });
+    if (this.starting) {
+      log.warn("[session-controller] startReceiver called while already starting");
+      return;
+    }
+    this.starting = true;
 
-    const session = new Session(SessionRole.Receiver, config);
-    this.session = session;
-    this.update({ sessionId: session.id, state: SessionState.Created });
-    this.attachListeners(session);
+    try {
+      this.cleanup();
+      this.update({ error: null });
 
-    await session.startAsReceiver(transport);
+      const session = new Session(SessionRole.Receiver, config);
+      this.session = session;
+      this.update({ sessionId: session.id, state: SessionState.Created });
+      this.attachListeners(session);
 
-    // bail if this session was superseded by a new one during the async await
-    if (this.session !== session) return;
+      await session.startAsReceiver(transport);
 
-    const addr = transport.getLocalAddress();
-    if (addr) {
-      const networkAddr = asNetworkAddress(addr);
-      const payload: QrPayload = {
-        v: PROTOCOL_VERSION,
-        sid: session.id,
-        addr: networkAddr,
-        pk: session.getPublicKey()!,
-        exp: session.getBootstrapTtl(),
-      };
+      // bail if this session was superseded by a new one during the async await
+      if (this.session !== session) return;
+
+      const addr = transport.getLocalAddress();
+      if (addr) {
+        const networkAddr = asNetworkAddress(addr);
+        const pk = session.getPublicKey();
+        if (!pk) {
+          log.warn("[session-controller] public key not available after startAsReceiver");
+          return;
+        }
+        const payload: QrPayload = {
+          v: PROTOCOL_VERSION,
+          sid: session.id,
+          addr: networkAddr,
+          pk,
+          exp: session.getBootstrapTtl(),
+        };
+        this.update({
+          localAddress: networkAddr,
+          qrPayload: encodeQrPayload(payload),
+        });
+      }
+    } catch (err) {
+      // cleanup failed session to prevent dangling listeners
+      if (this.session) {
+        this.session.close();
+        this.session = null;
+      }
       this.update({
-        localAddress: networkAddr,
-        qrPayload: encodeQrPayload(payload),
+        state: SessionState.Closed,
+        error: err instanceof Error ? err.message : String(err),
       });
+      throw err;
+    } finally {
+      this.starting = false;
     }
   }
 
@@ -167,15 +195,35 @@ export class SessionController {
     receiverPk?: string,
     sid?: SessionId,
   ): Promise<void> {
-    this.cleanup();
-    this.update({ error: null });
+    if (this.starting) {
+      log.warn("[session-controller] startSender called while already starting");
+      return;
+    }
+    this.starting = true;
 
-    const session = new Session(SessionRole.Sender, config, sid);
-    this.session = session;
-    this.update({ sessionId: session.id, state: SessionState.Created });
-    this.attachListeners(session);
+    try {
+      this.cleanup();
+      this.update({ error: null });
 
-    await session.startAsSender(transport, addr, receiverPk);
+      const session = new Session(SessionRole.Sender, config, sid);
+      this.session = session;
+      this.update({ sessionId: session.id, state: SessionState.Created });
+      this.attachListeners(session);
+
+      await session.startAsSender(transport, addr, receiverPk);
+    } catch (err) {
+      if (this.session) {
+        this.session.close();
+        this.session = null;
+      }
+      this.update({
+        state: SessionState.Closed,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      throw err;
+    } finally {
+      this.starting = false;
+    }
   }
 
   approve(): void {
@@ -189,9 +237,11 @@ export class SessionController {
   }
 
   sendData(text: string): void {
-    if (!this.session) return;
+    // capture reference to avoid race with concurrent cleanup
+    const session = this.session;
+    if (!session) return;
     const bytes = new TextEncoder().encode(text);
-    const seq = this.session.sendData(bytes);
+    const seq = session.sendData(bytes);
     this.update({
       sentItems: [...this.snapshot.sentItems, { seq, text, acked: false, timestamp: Date.now() }],
     });

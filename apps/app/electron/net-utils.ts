@@ -26,8 +26,8 @@ export function getLanIp(): string | null {
     if (!addrs) continue;
 
     for (const addr of addrs) {
-      // skip non-IPv4
-      if (addr.family !== "IPv4") continue;
+      // skip non-IPv4 (Node.js 18+ may return numeric 4 instead of "IPv4")
+      if (addr.family !== "IPv4" && (addr.family as unknown) !== 4) continue;
 
       // skip loopback
       if (addr.internal) continue;

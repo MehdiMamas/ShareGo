@@ -67,6 +67,7 @@ export function SendScreen({ navigation }: Props) {
         await session.startSender(t, { deviceName: DEVICE_NAME_SENDER }, addr, pk, sid);
       } catch (err) {
         setInputError(err instanceof Error ? err.message : en.send.errorConnectionFailed);
+      } finally {
         setConnecting(false);
       }
     },
@@ -166,7 +167,9 @@ export function SendScreen({ navigation }: Props) {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => {
-            session.endSession();
+            if (session.state !== SessionState.Closed) {
+              session.endSession();
+            }
             navigation.goBack();
           }}
         >
