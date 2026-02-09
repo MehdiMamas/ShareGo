@@ -48,13 +48,18 @@ export function deserializeMessage(data: Uint8Array): ProtocolMessage {
   if (!parsed.sid || typeof parsed.sid !== "string") {
     throw new Error("missing or invalid session id");
   }
-  if (typeof parsed.seq !== "number") {
+  if (
+    typeof parsed.seq !== "number" ||
+    !Number.isFinite(parsed.seq) ||
+    parsed.seq < 0 ||
+    parsed.seq > 0xffffffff
+  ) {
     throw new Error("missing or invalid sequence number");
   }
 
   // brand boundary values at the deserialization boundary
   parsed.sid = asSessionId(parsed.sid);
-  parsed.seq = asSequenceNumber(parsed.seq);
+  parsed.seq = asSequenceNumber(Math.floor(parsed.seq));
 
   // validate type-specific required fields with length checks
   switch (parsed.type) {

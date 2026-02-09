@@ -14,11 +14,15 @@ import {
   discoverReceiver,
   asSessionId,
   en,
+  MDNS_SERVICE_TYPE,
+  MDNS_BROWSE_TIMEOUT_MS,
+  log,
 } from "../lib/core";
 import { StatusIndicator } from "../components/StatusIndicator";
 import { QRScanner } from "../components/QRScanner";
 import { colors } from "../styles/theme";
 import { getLocalIp } from "../adapters/network";
+import { isElectron } from "../platform";
 
 interface Props {
   navigation: NativeStackNavigationProp<RootStackParamList, "Send">;
@@ -63,6 +67,7 @@ export function SendScreen({ navigation }: Props) {
         await session.startSender(t, { deviceName: DEVICE_NAME_SENDER }, addr, pk, sid);
       } catch (err) {
         setInputError(err instanceof Error ? err.message : en.send.errorConnectionFailed);
+      } finally {
         setConnecting(false);
       }
     },
@@ -99,6 +104,25 @@ export function SendScreen({ navigation }: Props) {
     discoveryAbortRef.current = controller;
 
     try {
+      // on electron, try mDNS first via main-process IPC (avoids 254 subnet connections)
+      if (isElectron && window.electronAPI?.mdnsBrowse) {
+        log.debug("[send] trying mDNS discovery via IPC...");
+        const mdnsResult = await window.electronAPI.mdnsBrowse(
+          MDNS_SERVICE_TYPE,
+          code,
+          MDNS_BROWSE_TIMEOUT_MS,
+        );
+        if (controller.signal.aborted) return;
+        if (mdnsResult) {
+          log.debug(`[send] mDNS found receiver at ${mdnsResult.address}`);
+          setDiscovering(false);
+          await connectToReceiver(mdnsResult.address, mdnsResult.publicKey ?? undefined, code);
+          return;
+        }
+        log.debug("[send] mDNS found nothing, falling back to subnet scan");
+      }
+
+      // fall back to subnet scanning
       const result = await discoverReceiver({
         sessionCode: asSessionId(code),
         port: DEFAULT_PORT,
@@ -124,6 +148,10 @@ export function SendScreen({ navigation }: Props) {
   const handleCancel = () => {
     discoveryAbortRef.current?.abort();
     discoveryAbortRef.current = null;
+    // stop mDNS browsing on electron
+    if (isElectron && window.electronAPI?.mdnsStopBrowse) {
+      window.electronAPI.mdnsStopBrowse();
+    }
     session.endSession();
     setConnecting(false);
     setDiscovering(false);
@@ -139,7 +167,9 @@ export function SendScreen({ navigation }: Props) {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => {
-            session.endSession();
+            if (session.state !== SessionState.Closed) {
+              session.endSession();
+            }
             navigation.goBack();
           }}
         >

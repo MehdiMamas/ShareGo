@@ -12,7 +12,11 @@ export class RnWsClientAdapter implements WebSocketClientAdapter {
 
   connect(url: string): Promise<void> {
     return new Promise((resolve, reject) => {
+      let settled = false;
+
       const timeout = setTimeout(() => {
+        if (settled) return;
+        settled = true;
         this.ws?.close();
         reject(new Error("connection timed out"));
       }, WS_CONNECT_TIMEOUT_MS);
@@ -21,11 +25,15 @@ export class RnWsClientAdapter implements WebSocketClientAdapter {
       this.ws.binaryType = "arraybuffer";
 
       this.ws.onopen = () => {
+        if (settled) return;
+        settled = true;
         clearTimeout(timeout);
         resolve();
       };
 
       this.ws.onerror = () => {
+        if (settled) return;
+        settled = true;
         clearTimeout(timeout);
         reject(new Error("websocket connection failed"));
       };
@@ -41,13 +49,18 @@ export class RnWsClientAdapter implements WebSocketClientAdapter {
       };
 
       this.ws.onclose = () => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timeout);
+          reject(new Error("websocket closed before connection established"));
+        }
         if (this.closeHandler) this.closeHandler();
       };
     });
   }
 
   send(data: Uint8Array): void {
-    if (!this.ws) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       throw new Error("websocket not connected");
     }
     this.ws.send(data.buffer);
