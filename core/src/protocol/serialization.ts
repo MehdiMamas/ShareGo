@@ -1,16 +1,7 @@
-import {
-  type ProtocolMessage,
-  type QrPayload,
-  MessageType,
-  PROTOCOL_VERSION,
-} from "./types.js";
+import { type ProtocolMessage, type QrPayload, MessageType, PROTOCOL_VERSION } from "./types.js";
 import type { SessionId, SequenceNumber } from "../types/index.js";
 import { asSessionId, asSequenceNumber } from "../types/index.js";
-import {
-  MAX_MESSAGE_SIZE,
-  MAX_BASE64_FIELD_LENGTH,
-  MAX_DEVICE_NAME_LENGTH,
-} from "../config.js";
+import { MAX_MESSAGE_SIZE, MAX_BASE64_FIELD_LENGTH, MAX_DEVICE_NAME_LENGTH } from "../config.js";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -49,9 +40,7 @@ export function deserializeMessage(data: Uint8Array): ProtocolMessage {
     throw new Error("invalid message: not an object");
   }
   if (parsed.v !== PROTOCOL_VERSION) {
-    throw new Error(
-      `unsupported protocol version: ${parsed.v} (expected ${PROTOCOL_VERSION})`,
-    );
+    throw new Error(`unsupported protocol version: ${parsed.v} (expected ${PROTOCOL_VERSION})`);
   }
   if (!parsed.type || !Object.values(MessageType).includes(parsed.type)) {
     throw new Error(`unknown message type: ${parsed.type}`);
@@ -90,7 +79,11 @@ export function deserializeMessage(data: Uint8Array): ProtocolMessage {
       assertBase64Field(parsed.nonce, "DATA: nonce");
       break;
     case MessageType.ACK:
-      if (typeof parsed.ackSeq !== "number" || parsed.ackSeq < 0 || !Number.isFinite(parsed.ackSeq)) {
+      if (
+        typeof parsed.ackSeq !== "number" ||
+        parsed.ackSeq < 0 ||
+        !Number.isFinite(parsed.ackSeq)
+      ) {
         throw new Error("ACK: missing or invalid ackSeq");
       }
       parsed.ackSeq = asSequenceNumber(parsed.ackSeq);
@@ -118,9 +111,7 @@ export function decodeQrPayload(raw: string): QrPayload {
     throw new Error("invalid QR payload: not an object");
   }
   if (parsed.v !== PROTOCOL_VERSION) {
-    throw new Error(
-      `unsupported QR version: ${parsed.v} (expected ${PROTOCOL_VERSION})`,
-    );
+    throw new Error(`unsupported QR version: ${parsed.v} (expected ${PROTOCOL_VERSION})`);
   }
   if (!parsed.sid || typeof parsed.sid !== "string") {
     throw new Error("missing session id in QR payload");

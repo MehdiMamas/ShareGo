@@ -101,20 +101,10 @@ export default defineConfig({
       "react-native": "react-native-web",
       "react-native-svg": "react-native-svg-web",
       // libsodium ESM dist is incomplete — alias to CJS
-      "libsodium-wrappers-sumo": path.dirname(
-        require.resolve("libsodium-wrappers-sumo"),
-      ) + "/libsodium-wrappers.js",
+      "libsodium-wrappers-sumo":
+        path.dirname(require.resolve("libsodium-wrappers-sumo")) + "/libsodium-wrappers.js",
     },
-    extensions: [
-      ".web.tsx",
-      ".web.ts",
-      ".web.jsx",
-      ".web.js",
-      ".tsx",
-      ".ts",
-      ".jsx",
-      ".js",
-    ],
+    extensions: [".web.tsx", ".web.ts", ".web.jsx", ".web.js", ".tsx", ".ts", ".jsx", ".js"],
   },
   optimizeDeps: {
     exclude: nativeOnlyModules,
@@ -136,9 +126,7 @@ export default defineConfig({
     },
   },
   define: {
-    "process.env.NODE_ENV": JSON.stringify(
-      process.env.NODE_ENV || "development",
-    ),
+    "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || "development"),
     __DEV__: process.env.NODE_ENV !== "production",
   },
 });

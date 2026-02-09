@@ -93,9 +93,7 @@ describe("deserializeMessage validation", () => {
   }
 
   it("should reject invalid JSON", () => {
-    expect(() =>
-      deserializeMessage(new TextEncoder().encode("not json")),
-    ).toThrow();
+    expect(() => deserializeMessage(new TextEncoder().encode("not json"))).toThrow();
   });
 
   it("should reject wrong protocol version", () => {
@@ -108,9 +106,7 @@ describe("deserializeMessage validation", () => {
 
   it("should reject unknown message type", () => {
     expect(() =>
-      deserializeMessage(
-        makeBytes({ v: PROTOCOL_VERSION, type: "UNKNOWN", sid: "X", seq: 1 }),
-      ),
+      deserializeMessage(makeBytes({ v: PROTOCOL_VERSION, type: "UNKNOWN", sid: "X", seq: 1 })),
     ).toThrow("unknown message type");
   });
 
@@ -156,9 +152,7 @@ describe("deserializeMessage validation", () => {
 
   it("should reject AUTH without proof", () => {
     expect(() =>
-      deserializeMessage(
-        makeBytes({ v: PROTOCOL_VERSION, type: "AUTH", sid: "X", seq: 1 }),
-      ),
+      deserializeMessage(makeBytes({ v: PROTOCOL_VERSION, type: "AUTH", sid: "X", seq: 1 })),
     ).toThrow("AUTH: proof: missing");
   });
 
@@ -180,9 +174,7 @@ describe("deserializeMessage validation", () => {
 
   it("should reject ACK without ackSeq", () => {
     expect(() =>
-      deserializeMessage(
-        makeBytes({ v: PROTOCOL_VERSION, type: "ACK", sid: "X", seq: 1 }),
-      ),
+      deserializeMessage(makeBytes({ v: PROTOCOL_VERSION, type: "ACK", sid: "X", seq: 1 })),
     ).toThrow("ACK: missing or invalid ackSeq");
   });
 });

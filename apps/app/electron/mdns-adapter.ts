@@ -3,19 +3,13 @@
  * uses bonjour-service to advertise and browse for ShareGo services.
  */
 
-import type {
-  DiscoveryAdapter,
-  DiscoveredService,
-} from "@sharego/core";
-import {
-  MDNS_TXT_KEYS,
-  asSessionId,
-  asBase64PublicKey,
-  asNetworkAddress,
-} from "@sharego/core";
+import type { DiscoveryAdapter, DiscoveredService } from "@sharego/core";
+import { MDNS_TXT_KEYS, asSessionId, asBase64PublicKey, asNetworkAddress } from "@sharego/core";
 
 // bonjour-service types
-interface BonjourTxt { [key: string]: string }
+interface BonjourTxt {
+  [key: string]: string;
+}
 interface BonjourService {
   name?: string;
   addresses?: string[];
@@ -27,11 +21,16 @@ interface BonjourBrowser {
   stop?: () => void;
 }
 interface BonjourInstance {
-  publish(opts: { name: string; type: string; port: number; txt: Record<string, string> }): BonjourService;
+  publish(opts: {
+    name: string;
+    type: string;
+    port: number;
+    txt: Record<string, string>;
+  }): BonjourService;
   find(opts: { type: string }, cb: (service: BonjourService) => void): BonjourBrowser;
 }
 interface BonjourConstructor {
-  new(): BonjourInstance;
+  new (): BonjourInstance;
 }
 
 let BonjourClass: BonjourConstructor | null = null;
@@ -55,11 +54,7 @@ export class ElectronMdnsAdapter implements DiscoveryAdapter {
   private service: BonjourService | null = null;
   private browser: BonjourBrowser | null = null;
 
-  async advertise(
-    serviceName: string,
-    port: number,
-    meta: Record<string, string>,
-  ): Promise<void> {
+  async advertise(serviceName: string, port: number, meta: Record<string, string>): Promise<void> {
     const bonjour = await getBonjourInstance();
     this.service = bonjour.publish({
       name: `ShareGo-${meta[MDNS_TXT_KEYS.sid] ?? "unknown"}`,
@@ -77,37 +72,40 @@ export class ElectronMdnsAdapter implements DiscoveryAdapter {
     let resolve: (() => void) | null = null;
     let done = false;
 
-    this.browser = bonjour.find({
-      type: serviceName.replace(/^_/, "").replace(/\._tcp$/, ""),
-    }, (service: BonjourService) => {
-      if (done) return;
+    this.browser = bonjour.find(
+      {
+        type: serviceName.replace(/^_/, "").replace(/\._tcp$/, ""),
+      },
+      (service: BonjourService) => {
+        if (done) return;
 
-      const txt = service.txt || {};
-      const address = service.addresses?.find((a: string) => a.includes("."));
-      if (!address) return;
+        const txt = service.txt || {};
+        const address = service.addresses?.find((a: string) => a.includes("."));
+        if (!address) return;
 
-      const discovered: DiscoveredService = {
-        name: service.name || "unknown",
-        address: asNetworkAddress(`${address}:${service.port}`),
-        sessionId: asSessionId(txt[MDNS_TXT_KEYS.sid] || ""),
-        publicKey: txt[MDNS_TXT_KEYS.pk]
-          ? asBase64PublicKey(txt[MDNS_TXT_KEYS.pk])
-          : undefined,
-      };
+        const discovered: DiscoveredService = {
+          name: service.name || "unknown",
+          address: asNetworkAddress(`${address}:${service.port}`),
+          sessionId: asSessionId(txt[MDNS_TXT_KEYS.sid] || ""),
+          publicKey: txt[MDNS_TXT_KEYS.pk] ? asBase64PublicKey(txt[MDNS_TXT_KEYS.pk]) : undefined,
+        };
 
-      queue.push(discovered);
-      if (resolve) {
-        resolve();
-        resolve = null;
-      }
-    });
+        queue.push(discovered);
+        if (resolve) {
+          resolve();
+          resolve = null;
+        }
+      },
+    );
 
     try {
       while (!done) {
         if (queue.length > 0) {
           yield queue.shift()!;
         } else {
-          await new Promise<void>((r) => { resolve = r; });
+          await new Promise<void>((r) => {
+            resolve = r;
+          });
         }
       }
     } finally {

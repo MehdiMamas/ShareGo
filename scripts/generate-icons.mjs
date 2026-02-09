@@ -60,16 +60,10 @@ async function main() {
     console.log(`  electron: ${out}`);
   }
   // copy 512 as the main icon
-  fs.copyFileSync(
-    path.join(buildDir, "icon-512.png"),
-    path.join(buildDir, "icon.png"),
-  );
+  fs.copyFileSync(path.join(buildDir, "icon-512.png"), path.join(buildDir, "icon.png"));
 
   // iOS icons
-  const iosDir = path.join(
-    ROOT,
-    "apps/app/ios/ShareGo/Images.xcassets/AppIcon.appiconset",
-  );
+  const iosDir = path.join(ROOT, "apps/app/ios/ShareGo/Images.xcassets/AppIcon.appiconset");
   fs.mkdirSync(iosDir, { recursive: true });
   for (const size of IOS_SIZES) {
     const out = path.join(iosDir, `icon-${size}.png`);

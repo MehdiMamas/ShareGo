@@ -1,11 +1,5 @@
 import React, { useContext, useEffect, useState, useCallback, useRef } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-} from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { ScreenContainer } from "../components/ScreenContainer";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../App";
@@ -18,6 +12,7 @@ import {
   CODE_PLACEHOLDER,
   DEVICE_NAME_SENDER,
   discoverReceiver,
+  asSessionId,
   en,
 } from "../lib/core";
 import { StatusIndicator } from "../components/StatusIndicator";
@@ -65,17 +60,9 @@ export function SendScreen({ navigation }: Props) {
       setInputError(null);
       try {
         const t = transport.createSenderTransport();
-        await session.startSender(
-          t,
-          { deviceName: DEVICE_NAME_SENDER },
-          addr,
-          pk,
-          sid,
-        );
+        await session.startSender(t, { deviceName: DEVICE_NAME_SENDER }, addr, pk, sid);
       } catch (err) {
-        setInputError(
-          err instanceof Error ? err.message : en.send.errorConnectionFailed,
-        );
+        setInputError(err instanceof Error ? err.message : en.send.errorConnectionFailed);
         setConnecting(false);
       }
     },
@@ -86,11 +73,13 @@ export function SendScreen({ navigation }: Props) {
     async (data: string) => {
       try {
         const payload = decodeQrPayload(data);
-        await connectToReceiver(payload.addr as string, payload.pk as string, payload.sid as string);
-      } catch (err) {
-        setInputError(
-          err instanceof Error ? err.message : en.send.errorInvalidQr,
+        await connectToReceiver(
+          payload.addr as string,
+          payload.pk as string,
+          payload.sid as string,
         );
+      } catch (err) {
+        setInputError(err instanceof Error ? err.message : en.send.errorInvalidQr);
       }
     },
     [connectToReceiver],
@@ -111,7 +100,7 @@ export function SendScreen({ navigation }: Props) {
 
     try {
       const result = await discoverReceiver({
-        sessionCode: code,
+        sessionCode: asSessionId(code),
         port: DEFAULT_PORT,
         getLocalIp,
         signal: controller.signal,
@@ -127,9 +116,7 @@ export function SendScreen({ navigation }: Props) {
       await connectToReceiver(addr as string, undefined, code);
     } catch (err) {
       if (controller.signal.aborted) return;
-      setInputError(
-        err instanceof Error ? err.message : en.send.errorDiscovery,
-      );
+      setInputError(err instanceof Error ? err.message : en.send.errorDiscovery);
       setDiscovering(false);
     }
   };
@@ -167,12 +154,7 @@ export function SendScreen({ navigation }: Props) {
           style={[styles.tab, tab === "scan" && styles.activeTab]}
           onPress={() => setTab("scan")}
         >
-          <Text
-            style={[
-              styles.tabText,
-              tab === "scan" && styles.activeTabText,
-            ]}
-          >
+          <Text style={[styles.tabText, tab === "scan" && styles.activeTabText]}>
             {en.send.tabScan}
           </Text>
         </TouchableOpacity>
@@ -180,12 +162,7 @@ export function SendScreen({ navigation }: Props) {
           style={[styles.tab, tab === "code" && styles.activeTab]}
           onPress={() => setTab("code")}
         >
-          <Text
-            style={[
-              styles.tabText,
-              tab === "code" && styles.activeTabText,
-            ]}
-          >
+          <Text style={[styles.tabText, tab === "code" && styles.activeTabText]}>
             {en.send.tabCode}
           </Text>
         </TouchableOpacity>
@@ -193,15 +170,11 @@ export function SendScreen({ navigation }: Props) {
 
       {/* content */}
       <View style={styles.content}>
-        {tab === "scan" && !connecting && !discovering && (
-          <QRScanner onScanned={handleQrScanned} />
-        )}
+        {tab === "scan" && !connecting && !discovering && <QRScanner onScanned={handleQrScanned} />}
 
         {tab === "code" && !connecting && !discovering && (
           <View style={styles.codeForm}>
-            <Text style={styles.hintText}>
-              {en.send.hintCode}
-            </Text>
+            <Text style={styles.hintText}>{en.send.hintCode}</Text>
 
             <TextInput
               style={styles.codeInput}
@@ -229,13 +202,8 @@ export function SendScreen({ navigation }: Props) {
 
         {discovering && (
           <>
-            <Text style={styles.statusText}>
-              {en.send.searching}
-            </Text>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={handleCancel}
-            >
+            <Text style={styles.statusText}>{en.send.searching}</Text>
+            <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
               <Text style={styles.cancelButtonText}>{en.common.cancel}</Text>
             </TouchableOpacity>
           </>
@@ -248,23 +216,16 @@ export function SendScreen({ navigation }: Props) {
                 ? en.send.waitingApproval
                 : en.send.connecting}
             </Text>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={handleCancel}
-            >
+            <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
               <Text style={styles.cancelButtonText}>{en.common.cancel}</Text>
             </TouchableOpacity>
           </>
         )}
 
         {inputError && <Text style={styles.errorText}>{inputError}</Text>}
-        {session.error && (
-          <Text style={styles.errorText}>{session.error}</Text>
-        )}
+        {session.error && <Text style={styles.errorText}>{session.error}</Text>}
         {session.state === SessionState.Rejected && (
-          <Text style={styles.errorText}>
-            {en.send.errorRejected}
-          </Text>
+          <Text style={styles.errorText}>{en.send.errorRejected}</Text>
         )}
       </View>
     </ScreenContainer>

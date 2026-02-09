@@ -6,8 +6,7 @@
 import { Platform } from "react-native";
 
 /** true when running inside Electron's renderer process */
-export const isElectron =
-  typeof window !== "undefined" && window.electronAPI !== undefined;
+export const isElectron = typeof window !== "undefined" && window.electronAPI !== undefined;
 
 /** true when running on iOS or Android */
 export const isMobile = Platform.OS === "ios" || Platform.OS === "android";

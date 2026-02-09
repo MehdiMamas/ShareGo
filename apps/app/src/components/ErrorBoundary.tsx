@@ -32,9 +32,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
       return (
         <View style={styles.container}>
           <Text style={styles.title}>{en.error.boundary}</Text>
-          <Text style={styles.detail}>
-            {this.state.error?.message ?? "unknown error"}
-          </Text>
+          <Text style={styles.detail}>{this.state.error?.message ?? "unknown error"}</Text>
           <TouchableOpacity style={styles.button} onPress={this.handleReset}>
             <Text style={styles.buttonText}>try again</Text>
           </TouchableOpacity>

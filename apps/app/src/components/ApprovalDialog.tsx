@@ -10,11 +10,7 @@ interface ApprovalDialogProps {
   onReject: () => void;
 }
 
-export function ApprovalDialog({
-  request,
-  onApprove,
-  onReject,
-}: ApprovalDialogProps) {
+export function ApprovalDialog({ request, onApprove, onReject }: ApprovalDialogProps) {
   // keyboard shortcuts for web/electron: Enter=approve, Escape=reject
   useEffect(() => {
     if (Platform.OS !== "web") return;
@@ -41,16 +37,10 @@ export function ApprovalDialog({
           </Text>
 
           <View style={styles.buttons}>
-            <TouchableOpacity
-              style={styles.rejectButton}
-              onPress={onReject}
-            >
+            <TouchableOpacity style={styles.rejectButton} onPress={onReject}>
               <Text style={styles.rejectButtonText}>{en.approval.reject}</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.acceptButton}
-              onPress={onApprove}
-            >
+            <TouchableOpacity style={styles.acceptButton} onPress={onApprove}>
               <Text style={styles.acceptButtonText}>{en.approval.accept}</Text>
             </TouchableOpacity>
           </View>

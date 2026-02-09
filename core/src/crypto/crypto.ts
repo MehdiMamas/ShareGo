@@ -55,7 +55,9 @@ export function deriveSharedSecret(
   assertReady();
 
   if (theirPublicKey.length !== PUBLIC_KEY_LENGTH) {
-    throw new Error(`invalid public key length: expected ${PUBLIC_KEY_LENGTH}, got ${theirPublicKey.length}`);
+    throw new Error(
+      `invalid public key length: expected ${PUBLIC_KEY_LENGTH}, got ${theirPublicKey.length}`,
+    );
   }
 
   try {
@@ -74,9 +76,7 @@ export function deriveSharedSecret(
 
     // use the rx key as symmetric encryption key (both sides derive same key)
     // receiver's rx = sender's tx, so we pick a consistent one
-    const encryptionKey = isReceiver
-      ? sessionKeys.sharedRx
-      : sessionKeys.sharedTx;
+    const encryptionKey = isReceiver ? sessionKeys.sharedRx : sessionKeys.sharedTx;
 
     return { encryptionKey };
   } catch (err) {
@@ -88,10 +88,7 @@ export function deriveSharedSecret(
  * encrypt plaintext using XChaCha20-Poly1305 (AEAD).
  * generates a random 24-byte nonce per message — never reuse.
  */
-export function encrypt(
-  plaintext: Uint8Array,
-  key: Uint8Array,
-): EncryptedEnvelope {
+export function encrypt(plaintext: Uint8Array, key: Uint8Array): EncryptedEnvelope {
   assertReady();
 
   if (key.length !== KEY_LENGTH) {
@@ -99,9 +96,7 @@ export function encrypt(
   }
 
   try {
-    const nonce = sodium.randombytes_buf(
-      sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES,
-    );
+    const nonce = sodium.randombytes_buf(sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
     const ciphertext = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
       plaintext,
       null, // no additional data
@@ -119,10 +114,7 @@ export function encrypt(
  * decrypt ciphertext using XChaCha20-Poly1305 (AEAD).
  * throws if authentication fails (tampered or wrong key).
  */
-export function decrypt(
-  envelope: EncryptedEnvelope,
-  key: Uint8Array,
-): Uint8Array {
+export function decrypt(envelope: EncryptedEnvelope, key: Uint8Array): Uint8Array {
   assertReady();
 
   if (key.length !== KEY_LENGTH) {
@@ -132,7 +124,9 @@ export function decrypt(
     throw new Error(`invalid nonce length: expected ${NONCE_LENGTH}, got ${envelope.nonce.length}`);
   }
   if (envelope.ciphertext.length < AEAD_TAG_LENGTH) {
-    throw new Error(`ciphertext too short: minimum ${AEAD_TAG_LENGTH} bytes (AEAD tag), got ${envelope.ciphertext.length}`);
+    throw new Error(
+      `ciphertext too short: minimum ${AEAD_TAG_LENGTH} bytes (AEAD tag), got ${envelope.ciphertext.length}`,
+    );
   }
 
   try {

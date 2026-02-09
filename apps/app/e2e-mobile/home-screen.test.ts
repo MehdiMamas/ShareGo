@@ -16,14 +16,10 @@ describe("home screen", () => {
   });
 
   it("should show receive button", async () => {
-    await detoxExpect(
-      element(by.text("Show QR Code / Show Code")),
-    ).toBeVisible();
+    await detoxExpect(element(by.text("Show QR Code / Show Code"))).toBeVisible();
   });
 
   it("should show send button", async () => {
-    await detoxExpect(
-      element(by.text("Scan QR Code / Enter Code")),
-    ).toBeVisible();
+    await detoxExpect(element(by.text("Scan QR Code / Enter Code"))).toBeVisible();
   });
 });

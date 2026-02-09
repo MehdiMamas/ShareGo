@@ -68,7 +68,11 @@ export class SessionController {
 
   private notify(): void {
     for (const cb of this.listeners) {
-      try { cb(this.snapshot); } catch (e) { log.warn("[session-controller] listener error:", e); }
+      try {
+        cb(this.snapshot);
+      } catch (e) {
+        log.warn("[session-controller] listener error:", e);
+      }
     }
   }
 
@@ -125,10 +129,7 @@ export class SessionController {
     });
   }
 
-  async startReceiver(
-    transport: ILocalTransport,
-    config: SessionConfig,
-  ): Promise<void> {
+  async startReceiver(transport: ILocalTransport, config: SessionConfig): Promise<void> {
     this.cleanup();
     this.update({ error: null });
 
@@ -192,10 +193,7 @@ export class SessionController {
     const bytes = new TextEncoder().encode(text);
     const seq = this.session.sendData(bytes);
     this.update({
-      sentItems: [
-        ...this.snapshot.sentItems,
-        { seq, text, acked: false, timestamp: Date.now() },
-      ],
+      sentItems: [...this.snapshot.sentItems, { seq, text, acked: false, timestamp: Date.now() }],
     });
   }
 

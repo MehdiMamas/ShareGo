@@ -38,9 +38,7 @@ export default function App() {
     initCrypto()
       .then(() => setReady(true))
       .catch((err) => {
-        setCryptoError(
-          err instanceof Error ? err.message : "failed to initialize crypto",
-        );
+        setCryptoError(err instanceof Error ? err.message : "failed to initialize crypto");
       });
   }, []);
 
@@ -63,39 +61,36 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-    <SafeAreaProvider>
-      <SessionContext.Provider value={{ session, transport }}>
-        <NavigationContainer
-          theme={{
-            dark: true,
-            colors: {
-              primary: colors.primary,
-              background: colors.background,
-              card: colors.surface,
-              text: colors.textPrimary,
-              border: colors.border,
-              notification: colors.primary,
-            },
-          }}
-        >
-          <Stack.Navigator
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: colors.background },
-              animation: "slide_from_right",
+      <SafeAreaProvider>
+        <SessionContext.Provider value={{ session, transport }}>
+          <NavigationContainer
+            theme={{
+              dark: true,
+              colors: {
+                primary: colors.primary,
+                background: colors.background,
+                card: colors.surface,
+                text: colors.textPrimary,
+                border: colors.border,
+                notification: colors.primary,
+              },
             }}
           >
-            <Stack.Screen name="Home" component={HomeScreen} />
-            <Stack.Screen name="Receive" component={ReceiveScreen} />
-            <Stack.Screen name="Send" component={SendScreen} />
-            <Stack.Screen
-              name="ActiveSession"
-              component={ActiveSessionScreen}
-            />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </SessionContext.Provider>
-    </SafeAreaProvider>
+            <Stack.Navigator
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.background },
+                animation: "slide_from_right",
+              }}
+            >
+              <Stack.Screen name="Home" component={HomeScreen} />
+              <Stack.Screen name="Receive" component={ReceiveScreen} />
+              <Stack.Screen name="Send" component={SendScreen} />
+              <Stack.Screen name="ActiveSession" component={ActiveSessionScreen} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </SessionContext.Provider>
+      </SafeAreaProvider>
     </ErrorBoundary>
   );
 }

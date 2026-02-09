@@ -1,14 +1,10 @@
 import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import { Session, DEFAULT_PORT } from "./session.js";
-import {
-  SessionState,
-  SessionRole,
-  SessionEvent,
-} from "./types.js";
+import { SessionState, SessionRole, SessionEvent } from "./types.js";
 import { sessionMachine } from "./machine.js";
 import { initCrypto } from "../crypto/index.js";
-import { serializeMessage, deserializeMessage, createBaseFields } from "../protocol/index.js";
-import { MessageType, PROTOCOL_VERSION } from "../protocol/types.js";
+import { serializeMessage, createBaseFields } from "../protocol/index.js";
+import { MessageType } from "../protocol/types.js";
 import type {
   ILocalTransport,
   TransportState,
@@ -107,7 +103,9 @@ describe("Session state machine", () => {
 
   it("should have END_SESSION as the only transition from Rejected", () => {
     const config = sessionMachine.config.states!;
-    const rejectedOn = config[SessionState.Rejected]?.on as Record<string, { target: string }> | undefined;
+    const rejectedOn = config[SessionState.Rejected]?.on as
+      | Record<string, { target: string }>
+      | undefined;
     expect(rejectedOn).toBeDefined();
     const targets = Object.values(rejectedOn!).map((t) => t.target);
     expect(targets).toEqual([SessionState.Closed]);
@@ -141,9 +139,7 @@ describe("Session receiver lifecycle", () => {
   it("should reject startAsReceiver if not in Created state", async () => {
     await receiver.startAsReceiver(receiverTransport);
     const transport2 = new MockTransport();
-    await expect(receiver.startAsReceiver(transport2)).rejects.toThrow(
-      "expected state Created",
-    );
+    await expect(receiver.startAsReceiver(transport2)).rejects.toThrow("expected state Created");
   });
 });
 

@@ -32,7 +32,7 @@ These are non-negotiable. Do not submit changes that violate them:
 - Use `Uint8Array` for binary data, never `Buffer`
 - Prefer `const` over `let`
 - Explicit return types on all exported functions
-- Comments are lowercase, only when explaining *why*
+- Comments are lowercase, only when explaining _why_
 
 ### Naming
 
@@ -67,6 +67,7 @@ See `.cursor/skills/add-transport/SKILL.md` for adding a new transport.
 ### App shell changes (`apps/`)
 
 App shells are thin wrappers. They should:
+
 - Provide platform-native WebSocket server/client adapters
 - Provide UI (React Native + react-native-web for all platforms)
 - Provide platform permissions (camera, local network)

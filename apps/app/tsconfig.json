@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*", "electron/types.d.ts"],
+  "exclude": ["node_modules"]
+}

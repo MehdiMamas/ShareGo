@@ -53,11 +53,9 @@ function createWindow(): void {
   );
 
   // allow only media permission checks
-  mainWindow.webContents.session.setPermissionCheckHandler(
-    (_webContents, permission) => {
-      return permission === "media";
-    },
-  );
+  mainWindow.webContents.session.setPermissionCheckHandler((_webContents, permission) => {
+    return permission === "media";
+  });
 
   // allow device enumeration (needed for getUserMedia on some Electron versions)
   // device permission handler covers HID/serial/USB — not camera (camera is

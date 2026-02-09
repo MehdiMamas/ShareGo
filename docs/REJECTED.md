@@ -7,6 +7,7 @@ This document explains why certain technologies, architectures, and approaches w
 **Why considered:** Firebase Realtime Database or Firestore could act as a signaling channel to help devices find each other without being on the same network.
 
 **Why rejected:**
+
 - Violates the "no cloud servers" invariant
 - Introduces a third party that can observe connection metadata (who is connecting to whom, when, how often)
 - Creates a dependency on Google infrastructure — if Firebase is down, the app breaks
@@ -20,6 +21,7 @@ This document explains why certain technologies, architectures, and approaches w
 **Why considered:** Expo simplifies React Native development significantly — easier builds, OTA updates, managed native modules.
 
 **Why rejected:**
+
 - Expo managed does not give full control over native modules
 - Local network server (WebSocket listener) requires native code that Expo managed may not support or may break on updates
 - Camera + LAN + clipboard + memory control all require native module access
@@ -33,6 +35,7 @@ This document explains why certain technologies, architectures, and approaches w
 **Why considered:** Bluetooth could enable device-to-device transfer without Wi-Fi.
 
 **Why rejected:**
+
 - Bluetooth pairing UX is terrible and inconsistent across platforms
 - Bluetooth throughput is low (even for short text, the pairing overhead is significant)
 - Bluetooth APIs are significantly different on iOS, Android, Windows, macOS, and Linux — no unified abstraction
@@ -46,6 +49,7 @@ This document explains why certain technologies, architectures, and approaches w
 **Why considered:** NFC tap could bootstrap a session instantly.
 
 **Why rejected:**
+
 - Not available on all platforms (most laptops lack NFC)
 - iOS NFC is heavily restricted (background tag reading only in certain modes)
 - NFC range is too short for practical use (devices must physically touch)
@@ -58,6 +62,7 @@ This document explains why certain technologies, architectures, and approaches w
 **Why considered:** When LAN discovery fails (e.g., devices on different VLANs, AP isolation), a cloud relay could forward encrypted packets.
 
 **Why rejected:**
+
 - Violates the "no cloud servers" invariant
 - Even if data is E2E encrypted, the relay server sees metadata (IPs, timing, packet sizes)
 - Creates infrastructure cost and maintenance burden
@@ -72,6 +77,7 @@ This document explains why certain technologies, architectures, and approaches w
 **Why considered:** iOS Keychain, Android Keystore, Windows DPAPI, and macOS Keychain offer hardware-backed key storage and crypto operations.
 
 **Why rejected:**
+
 - ShareGo uses ephemeral keys that are never persisted — key storage is not needed
 - Platform crypto APIs differ in behavior, algorithm support, and error handling across 5 platforms
 - Using platform crypto would mean 5 different crypto implementations instead of 1
@@ -85,6 +91,7 @@ This document explains why certain technologies, architectures, and approaches w
 **Why considered:** WebRTC DataChannel provides built-in encryption (DTLS-SRTP) and peer-to-peer connectivity.
 
 **Why rejected for v1:**
+
 - WebRTC's encryption is not under our control — we cannot audit or customize it
 - WebRTC on LAN still works, but the setup complexity (ICE, SDP exchange) is overkill for same-network devices
 - WebSocket is simpler, more debuggable, and universally supported
@@ -99,6 +106,7 @@ This document explains why certain technologies, architectures, and approaches w
 **Why used in v1:** Tauri uses the system webview, resulting in 5-10MB binaries and a smaller attack surface than Electron. For a security-focused app, minimizing attack surface was a priority.
 
 **Why replaced in v2:**
+
 - The v2 architecture unified desktop and mobile into a single React Native + react-native-web codebase
 - Electron's Node.js main process provides native WebSocket server and mDNS discovery without Rust FFI
 - Sharing the same JavaScript runtime across all platforms eliminated an entire class of cross-platform bugs
@@ -112,6 +120,7 @@ This document explains why certain technologies, architectures, and approaches w
 **Why considered:** Flutter covers mobile and desktop from a single Dart codebase.
 
 **Why rejected:**
+
 - Dart ecosystem for crypto is less mature than TypeScript/libsodium
 - Flutter desktop is less mature than Electron for native system access
 - TypeScript core is more widely auditable (more developers can review it)

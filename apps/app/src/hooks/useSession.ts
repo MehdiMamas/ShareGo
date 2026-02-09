@@ -7,7 +7,6 @@ import {
   type ILocalTransport,
   type ReceivedItem,
   type SentItem,
-  type SessionId,
   asSessionId,
 } from "../lib/core";
 
@@ -22,10 +21,7 @@ export interface UseSessionReturn {
   receivedItems: ReceivedItem[];
   sentItems: SentItem[];
   error: string | null;
-  startReceiver: (
-    transport: ILocalTransport,
-    config: SessionConfig,
-  ) => Promise<void>;
+  startReceiver: (transport: ILocalTransport, config: SessionConfig) => Promise<void>;
   startSender: (
     transport: ILocalTransport,
     config: SessionConfig,
@@ -51,8 +47,7 @@ export function useSession(): UseSessionReturn {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [qrPayload, setQrPayload] = useState<string | null>(null);
   const [localAddress, setLocalAddress] = useState<string | null>(null);
-  const [pairingRequest, setPairingRequest] =
-    useState<PairingRequest | null>(null);
+  const [pairingRequest, setPairingRequest] = useState<PairingRequest | null>(null);
   const [receivedItems, setReceivedItems] = useState<ReceivedItem[]>([]);
   const [sentItems, setSentItems] = useState<SentItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -76,8 +71,7 @@ export function useSession(): UseSessionReturn {
   }, [ctrl]);
 
   const startReceiver = useCallback(
-    (transport: ILocalTransport, config: SessionConfig) =>
-      ctrl.startReceiver(transport, config),
+    (transport: ILocalTransport, config: SessionConfig) => ctrl.startReceiver(transport, config),
     [ctrl],
   );
 

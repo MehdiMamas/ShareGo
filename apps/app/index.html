@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6,29 +6,62 @@
     <title>ShareGo</title>
     <script>
       // polyfill node globals that some npm packages expect in the browser
-      if (typeof global === "undefined") { window.global = window; }
-      if (typeof process === "undefined") { window.process = { env: {} }; }
-      if (typeof Buffer === "undefined") { window.Buffer = { isBuffer: function() { return false; } }; }
+      if (typeof global === "undefined") {
+        window.global = window;
+      }
+      if (typeof process === "undefined") {
+        window.process = { env: {} };
+      }
+      if (typeof Buffer === "undefined") {
+        window.Buffer = {
+          isBuffer: function () {
+            return false;
+          },
+        };
+      }
     </script>
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      html, body, #root {
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body,
+      #root {
         width: 100%;
         height: 100%;
         background-color: #0f172a;
         color: #f1f5f9;
         overflow: hidden;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
       /* react-native-web wraps everything in extra divs — force them to fill */
-      #root > div { display: flex; flex-direction: column; height: 100vh; }
-      ::-webkit-scrollbar { width: 6px; }
-      ::-webkit-scrollbar-track { background: #1e293b; }
-      ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-      button { cursor: pointer; }
-      input { outline: none; }
+      #root > div {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #1e293b;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 3px;
+      }
+      button {
+        cursor: pointer;
+      }
+      input {
+        outline: none;
+      }
     </style>
   </head>
   <body>

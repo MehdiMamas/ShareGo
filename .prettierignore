@@ -1,0 +1,11 @@
+dist/
+dist-electron/
+web/dist/
+node_modules/
+android/
+ios/
+release/
+build/
+pnpm-lock.yaml
+*.lock
+.cursor/

@@ -24,14 +24,7 @@ export function ScreenContainer({ style, children }: Props) {
 
   // on web/electron, use 100vh to guarantee full viewport fill
   return (
-    <View
-      style={[
-        styles.base,
-        styles.webContainer,
-        isElectron && styles.electronPadding,
-        style,
-      ]}
-    >
+    <View style={[styles.base, styles.webContainer, isElectron && styles.electronPadding, style]}>
       {children}
     </View>
   );

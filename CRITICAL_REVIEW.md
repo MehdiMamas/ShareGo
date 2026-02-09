@@ -9,11 +9,13 @@
 ### 1a. Two `package.json` files for the unified app
 
 **Current state:** `apps/app/package.json` lists ALL dependencies for both Electron and React Native in a single `dependencies` field. This causes:
+
 - Electron bundles 280MB of mobile-only packages (react-native, jsc-android, metro, @babel, etc.)
 - Requires a massive `files` exclusion list in electron-builder config to compensate
 - npm hoisting is unpredictable, requiring CI symlink workarounds
 
 **What I would do instead:** Use a two-package.json structure:
+
 - `apps/app/package.json` — only shared/mobile deps
 - `apps/app/electron/package.json` — only Electron main-process deps (`ws`, `bonjour-service`)
 - electron-builder would use `electron/package.json` for bundling, naturally excluding mobile packages
@@ -22,11 +24,13 @@
 ### 1b. Platform adapter pattern for all platform-specific code
 
 **Current state:** Platform-specific logic is scattered:
+
 - Clipboard: inline `if (isElectron)` / `if (isMobile)` in `ActiveSessionScreen.tsx`
 - IP detection: inline `if (isElectron)` / `if (isMobile)` in `SendScreen.tsx`
 - Transport: properly abstracted via `useTransport` hook
 
 **What I would do instead:** Every platform-specific capability gets an adapter:
+
 ```
 adapters/
   clipboard.ts          — interface + web fallback
@@ -37,11 +41,13 @@ adapters/
   network.native.ts     — react-native-network-info
   transport/            — (already done properly)
 ```
+
 Components would import from the adapter, never from platform-specific modules directly.
 
 ### 1c. Proper logging instead of console.log / silent catches
 
 **Current state:** Error handling is almost universally "best effort" with empty catch blocks:
+
 - `electron-ws-server.ts:56` — `.catch(() => {})`
 - `rn-ws-server.ts:152, 221` — `catch { /* best effort */ }`
 - `QRScanner.tsx:203, 237, 240` — `catch { /* best effort */ }`
@@ -51,17 +57,26 @@ Components would import from the adapter, never from platform-specific modules d
 - `session-controller.ts:70` — `catch { /* don't crash */ }`
 
 **What I would do instead:** Create a `core/src/logger.ts` with a pluggable logger:
+
 ```typescript
 export interface Logger {
   warn(msg: string, ...args: unknown[]): void;
   error(msg: string, ...args: unknown[]): void;
 }
 let logger: Logger = console;
-export function setLogger(l: Logger) { logger = l; }
-export function warn(msg: string, ...args: unknown[]) { logger.warn(msg, ...args); }
-export function error(msg: string, ...args: unknown[]) { logger.error(msg, ...args); }
+export function setLogger(l: Logger) {
+  logger = l;
+}
+export function warn(msg: string, ...args: unknown[]) {
+  logger.warn(msg, ...args);
+}
+export function error(msg: string, ...args: unknown[]) {
+  logger.error(msg, ...args);
+}
 ```
+
 Every catch block would call `logger.warn()` instead of silently swallowing. This way:
+
 - Development: errors are visible in console
 - Production: errors can be routed to a crash reporter
 - Tests: errors can be captured and asserted
@@ -74,6 +89,7 @@ Every catch block would call `logger.warn()` instead of silently swallowing. Thi
 
 **File:** `.github/workflows/release.yml` lines 137-153
 **Workaround:**
+
 ```yaml
 - name: Fix monorepo node_modules resolution
   run: |
@@ -82,6 +98,7 @@ Every catch block would call `logger.warn()` instead of silently swallowing. Thi
     fi
     # ... more symlinks
 ```
+
 **Why it's bad:** Fragile, breaks when new native deps are added, papers over the real problem.
 **Proper fix:** Use `nohoist` in npm workspaces config, or switch to pnpm which has deterministic hoisting. Alternatively, pin React Native workspace deps at the root level.
 
@@ -89,16 +106,22 @@ Every catch block would call `logger.warn()` instead of silently swallowing. Thi
 
 **File:** `apps/app/src/components/ScreenContainer.tsx` lines 45-48
 **Workaround:**
+
 ```typescript
 // @ts-expect-error -- 100vh is valid CSS but not in RN types
 height: "100vh",
 ```
+
 **Why it's bad:** TypeScript safety bypassed for every occurrence.
 **Proper fix:** Create a `web.d.ts` declaration file:
+
 ```typescript
 import "react-native";
 declare module "react-native" {
-  interface ViewStyle { height?: string | number; minHeight?: string | number; }
+  interface ViewStyle {
+    height?: string | number;
+    minHeight?: string | number;
+  }
 }
 ```
 
@@ -106,9 +129,11 @@ declare module "react-native" {
 
 **File:** `apps/app/src/screens/ActiveSessionScreen.tsx` line 46
 **Workaround:**
+
 ```typescript
 const RNClipboard = require("@react-native-clipboard/clipboard").default;
 ```
+
 **Why it's bad:** No type safety, bundler can't tree-shake, eslint-disable needed.
 **Proper fix:** Use the adapter pattern (see 1b above) with platform-specific imports resolved at build time.
 
@@ -116,9 +141,11 @@ const RNClipboard = require("@react-native-clipboard/clipboard").default;
 
 **File:** `apps/app/src/components/QRScanner.tsx` line 191
 **Workaround:**
+
 ```typescript
 const startDelay = new Promise<void>((r) => setTimeout(r, 300));
 ```
+
 **Why it's bad:** Arbitrary delay; might be too short on slow devices, wastes time on fast ones.
 **Proper fix:** Use a MutationObserver or requestAnimationFrame loop to wait until the DOM container is actually rendered, then initialize html5-qrcode.
 
@@ -126,9 +153,11 @@ const startDelay = new Promise<void>((r) => setTimeout(r, 300));
 
 **File:** `apps/app/src/screens/ActiveSessionScreen.tsx` line 124
 **Workaround:**
+
 ```typescript
 setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 ```
+
 **Why it's bad:** Timing-dependent; race condition with React rendering.
 **Proper fix:** Use `onContentSizeChange` prop on FlatList to scroll when content actually changes.
 
@@ -143,9 +172,11 @@ setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 
 **File:** `apps/app/src/screens/ReceiveScreen.tsx` line 65
 **Workaround:**
+
 ```typescript
 // eslint-disable-next-line react-hooks/exhaustive-deps
 ```
+
 **Why it's bad:** Hides a real dependency issue; effect may not re-run when it should.
 **Proper fix:** Restructure the effect to properly declare dependencies, or use `useCallback` with correct deps and pass it to the effect.
 
@@ -153,6 +184,7 @@ setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 
 **File:** `apps/app/src/components/QRScanner.tsx` lines 240-249
 **Workaround:**
+
 ```typescript
 const videos = document.querySelectorAll("video");
 videos.forEach((video) => {
@@ -160,6 +192,7 @@ videos.forEach((video) => {
   if (stream) stream.getTracks().forEach((track) => track.stop());
 });
 ```
+
 **Why it's bad:** Queries ALL video elements on the page, not just the scanner's. Could accidentally stop unrelated video streams.
 **Proper fix:** Store a reference to the specific MediaStream from html5-qrcode and stop only those tracks. Or use html5-qrcode's `clear()` method which handles cleanup.
 
@@ -197,13 +230,13 @@ videos.forEach((video) => {
 
 ## 4. Dead code
 
-| File | What | Action |
-|------|------|--------|
-| `apps/app/src/components/CodeInput.tsx` | Component exported but never imported | Delete |
-| `core/src/session/types.ts:61-81` | `VALID_TRANSITIONS` map marked "for backward compatibility" | Delete — XState machine is authoritative |
-| `core/src/session/machine.ts:126-148` | `deriveValidTransitions()` only used in tests | Move to test file |
-| `core/src/session/session-controller.ts:179-182` | `isCurrentSession()` never called | Delete |
-| `package.json:17-18, 21` | Scripts reference `sharego-desktop` and `sharego-mobile` workspaces that don't exist | Fix to `sharego-app` or delete |
+| File                                             | What                                                                                 | Action                                   |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------ | ---------------------------------------- |
+| `apps/app/src/components/CodeInput.tsx`          | Component exported but never imported                                                | Delete                                   |
+| `core/src/session/types.ts:61-81`                | `VALID_TRANSITIONS` map marked "for backward compatibility"                          | Delete — XState machine is authoritative |
+| `core/src/session/machine.ts:126-148`            | `deriveValidTransitions()` only used in tests                                        | Move to test file                        |
+| `core/src/session/session-controller.ts:179-182` | `isCurrentSession()` never called                                                    | Delete                                   |
+| `package.json:17-18, 21`                         | Scripts reference `sharego-desktop` and `sharego-mobile` workspaces that don't exist | Fix to `sharego-app` or delete           |
 
 ---
 
@@ -211,11 +244,11 @@ videos.forEach((video) => {
 
 Per project rules, ALL user-facing text must come from `core/src/i18n/en.ts`.
 
-| File | Line(s) | Hardcoded text |
-|------|---------|----------------|
-| `apps/app/src/components/ErrorBoundary.tsx` | 33-35 | Error boundary fallback messages |
-| `apps/app/src/App.tsx` | 50-51 | Error messages |
-| `apps/app/src/screens/ActiveSessionScreen.tsx` | ~246 | Session title format |
+| File                                           | Line(s) | Hardcoded text                   |
+| ---------------------------------------------- | ------- | -------------------------------- |
+| `apps/app/src/components/ErrorBoundary.tsx`    | 33-35   | Error boundary fallback messages |
+| `apps/app/src/App.tsx`                         | 50-51   | Error messages                   |
+| `apps/app/src/screens/ActiveSessionScreen.tsx` | ~246    | Session title format             |
 
 ---
 
@@ -225,12 +258,14 @@ Per project rules, ALL user-facing text must come from `core/src/i18n/en.ts`.
 
 **File:** `apps/app/electron/main.ts` lines 48-65
 **Issue:** All media permissions are auto-granted without user interaction:
+
 ```typescript
 session.setPermissionRequestHandler((_, permission, callback) => {
   callback(mediaPermissions.includes(permission)); // auto-grants camera
 });
 session.setDevicePermissionHandler(() => true); // grants everything
 ```
+
 **Proper fix:** Only grant camera permission, and only when the user is on the Send screen (scanning QR). Deny all others.
 
 ### 6b. No input validation on IPC handlers
@@ -264,11 +299,13 @@ session.setDevicePermissionHandler(() => true); // grants everything
 ### 7a. Broken root scripts
 
 **File:** `package.json` lines 17-18, 21
+
 ```json
 "dev:desktop": "turbo run dev --filter=sharego-desktop",
 "dev:mobile": "npm run start --workspace=sharego-mobile",
 "dev:android": "npm run android --workspace=sharego-mobile"
 ```
+
 These reference old workspace names (`sharego-desktop`, `sharego-mobile`) that no longer exist. The actual workspace is `sharego-app`.
 
 ### 7b. Missing iOS build in CI

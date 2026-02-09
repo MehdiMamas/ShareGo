@@ -15,8 +15,9 @@ interface QRScannerProps {
 
 /** dynamically imported vision-camera module shape */
 interface VisionCameraModule {
-  Camera: React.ComponentType<Record<string, unknown>>;
-  useCameraDevice: (position: string) => unknown;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Camera: any;
+  useCameraDevice: (position: unknown) => unknown;
   useCodeScanner: (opts: CodeScannerOptions) => unknown;
 }
 
@@ -31,8 +32,9 @@ interface ScannedCode {
 }
 
 interface MobileCameraViewProps {
-  Camera: React.ComponentType<Record<string, unknown>>;
-  useCameraDevice: (position: string) => unknown;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Camera: any;
+  useCameraDevice: (position: unknown) => unknown;
   useCodeScanner: (opts: CodeScannerOptions) => unknown;
   scannedRef: React.MutableRefObject<boolean>;
   showRetry: boolean;
@@ -43,8 +45,8 @@ interface MobileCameraViewProps {
 
 interface Html5QrScanner {
   start: (
-    cameraIdOrConfig: Record<string, unknown>,
-    config: Record<string, unknown>,
+    cameraIdOrConfig: unknown,
+    config: unknown,
     onSuccess: (text: string) => void,
     onError: () => void,
   ) => Promise<void>;
@@ -64,14 +66,16 @@ function MobileQRScanner({ onScanned }: QRScannerProps) {
   useEffect(() => {
     let mounted = true;
     import("react-native-vision-camera").then((mod) => {
-      if (mounted) setVisionCamera(mod);
+      if (mounted) setVisionCamera(mod as unknown as VisionCameraModule);
     });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
     if (!VisionCamera) return;
-    VisionCamera.Camera.requestCameraPermission().then((status: string) => {
+    (VisionCamera.Camera as any).requestCameraPermission().then((status: string) => {
       setHasPermission(status === "granted");
     });
   }, [VisionCamera]);
@@ -92,9 +96,7 @@ function MobileQRScanner({ onScanned }: QRScannerProps) {
   if (!hasPermission) {
     return (
       <View style={styles.placeholder}>
-        <Text style={styles.placeholderText}>
-          {en.camera.denied}
-        </Text>
+        <Text style={styles.placeholderText}>{en.camera.denied}</Text>
       </View>
     );
   }
@@ -190,7 +192,10 @@ function WebQRScanner({ onScanned }: QRScannerProps) {
     // wait for the DOM container to be rendered before html5-qrcode tries to use it
     const waitForContainer = new Promise<void>((resolve) => {
       const el = document.getElementById(containerRef.current);
-      if (el) { resolve(); return; }
+      if (el) {
+        resolve();
+        return;
+      }
       const observer = new MutationObserver(() => {
         if (document.getElementById(containerRef.current)) {
           observer.disconnect();
@@ -199,48 +204,52 @@ function WebQRScanner({ onScanned }: QRScannerProps) {
       });
       observer.observe(document.body, { childList: true, subtree: true });
       // safety timeout in case observer never fires
-      setTimeout(() => { observer.disconnect(); resolve(); }, 1000);
+      setTimeout(() => {
+        observer.disconnect();
+        resolve();
+      }, 1000);
     });
 
-    waitForContainer.then(() => import("html5-qrcode")).then(({ Html5Qrcode }) => {
-      if (!mounted) return;
-
-      const scanner = new Html5Qrcode(containerRef.current);
-      scannerRef.current = scanner;
-
-      const onSuccess = (decodedText: string) => {
-        if (scannedRef.current) return;
-        scannedRef.current = true;
-        onScannedRef.current(decodedText);
-        try { scanner.stop().catch((e: unknown) => log.warn("[qr] stop failed:", e)); } catch (e) { log.warn("[qr] stop threw:", e); }
-      };
-      const onFailure = () => {};
-      const config = { fps: 10, qrbox: { width: 200, height: 200 } };
-
-      // try environment camera first, fall back to user camera (desktop macs have no rear cam)
-      scanner.start(
-        { facingMode: "environment" },
-        config,
-        onSuccess,
-        onFailure,
-      ).then(() => {
-        startedRef.current = true;
-      }).catch(() => {
+    waitForContainer
+      .then(() => import("html5-qrcode"))
+      .then(({ Html5Qrcode }) => {
         if (!mounted) return;
-        return scanner.start(
-          { facingMode: "user" },
-          config,
-          onSuccess,
-          onFailure,
-        ).then(() => {
-          startedRef.current = true;
-        });
-      }).catch((err: Error) => {
-        if (mounted) setError(err.message);
+
+        const scanner = new Html5Qrcode(containerRef.current);
+        scannerRef.current = scanner as unknown as Html5QrScanner;
+
+        const onSuccess = (decodedText: string) => {
+          if (scannedRef.current) return;
+          scannedRef.current = true;
+          onScannedRef.current(decodedText);
+          try {
+            scanner.stop().catch((e: unknown) => log.warn("[qr] stop failed:", e));
+          } catch (e) {
+            log.warn("[qr] stop threw:", e);
+          }
+        };
+        const onFailure = () => {};
+        const config = { fps: 10, qrbox: { width: 200, height: 200 } };
+
+        // try environment camera first, fall back to user camera (desktop macs have no rear cam)
+        scanner
+          .start({ facingMode: "environment" }, config, onSuccess, onFailure)
+          .then(() => {
+            startedRef.current = true;
+          })
+          .catch(() => {
+            if (!mounted) return;
+            return scanner.start({ facingMode: "user" }, config, onSuccess, onFailure).then(() => {
+              startedRef.current = true;
+            });
+          })
+          .catch((err: Error) => {
+            if (mounted) setError(err.message);
+          });
+      })
+      .catch(() => {
+        if (mounted) setError("failed to load QR scanner");
       });
-    }).catch(() => {
-      if (mounted) setError("failed to load QR scanner");
-    });
 
     return () => {
       mounted = false;
@@ -278,10 +287,7 @@ function WebQRScanner({ onScanned }: QRScannerProps) {
 
   return (
     <View style={styles.container}>
-      <View
-        nativeID={containerRef.current}
-        style={{ width: 280, height: 280 }}
-      />
+      <View nativeID={containerRef.current} style={{ width: 280, height: 280 }} />
     </View>
   );
 }

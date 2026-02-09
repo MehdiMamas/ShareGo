@@ -14,17 +14,10 @@ export function QRDisplay({ value, sessionId, address }: QRDisplayProps) {
   return (
     <View style={styles.container}>
       <View style={styles.qrWrapper}>
-        <QRCode
-          value={value}
-          size={200}
-          backgroundColor={colors.white}
-          color={colors.black}
-        />
+        <QRCode value={value} size={200} backgroundColor={colors.white} color={colors.black} />
       </View>
 
-      <Text style={styles.hint}>
-        {en.qr.hint}
-      </Text>
+      <Text style={styles.hint}>{en.qr.hint}</Text>
 
       <View style={styles.codeSection}>
         <View style={styles.codeRow}>

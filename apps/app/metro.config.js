@@ -7,11 +7,7 @@ const rootModules = path.resolve(monorepoRoot, "node_modules");
 
 // packages that must resolve from the local node_modules
 // to avoid version mismatches with the monorepo root
-const localOnly = [
-  "react-native-screens",
-  "react-native-safe-area-context",
-  "react-native-svg",
-];
+const localOnly = ["react-native-screens", "react-native-safe-area-context", "react-native-svg"];
 
 const extraNodeModules = {};
 for (const pkg of localOnly) {

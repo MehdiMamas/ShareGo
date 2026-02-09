@@ -26,10 +26,7 @@ if (!version) {
 
 console.log(`root version: ${version}`);
 
-const jsonTargets = [
-  "core/package.json",
-  "apps/app/package.json",
-];
+const jsonTargets = ["core/package.json", "apps/app/package.json"];
 
 let allMatch = true;
 

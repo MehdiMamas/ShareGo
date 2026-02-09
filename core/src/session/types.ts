@@ -52,4 +52,3 @@ export type SessionEventMap = {
   [SessionEvent.DataAcknowledged]: (seq: SequenceNumber) => void;
   [SessionEvent.Error]: (error: Error) => void;
 };
-

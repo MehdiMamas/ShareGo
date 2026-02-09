@@ -10,13 +10,13 @@ share passwords, OTPs, and sensitive text between exactly two devices on the sam
 
 ## platforms
 
-| platform | shell | status |
-|----------|-------|--------|
-| windows | electron | code complete |
-| macOS | electron | code complete |
-| linux | electron | code complete |
-| android | react native bare | code complete |
-| iOS | react native bare | code complete |
+| platform | shell             | status        |
+| -------- | ----------------- | ------------- |
+| windows  | electron          | code complete |
+| macOS    | electron          | code complete |
+| linux    | electron          | code complete |
+| android  | react native bare | code complete |
+| iOS      | react native bare | code complete |
 
 ## quick start
 
@@ -174,26 +174,26 @@ all security logic lives in `@sharego/core`. app shells are thin wrappers that p
 
 ## all scripts
 
-| script | description |
-|---|---|
-| `pnpm run setup` | one-command setup for all platforms |
-| `pnpm run setup:ios` | setup for iOS development |
-| `pnpm run setup:android` | setup for Android development |
-| `pnpm run setup:desktop` | setup for desktop development |
-| `pnpm run dev:desktop` | start desktop app in dev mode |
-| `pnpm run dev:mobile` | start metro bundler |
-| `pnpm run dev:ios` | run iOS app on simulator |
-| `pnpm run dev:ios:device` | run iOS app on physical iPhone |
-| `pnpm run dev:android` | run Android app on emulator/device |
-| `pnpm run build:core` | build core library |
-| `pnpm run build:ios` | release build for iOS |
-| `pnpm run build:android` | release build for Android |
-| `pnpm run build:desktop` | release build for desktop |
-| `pnpm run test:core` | run core library tests |
-| `pnpm run check` | check all prerequisites |
-| `pnpm run check:ios` | check iOS prerequisites |
-| `pnpm run check:android` | check Android prerequisites |
-| `pnpm run check:desktop` | check desktop prerequisites |
+| script                    | description                         |
+| ------------------------- | ----------------------------------- |
+| `pnpm run setup`          | one-command setup for all platforms |
+| `pnpm run setup:ios`      | setup for iOS development           |
+| `pnpm run setup:android`  | setup for Android development       |
+| `pnpm run setup:desktop`  | setup for desktop development       |
+| `pnpm run dev:desktop`    | start desktop app in dev mode       |
+| `pnpm run dev:mobile`     | start metro bundler                 |
+| `pnpm run dev:ios`        | run iOS app on simulator            |
+| `pnpm run dev:ios:device` | run iOS app on physical iPhone      |
+| `pnpm run dev:android`    | run Android app on emulator/device  |
+| `pnpm run build:core`     | build core library                  |
+| `pnpm run build:ios`      | release build for iOS               |
+| `pnpm run build:android`  | release build for Android           |
+| `pnpm run build:desktop`  | release build for desktop           |
+| `pnpm run test:core`      | run core library tests              |
+| `pnpm run check`          | check all prerequisites             |
+| `pnpm run check:ios`      | check iOS prerequisites             |
+| `pnpm run check:android`  | check Android prerequisites         |
+| `pnpm run check:desktop`  | check desktop prerequisites         |
 
 ## environment
 

@@ -9,6 +9,8 @@
   "source": "./src/index.ts",
   "scripts": {
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
     "test": "vitest run",
     "test:watch": "vitest"
   },
