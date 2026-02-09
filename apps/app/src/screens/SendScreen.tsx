@@ -19,6 +19,7 @@ import {
   DEVICE_NAME_SENDER,
   discoverReceiver,
   en,
+  log,
 } from "../lib/core";
 import { StatusIndicator } from "../components/StatusIndicator";
 import { QRScanner } from "../components/QRScanner";
@@ -31,7 +32,8 @@ async function getLocalIp(): Promise<string | null> {
   if (isElectron && window.electronAPI) {
     try {
       return await window.electronAPI.getLocalIp();
-    } catch {
+    } catch (err) {
+      log.warn("[network] electron getLocalIp failed:", err);
       return null;
     }
   }
@@ -42,7 +44,8 @@ async function getLocalIp(): Promise<string | null> {
       const { NetworkInfo } = require("react-native-network-info");
       const ip: string | null = await NetworkInfo.getIPV4Address();
       return ip && ip !== "0.0.0.0" ? ip : null;
-    } catch {
+    } catch (err) {
+      log.warn("[network] RN NetworkInfo failed:", err);
       return null;
     }
   }

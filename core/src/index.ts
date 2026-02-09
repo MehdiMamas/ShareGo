@@ -97,6 +97,9 @@ export {
   type ConnectionHandler,
 } from "./transport/index.js";
 
+// logger
+export { type Logger, setLogger, log } from "./logger.js";
+
 // branded types
 export {
   type SessionId,

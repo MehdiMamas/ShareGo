@@ -6,7 +6,7 @@
 
 import React, { useCallback, useRef, useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from "react-native";
-import { en } from "../lib/core";
+import { en, log } from "../lib/core";
 import { colors } from "../styles/theme";
 
 interface QRScannerProps {
@@ -200,7 +200,7 @@ function WebQRScanner({ onScanned }: QRScannerProps) {
         if (scannedRef.current) return;
         scannedRef.current = true;
         onScannedRef.current(decodedText);
-        try { scanner.stop().catch(() => {}); } catch { /* best effort */ }
+        try { scanner.stop().catch((e: unknown) => log.warn("[qr] stop failed:", e)); } catch (e) { log.warn("[qr] stop threw:", e); }
       };
       const onFailure = () => {};
       const config = { fps: 10, qrbox: { width: 200, height: 200 } };
@@ -234,7 +234,11 @@ function WebQRScanner({ onScanned }: QRScannerProps) {
       mounted = false;
       // stop the html5-qrcode scanner
       if (startedRef.current && scannerRef.current) {
-        try { scannerRef.current.stop().catch(() => {}); } catch { /* best effort */ }
+        try {
+          scannerRef.current.stop().catch((e: unknown) => log.warn("[qr] cleanup stop failed:", e));
+        } catch (e) {
+          log.warn("[qr] cleanup stop threw:", e);
+        }
       }
       // force-release all camera tracks in case html5-qrcode doesn't
       try {
@@ -246,7 +250,9 @@ function WebQRScanner({ onScanned }: QRScannerProps) {
             (video as HTMLVideoElement).srcObject = null;
           }
         });
-      } catch { /* best effort */ }
+      } catch (e) {
+        log.warn("[qr] camera track cleanup failed:", e);
+      }
     };
   }, []); // no deps — mount once, use refs for callbacks
 

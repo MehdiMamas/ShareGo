@@ -7,6 +7,7 @@ import type { QrPayload } from "../protocol/index.js";
 import { PROTOCOL_VERSION, encodeQrPayload } from "../protocol/index.js";
 import type { SessionId, NetworkAddress, SequenceNumber } from "../types/index.js";
 import { asNetworkAddress } from "../types/index.js";
+import { log } from "../logger.js";
 
 export interface ReceivedItem {
   id: number;
@@ -67,7 +68,7 @@ export class SessionController {
 
   private notify(): void {
     for (const cb of this.listeners) {
-      try { cb(this.snapshot); } catch { /* don't crash on listener error */ }
+      try { cb(this.snapshot); } catch (e) { log.warn("[session-controller] listener error:", e); }
     }
   }
 

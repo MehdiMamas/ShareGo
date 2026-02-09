@@ -7,6 +7,7 @@ import type {
   WebSocketClientAdapter,
   ConnectionHandler,
 } from "../lib/core";
+import { log } from "../lib/core";
 
 const WS_MAGIC = "258EAFA5-E914-47DA-95CA-5AB9ADF5B30E";
 
@@ -149,8 +150,8 @@ class RnWsClient implements WebSocketClientAdapter {
         try {
           const closeFrame = createWsFrame(frame.payload, OP_CLOSE);
           this.socket.write(closeFrame);
-        } catch {
-          // best effort
+        } catch (err) {
+          log.warn("[rn-ws] close frame write failed:", err);
         }
         this.socket.destroy();
         break;
@@ -216,8 +217,8 @@ class RnWsClient implements WebSocketClientAdapter {
     try {
       const closeFrame = createWsFrame(new Uint8Array(0), OP_CLOSE);
       this.socket.write(closeFrame);
-    } catch {
-      // best effort
+    } catch (err) {
+      log.warn("[rn-ws] close write failed:", err);
     }
     this.socket.destroy();
   }
@@ -304,8 +305,8 @@ export class RnWsServerAdapter implements WebSocketServerAdapter {
         try {
           const lanIp = await NetworkInfo.getIPV4Address();
           if (lanIp) host = lanIp;
-        } catch {
-          // fallback to 0.0.0.0 if detection fails
+        } catch (err) {
+          log.warn("[rn-ws] IP detection failed, using 0.0.0.0:", err);
         }
 
         resolve(`${host}:${boundPort}`);

@@ -71,7 +71,8 @@ export class ElectronWsServer {
         events.onClose();
       });
 
-      ws.on("error", () => {
+      ws.on("error", (err) => {
+        console.warn("[ws-server] peer error:", err.message);
         this.peer = null;
         events.onClose();
       });
@@ -98,7 +99,7 @@ export class ElectronWsServer {
    */
   async stop(): Promise<void> {
     if (this.peer) {
-      try { this.peer.close(); } catch { /* best effort */ }
+      try { this.peer.close(); } catch (e) { console.warn("[ws-server] peer close failed:", e); }
       this.peer = null;
     }
 

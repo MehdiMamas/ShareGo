@@ -42,4 +42,8 @@ export {
   type DiscoveryOptions,
   // i18n
   en,
+  // logger
+  log,
+  setLogger,
+  type Logger,
 } from "@sharego/core";

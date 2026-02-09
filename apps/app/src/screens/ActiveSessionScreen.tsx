@@ -14,7 +14,7 @@ import { ScreenContainer } from "../components/ScreenContainer";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../App";
 import { SessionContext } from "../App";
-import { SessionState, COPY_FEEDBACK_MS, en } from "../lib/core";
+import { SessionState, COPY_FEEDBACK_MS, en, log } from "../lib/core";
 import { StatusIndicator } from "../components/StatusIndicator";
 import { EyeIcon, EyeOffIcon } from "../components/Icons";
 import { colors } from "../styles/theme";
@@ -46,15 +46,16 @@ function copyToClipboard(text: string): void {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const RNClipboard = require("@react-native-clipboard/clipboard").default;
       RNClipboard.setString(text);
-    } catch {
-      // best effort
+    } catch (err) {
+      log.warn("[clipboard] RN clipboard failed:", err);
     }
     return;
   }
 
   // web: modern clipboard API
   if (typeof navigator !== "undefined" && navigator.clipboard) {
-    navigator.clipboard.writeText(text).catch(() => {
+    navigator.clipboard.writeText(text).catch((err) => {
+      log.warn("[clipboard] navigator.clipboard failed, using fallback:", err);
       fallbackCopy(text);
     });
     return;
@@ -73,8 +74,8 @@ function fallbackCopy(text: string): void {
   textarea.select();
   try {
     document.execCommand("copy");
-  } catch {
-    // best effort
+  } catch (err) {
+    log.warn("[clipboard] execCommand('copy') failed:", err);
   }
   document.body.removeChild(textarea);
 }
