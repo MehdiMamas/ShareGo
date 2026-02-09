@@ -26,16 +26,17 @@ test("should navigate to send screen when send button is clicked", async () => {
   const sendButton = page.getByTestId("send-button");
   await sendButton.click();
 
-  // should show tab labels (scan QR / enter code)
-  await expect(page.getByText(/scan|enter code/i)).toBeVisible({ timeout: 10_000 });
+  // send screen shows a back button, confirming navigation worked
+  const backButton = page.getByText("back");
+  await expect(backButton).toBeVisible({ timeout: 10_000 });
 });
 
 test("should show connect button on code tab", async () => {
-  // switch to the code tab
-  const codeTab = page.getByText(/enter code/i);
+  // switch to the "enter code" tab using exact text
+  const codeTab = page.getByText("enter code", { exact: true });
   await codeTab.click();
 
   // connect button should now be visible
-  const connectButton = page.getByText(/connect/i);
+  const connectButton = page.getByText("connect", { exact: true });
   await expect(connectButton).toBeVisible({ timeout: 5_000 });
 });
