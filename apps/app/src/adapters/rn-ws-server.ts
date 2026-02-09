@@ -202,6 +202,9 @@ class RnWsClient implements WebSocketClientAdapter {
   }
 
   send(data: Uint8Array): void {
+    if (this.socket.destroyed) {
+      throw new Error("socket not connected");
+    }
     const frame = createWsFrame(data, OP_BINARY);
     this.socket.write(frame);
   }
@@ -276,6 +279,11 @@ export class RnWsServerAdapter implements WebSocketServerAdapter {
           socket.write(response);
           handshakeDone = true;
           this.hasPeer = true;
+
+          // reset hasPeer when the socket disconnects so new connections can be accepted
+          socket.on("close", () => {
+            this.hasPeer = false;
+          });
 
           socket.removeListener("data", onData);
 

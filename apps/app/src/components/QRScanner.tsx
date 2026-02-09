@@ -175,11 +175,14 @@ function MobileCameraView({
 
 /**
  * web/electron QR scanner using html5-qrcode.
+ * enumerates cameras by device id (more reliable in Electron on Windows
+ * than facingMode constraints which may not be supported by all drivers).
  */
 function WebQRScanner({ onScanned }: QRScannerProps) {
   const scannerRef = useRef<Html5QrScanner | null>(null);
   const containerRef = useRef<string>("qr-scanner-" + Date.now());
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const scannedRef = useRef(false);
   // use a ref for the callback so the effect doesn't re-run when onScanned changes identity
   const onScannedRef = useRef(onScanned);
@@ -212,7 +215,7 @@ function WebQRScanner({ onScanned }: QRScannerProps) {
 
     waitForContainer
       .then(() => import("html5-qrcode"))
-      .then(({ Html5Qrcode }) => {
+      .then(async ({ Html5Qrcode }) => {
         if (!mounted) return;
 
         const scanner = new Html5Qrcode(containerRef.current);
@@ -231,24 +234,71 @@ function WebQRScanner({ onScanned }: QRScannerProps) {
         const onFailure = () => {};
         const config = { fps: 10, qrbox: { width: 200, height: 200 } };
 
-        // try environment camera first, fall back to user camera (desktop macs have no rear cam)
-        scanner
-          .start({ facingMode: "environment" }, config, onSuccess, onFailure)
-          .then(() => {
-            startedRef.current = true;
-          })
-          .catch(() => {
-            if (!mounted) return;
-            return scanner.start({ facingMode: "user" }, config, onSuccess, onFailure).then(() => {
-              startedRef.current = true;
-            });
-          })
-          .catch((err: Error) => {
-            if (mounted) setError(err.message);
-          });
+        // enumerate cameras first — more reliable than facingMode in Electron on Windows
+        let cameras: Array<{ id: string; label: string }> = [];
+        try {
+          cameras = (await Html5Qrcode.getCameras()).map((c: { id: string; label: string }) => c);
+        } catch {
+          // getCameras may fail if no permission yet, continue with facingMode fallback
+        }
+
+        if (!mounted) return;
+
+        let started = false;
+
+        // try starting with a specific camera device id (avoids facingMode issues)
+        if (cameras.length > 0) {
+          // prefer environment/back camera, fall back to first available
+          const backCam = cameras.find(
+            (c) =>
+              c.label.toLowerCase().includes("back") ||
+              c.label.toLowerCase().includes("rear") ||
+              c.label.toLowerCase().includes("environment"),
+          );
+          const cameraId = backCam?.id ?? cameras[0].id;
+
+          try {
+            await scanner.start(cameraId, config, onSuccess, onFailure);
+            started = true;
+          } catch {
+            // device id start failed, will try facingMode below
+          }
+        }
+
+        if (!mounted) return;
+
+        // fallback: try facingMode constraints
+        if (!started) {
+          try {
+            await scanner.start({ facingMode: "environment" }, config, onSuccess, onFailure);
+            started = true;
+          } catch {
+            // environment facingMode failed
+          }
+        }
+
+        if (!mounted) return;
+
+        if (!started) {
+          try {
+            await scanner.start({ facingMode: "user" }, config, onSuccess, onFailure);
+            started = true;
+          } catch (err) {
+            if (mounted) {
+              const msg = err instanceof Error ? err.message : String(err);
+              setError(msg || en.camera.notFound);
+            }
+            return;
+          }
+        }
+
+        if (started) {
+          startedRef.current = true;
+          if (mounted) setLoading(false);
+        }
       })
       .catch(() => {
-        if (mounted) setError("failed to load QR scanner");
+        if (mounted) setError(en.camera.notFound);
       });
 
     return () => {
@@ -287,6 +337,11 @@ function WebQRScanner({ onScanned }: QRScannerProps) {
 
   return (
     <View style={styles.container}>
+      {loading && (
+        <View style={styles.placeholder}>
+          <Text style={styles.placeholderText}>{en.camera.requesting}</Text>
+        </View>
+      )}
       <View nativeID={containerRef.current} style={{ width: 280, height: 280 }} />
     </View>
   );

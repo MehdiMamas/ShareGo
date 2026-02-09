@@ -11,8 +11,12 @@ import {
   REGENERATION_DELAY_MS,
   COUNTDOWN_INTERVAL_MS,
   DEVICE_NAME_RECEIVER,
+  MDNS_SERVICE_TYPE,
+  PROTOCOL_VERSION,
   en,
+  log,
 } from "../lib/core";
+import { isElectron } from "../platform";
 import { QRDisplay } from "../components/QRDisplay";
 import { ApprovalDialog } from "../components/ApprovalDialog";
 import { StatusIndicator } from "../components/StatusIndicator";
@@ -54,7 +58,7 @@ export function ReceiveScreen({ navigation }: Props) {
       })
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err);
-        console.error("failed to start receiver:", msg);
+        log.error("[receive] failed to start receiver:", msg);
         setInitError(msg);
       });
   }, []);
@@ -79,6 +83,28 @@ export function ReceiveScreen({ navigation }: Props) {
     }, COUNTDOWN_INTERVAL_MS);
     return () => clearInterval(timerRef.current);
   }, [started]);
+
+  // advertise via mDNS on electron so senders can discover without subnet scan
+  useEffect(() => {
+    if (!isElectron || !window.electronAPI?.mdnsAdvertise) return;
+    if (!session.sessionId || !session.localAddress) return;
+
+    const sid = session.sessionId;
+    const port = DEFAULT_PORT;
+    const meta: Record<string, string> = {
+      sid,
+      v: String(PROTOCOL_VERSION),
+    };
+
+    log.debug(`[receive] advertising via mDNS: ${sid}`);
+    window.electronAPI.mdnsAdvertise(MDNS_SERVICE_TYPE, port, meta).catch((err: unknown) => {
+      log.warn("[receive] mDNS advertise failed:", err);
+    });
+
+    return () => {
+      window.electronAPI?.mdnsStopAdvertise();
+    };
+  }, [session.sessionId, session.localAddress]);
 
   // navigate to active session when connected
   useEffect(() => {
@@ -117,7 +143,9 @@ export function ReceiveScreen({ navigation }: Props) {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => {
-            session.endSession();
+            if (session.state !== SessionState.Closed) {
+              session.endSession();
+            }
             navigation.goBack();
           }}
         >

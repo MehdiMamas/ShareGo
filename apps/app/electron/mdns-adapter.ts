@@ -4,7 +4,19 @@
  */
 
 import type { DiscoveryAdapter, DiscoveredService } from "@sharego/core";
-import { MDNS_TXT_KEYS, asSessionId, asBase64PublicKey, asNetworkAddress } from "@sharego/core";
+
+// inlined from @sharego/core to avoid CJS→ESM require() crash in the electron main process.
+// the core package is ESM-only, and the electron main process compiles to CJS.
+const MDNS_TXT_KEYS = { sid: "sid", pk: "pk", v: "v" } as const;
+function asSessionId(s: string) {
+  return s as import("@sharego/core").SessionId;
+}
+function asBase64PublicKey(s: string) {
+  return s as import("@sharego/core").Base64PublicKey;
+}
+function asNetworkAddress(s: string) {
+  return s as import("@sharego/core").NetworkAddress;
+}
 
 // bonjour-service types
 interface BonjourTxt {
