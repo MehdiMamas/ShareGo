@@ -1,6 +1,6 @@
 {
   "name": "sharego-app",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "description": "ShareGo — unified app (desktop + mobile)",
   "author": {
