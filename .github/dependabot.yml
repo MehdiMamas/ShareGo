@@ -13,6 +13,17 @@ updates:
         update-types:
           - "minor"
           - "patch"
+        exclude-patterns:
+          - "react-native"
+          - "react-native-*"
+          - "@react-native/*"
+          - "@react-native-*/*"
+    # react-native upgrades are breaking even for minor bumps — handle manually
+    ignore:
+      - dependency-name: "react-native"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "@react-native/*"
+        update-types: ["version-update:semver-minor"]
     labels:
       - "dependencies"
 
