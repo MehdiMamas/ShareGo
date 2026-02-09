@@ -124,7 +124,7 @@
     "react-native-svg-web": "^1.0.9",
     "react-native-tcp-socket": "^6.4.1",
     "react-native-vision-camera": "^4.7.3",
-    "react-native-web": "^0.19.12",
+    "react-native-web": "^0.21.2",
     "tweetnacl": "^1.0.3",
     "ws": "^8.18.0"
   },
