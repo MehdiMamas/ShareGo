@@ -40,6 +40,8 @@ export {
   // discovery
   discoverReceiver,
   type DiscoveryOptions,
+  MDNS_SERVICE_TYPE,
+  MDNS_BROWSE_TIMEOUT_MS,
   // i18n
   en,
   // logger

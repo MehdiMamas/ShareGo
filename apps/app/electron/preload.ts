@@ -17,6 +17,20 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // network
   getLocalIp: (): Promise<string> => ipcRenderer.invoke("net:get-local-ip"),
 
+  // mdns discovery
+  mdnsBrowse: (
+    serviceType: string,
+    sessionCode: string,
+    timeoutMs: number,
+  ): Promise<{ address: string; sessionId: string; publicKey: string | null } | null> =>
+    ipcRenderer.invoke("mdns:browse", serviceType, sessionCode, timeoutMs),
+  mdnsStopBrowse: (): void => ipcRenderer.send("mdns:stop-browse"),
+
+  // mdns advertising (receiver side)
+  mdnsAdvertise: (serviceType: string, port: number, meta: Record<string, string>): Promise<void> =>
+    ipcRenderer.invoke("mdns:advertise", serviceType, port, meta),
+  mdnsStopAdvertise: (): void => ipcRenderer.send("mdns:stop-advertise"),
+
   // ws events (from main -> renderer)
   onWsConnection: (cb: () => void) => {
     const handler = () => cb();
