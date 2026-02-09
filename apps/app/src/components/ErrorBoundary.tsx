@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { en } from "../lib/core";
 import { colors } from "../styles/theme";
 
 interface Props {
@@ -30,7 +31,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
     if (this.state.hasError) {
       return (
         <View style={styles.container}>
-          <Text style={styles.title}>something went wrong</Text>
+          <Text style={styles.title}>{en.error.boundary}</Text>
           <Text style={styles.detail}>
             {this.state.error?.message ?? "unknown error"}
           </Text>

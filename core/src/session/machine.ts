@@ -119,30 +119,3 @@ export const STATE_TO_EVENT: Record<string, SessionMachineEvent["type"]> = {
   [`${SessionState.Rejected}->${SessionState.Closed}`]: "END_SESSION",
 };
 
-/**
- * derive valid transitions from the machine definition.
- * used in tests to verify the machine stays in sync with VALID_TRANSITIONS.
- */
-export function deriveValidTransitions(): Record<SessionState, SessionState[]> {
-  const result: Record<string, SessionState[]> = {};
-  const config = sessionMachine.config.states!;
-
-  for (const stateKey of Object.values(SessionState)) {
-    const stateConfig = config[stateKey];
-    if (!stateConfig || !stateConfig.on) {
-      result[stateKey] = [];
-      continue;
-    }
-
-    const targets = new Set<SessionState>();
-    for (const [, transition] of Object.entries(stateConfig.on)) {
-      const t = transition as { target?: string };
-      if (t.target) {
-        targets.add(t.target as SessionState);
-      }
-    }
-    result[stateKey] = [...targets];
-  }
-
-  return result as Record<SessionState, SessionState[]>;
-}

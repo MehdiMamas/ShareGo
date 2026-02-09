@@ -1,7 +1,32 @@
 import { describe, it, expect } from "vitest";
 import { createActor } from "xstate";
-import { sessionMachine, STATE_TO_EVENT, deriveValidTransitions } from "./machine.js";
-import { SessionState, SessionRole, VALID_TRANSITIONS } from "./types.js";
+import { sessionMachine, STATE_TO_EVENT } from "./machine.js";
+import { SessionState } from "./types.js";
+
+/** derive valid transitions directly from the xstate machine definition */
+function deriveValidTransitions(): Record<SessionState, SessionState[]> {
+  const result: Record<string, SessionState[]> = {};
+  const config = sessionMachine.config.states!;
+
+  for (const stateKey of Object.values(SessionState)) {
+    const stateConfig = config[stateKey];
+    if (!stateConfig || !stateConfig.on) {
+      result[stateKey] = [];
+      continue;
+    }
+
+    const targets = new Set<SessionState>();
+    for (const [, transition] of Object.entries(stateConfig.on)) {
+      const t = transition as { target?: string };
+      if (t.target) {
+        targets.add(t.target as SessionState);
+      }
+    }
+    result[stateKey] = [...targets];
+  }
+
+  return result as Record<SessionState, SessionState[]>;
+}
 
 describe("sessionMachine definition", () => {
   it("should have Created as the initial state", () => {
@@ -132,8 +157,9 @@ describe("sessionMachine transitions", () => {
 });
 
 describe("STATE_TO_EVENT mapping", () => {
-  it("should have an entry for every valid transition", () => {
-    for (const [fromState, toStates] of Object.entries(VALID_TRANSITIONS)) {
+  it("should have an entry for every valid transition derived from the machine", () => {
+    const validTransitions = deriveValidTransitions();
+    for (const [fromState, toStates] of Object.entries(validTransitions)) {
       for (const toState of toStates) {
         const key = `${fromState}->${toState}`;
         expect(STATE_TO_EVENT[key]).toBeDefined();
@@ -142,21 +168,10 @@ describe("STATE_TO_EVENT mapping", () => {
   });
 
   it("should not have entries for invalid transitions", () => {
+    const validTransitions = deriveValidTransitions();
     for (const key of Object.keys(STATE_TO_EVENT)) {
       const [from, to] = key.split("->");
-      expect(VALID_TRANSITIONS[from as SessionState]).toContain(to);
-    }
-  });
-});
-
-describe("deriveValidTransitions sync with VALID_TRANSITIONS", () => {
-  it("should produce the same transitions as the hardcoded VALID_TRANSITIONS map", () => {
-    const derived = deriveValidTransitions();
-
-    for (const state of Object.values(SessionState)) {
-      const expected = [...VALID_TRANSITIONS[state]].sort();
-      const actual = [...derived[state]].sort();
-      expect(actual).toEqual(expected);
+      expect(validTransitions[from as SessionState]).toContain(to);
     }
   });
 });

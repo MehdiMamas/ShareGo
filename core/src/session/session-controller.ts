@@ -177,11 +177,6 @@ export class SessionController {
     await session.startAsSender(transport, addr, receiverPk);
   }
 
-  /** check if the given session is still the active one */
-  isCurrentSession(session: Session): boolean {
-    return this.session === session;
-  }
-
   approve(): void {
     this.session?.approvePairing();
     this.update({ pairingRequest: null });

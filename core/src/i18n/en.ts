@@ -78,6 +78,11 @@ const en = {
     notFound: "no camera found",
     retryHint: "tap to scan again",
   },
+  error: {
+    boundary: "something went wrong",
+    boundaryHint: "try restarting the app",
+    appInit: "failed to initialize",
+  },
   common: {
     back: "back",
     cancel: "cancel",

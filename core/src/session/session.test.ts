@@ -4,8 +4,8 @@ import {
   SessionState,
   SessionRole,
   SessionEvent,
-  VALID_TRANSITIONS,
 } from "./types.js";
+import { sessionMachine } from "./machine.js";
 import { initCrypto } from "../crypto/index.js";
 import { serializeMessage, deserializeMessage, createBaseFields } from "../protocol/index.js";
 import { MessageType, PROTOCOL_VERSION } from "../protocol/types.js";
@@ -93,18 +93,24 @@ describe("Session construction", () => {
 });
 
 describe("Session state machine", () => {
-  it("should define valid transitions for all states", () => {
+  it("should define states for all SessionState values", () => {
+    const config = sessionMachine.config.states!;
     for (const state of Object.values(SessionState)) {
-      expect(VALID_TRANSITIONS[state]).toBeDefined();
+      expect(config[state]).toBeDefined();
     }
   });
 
-  it("should allow Rejected to transition to Closed for cleanup", () => {
-    expect(VALID_TRANSITIONS[SessionState.Rejected]).toEqual([SessionState.Closed]);
+  it("should mark Closed as a final state with no outgoing transitions", () => {
+    const config = sessionMachine.config.states!;
+    expect(config[SessionState.Closed]).toHaveProperty("type", "final");
   });
 
-  it("should have Closed as a terminal state", () => {
-    expect(VALID_TRANSITIONS[SessionState.Closed]).toEqual([]);
+  it("should have END_SESSION as the only transition from Rejected", () => {
+    const config = sessionMachine.config.states!;
+    const rejectedOn = config[SessionState.Rejected]?.on as Record<string, { target: string }> | undefined;
+    expect(rejectedOn).toBeDefined();
+    const targets = Object.values(rejectedOn!).map((t) => t.target);
+    expect(targets).toEqual([SessionState.Closed]);
   });
 });
 

@@ -2,7 +2,6 @@ export {
   SessionState,
   SessionRole,
   SessionEvent,
-  VALID_TRANSITIONS,
   type SessionEventMap,
   type PairingRequest,
 } from "./types.js";

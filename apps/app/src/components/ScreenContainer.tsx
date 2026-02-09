@@ -42,10 +42,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   webContainer: {
-    // @ts-expect-error -- 100vh is valid CSS but not in RN types
-    height: "100vh",
-    // @ts-expect-error
-    minHeight: "100vh",
+    height: "100vh" as unknown as number,
+    minHeight: "100vh" as unknown as number,
   },
   electronPadding: {
     paddingTop: TITLE_BAR_HEIGHT,

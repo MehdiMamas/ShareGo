@@ -1,6 +1,9 @@
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
 
 // mobile-only native modules that must never enter the web/electron bundle
 const nativeOnlyModules = [
@@ -98,10 +101,9 @@ export default defineConfig({
       "react-native": "react-native-web",
       "react-native-svg": "react-native-svg-web",
       // libsodium ESM dist is incomplete — alias to CJS
-      "libsodium-wrappers-sumo": path.resolve(
-        __dirname,
-        "../../node_modules/libsodium-wrappers-sumo/dist/modules-sumo/libsodium-wrappers.js",
-      ),
+      "libsodium-wrappers-sumo": path.dirname(
+        require.resolve("libsodium-wrappers-sumo"),
+      ) + "/libsodium-wrappers.js",
     },
     extensions: [
       ".web.tsx",

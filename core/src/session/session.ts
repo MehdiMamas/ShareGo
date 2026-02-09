@@ -95,9 +95,7 @@ export class Session {
     new Map();
   private flushTimer: ReturnType<typeof setTimeout> | null = null;
   private closing = false;
-  private machineActor = createActor(sessionMachine, {
-    snapshot: sessionMachine.resolveState({ value: SessionState.Created, context: { role: SessionRole.Receiver } }),
-  });
+  private machineActor;
 
   constructor(role: SessionRole, config: SessionConfig, id?: SessionId) {
     this.role = role;
