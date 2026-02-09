@@ -15,6 +15,20 @@ export function initCrypto(): Promise<void> {
 }
 
 /**
+ * await crypto readiness. safe to call concurrently — returns the
+ * same promise as initCrypto(). use this instead of assertReady()
+ * in async contexts to avoid race conditions.
+ */
+export async function ensureReady(): Promise<void> {
+  if (initialized) return;
+  if (initPromise) {
+    await initPromise;
+    return;
+  }
+  await initCrypto();
+}
+
+/**
  * generate an ephemeral X25519 key pair.
  * must be called once per session — never reuse across sessions.
  */

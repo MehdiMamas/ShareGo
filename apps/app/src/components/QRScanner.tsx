@@ -187,10 +187,22 @@ function WebQRScanner({ onScanned }: QRScannerProps) {
   useEffect(() => {
     let mounted = true;
 
-    // small delay to ensure the DOM container is rendered before html5-qrcode tries to use it
-    const startDelay = new Promise<void>((r) => setTimeout(r, 300));
+    // wait for the DOM container to be rendered before html5-qrcode tries to use it
+    const waitForContainer = new Promise<void>((resolve) => {
+      const el = document.getElementById(containerRef.current);
+      if (el) { resolve(); return; }
+      const observer = new MutationObserver(() => {
+        if (document.getElementById(containerRef.current)) {
+          observer.disconnect();
+          resolve();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      // safety timeout in case observer never fires
+      setTimeout(() => { observer.disconnect(); resolve(); }, 1000);
+    });
 
-    startDelay.then(() => import("html5-qrcode")).then(({ Html5Qrcode }) => {
+    waitForContainer.then(() => import("html5-qrcode")).then(({ Html5Qrcode }) => {
       if (!mounted) return;
 
       const scanner = new Html5Qrcode(containerRef.current);

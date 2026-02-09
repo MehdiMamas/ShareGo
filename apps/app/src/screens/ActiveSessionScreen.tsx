@@ -60,13 +60,10 @@ export function ActiveSessionScreen({ navigation }: Props) {
     }
   }, [session.state, navigation]);
 
-  // auto-scroll to latest message
-  const itemCount = session.sentItems.length + session.receivedItems.length;
-  useEffect(() => {
-    if (itemCount > 0) {
-      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
-    }
-  }, [itemCount]);
+  // auto-scroll to latest message when content size changes
+  const handleContentSizeChange = () => {
+    flatListRef.current?.scrollToEnd({ animated: true });
+  };
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -222,6 +219,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
           renderItem={renderItem}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
+          onContentSizeChange={handleContentSizeChange}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>{en.session.emptyHint}</Text>

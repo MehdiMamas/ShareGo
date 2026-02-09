@@ -82,7 +82,8 @@ class ElectronWsClient implements WebSocketClientAdapter {
 export class ElectronWsServerAdapter implements WebSocketServerAdapter {
   private connectionHandler: ConnectionHandler | null = null;
   private unsubConnection: (() => void) | null = null;
-  private pendingConnection = false;
+  // buffer connection events that arrive before onConnection() is called
+  private pendingClients: ElectronWsClient[] = [];
 
   async start(port: number): Promise<string> {
     const api = getElectronAPI();
@@ -90,12 +91,11 @@ export class ElectronWsServerAdapter implements WebSocketServerAdapter {
     // subscribe to connection events BEFORE starting the server to avoid
     // race where a peer connects before the handler is registered
     this.unsubConnection = api.onWsConnection(() => {
+      const client = new ElectronWsClient();
       if (this.connectionHandler) {
-        const client = new ElectronWsClient();
         this.connectionHandler(client);
       } else {
-        // handler not set yet — flag it for when onConnection() is called
-        this.pendingConnection = true;
+        this.pendingClients.push(client);
       }
     });
 
@@ -105,10 +105,9 @@ export class ElectronWsServerAdapter implements WebSocketServerAdapter {
 
   onConnection(handler: ConnectionHandler): void {
     this.connectionHandler = handler;
-    // if a connection arrived before the handler was set, fire it now
-    if (this.pendingConnection) {
-      this.pendingConnection = false;
-      const client = new ElectronWsClient();
+    // flush any connections that arrived before the handler was set
+    while (this.pendingClients.length > 0) {
+      const client = this.pendingClients.shift()!;
       handler(client);
     }
   }

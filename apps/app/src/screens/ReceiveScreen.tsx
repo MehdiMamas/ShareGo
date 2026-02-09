@@ -62,8 +62,7 @@ export function ReceiveScreen({ navigation }: Props) {
   // start on mount
   useEffect(() => {
     startSession();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [startSession]);
 
   // countdown timer
   useEffect(() => {

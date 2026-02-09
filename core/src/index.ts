@@ -4,6 +4,7 @@ export {
   type SharedSecret,
   type EncryptedEnvelope,
   initCrypto,
+  ensureReady,
   generateKeyPair,
   deriveSharedSecret,
   encrypt,

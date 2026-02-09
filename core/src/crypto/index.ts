@@ -2,6 +2,7 @@ export type { KeyPair, SharedSecret, EncryptedEnvelope } from "./types.js";
 
 export {
   initCrypto,
+  ensureReady,
   generateKeyPair,
   deriveSharedSecret,
   encrypt,

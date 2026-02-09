@@ -9,6 +9,8 @@
  * platform adapters inject the DiscoveryAdapter at runtime.
  */
 
+import { log } from "../logger.js";
+
 import type { DiscoveryAdapter, DiscoveredService } from "./types.js";
 import { MDNS_SERVICE_TYPE, MDNS_TXT_KEYS } from "./types.js";
 import { DISCOVERY_HOST_TIMEOUT_MS, MDNS_BROWSE_TIMEOUT_MS } from "../config.js";
@@ -165,7 +167,7 @@ async function discoverViaSubnet(
       for (const t of timeouts) clearTimeout(t);
       const snapshot = [...sockets];
       for (const ws of snapshot) {
-        try { ws.close(); } catch { /* best effort */ }
+        try { ws.close(); } catch (e) { log.warn("[discovery] socket close failed:", e); }
       }
       resolveOuter(result);
     }
@@ -182,12 +184,12 @@ async function discoverViaSubnet(
       sockets.push(ws);
 
       if (found) {
-        try { ws.close(); } catch { /* best effort */ }
+        try { ws.close(); } catch (e) { log.warn("[discovery] socket close failed:", e); }
         continue;
       }
 
       const timer = setTimeout(() => {
-        try { ws.close(); } catch { /* best effort */ }
+        try { ws.close(); } catch (e) { log.warn("[discovery] timeout close failed:", e); }
         if (--pending === 0 && !found) finish(null);
       }, timeout);
       timeouts.push(timer);
