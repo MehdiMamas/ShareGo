@@ -91,6 +91,8 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 4
         versionName "0.4.0"
+        testBuildType System.getProperty("testBuildType", "debug")
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
         debug {
@@ -141,4 +143,8 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+
+    // detox instrumentation tests
+    androidTestImplementation('com.wix:detox:+')
+    androidTestImplementation 'junit:junit:4.13.2'
 }
