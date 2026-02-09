@@ -7,78 +7,20 @@ import {
   FlatList,
   StyleSheet,
   KeyboardAvoidingView,
-  Platform,
   Switch,
 } from "react-native";
 import { ScreenContainer } from "../components/ScreenContainer";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../App";
 import { SessionContext } from "../App";
-import { SessionState, COPY_FEEDBACK_MS, en, log } from "../lib/core";
+import { SessionState, COPY_FEEDBACK_MS, en } from "../lib/core";
 import { StatusIndicator } from "../components/StatusIndicator";
 import { EyeIcon, EyeOffIcon } from "../components/Icons";
 import { colors } from "../styles/theme";
-import { isElectron } from "../platform";
+import { copyToClipboard } from "../adapters/clipboard";
 import type { ReceivedItem, SentItem } from "../hooks/useSession";
 
 const MASKED_TEXT = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
-
-interface Props {
-  navigation: NativeStackNavigationProp<RootStackParamList, "ActiveSession">;
-}
-
-type ListItem =
-  | { type: "sent"; data: SentItem }
-  | { type: "received"; data: ReceivedItem };
-
-/** copy text to clipboard (cross-platform) */
-function copyToClipboard(text: string): void {
-  // electron: use native clipboard via IPC (works without user gesture)
-  if (isElectron && window.electronAPI?.copyToClipboard) {
-    window.electronAPI.copyToClipboard(text);
-    return;
-  }
-
-  // react native: use @react-native-clipboard/clipboard
-  if (Platform.OS !== "web") {
-    try {
-      // dynamic require so web/electron bundles don't try to resolve this
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const RNClipboard = require("@react-native-clipboard/clipboard").default;
-      RNClipboard.setString(text);
-    } catch (err) {
-      log.warn("[clipboard] RN clipboard failed:", err);
-    }
-    return;
-  }
-
-  // web: modern clipboard API
-  if (typeof navigator !== "undefined" && navigator.clipboard) {
-    navigator.clipboard.writeText(text).catch((err) => {
-      log.warn("[clipboard] navigator.clipboard failed, using fallback:", err);
-      fallbackCopy(text);
-    });
-    return;
-  }
-  fallbackCopy(text);
-}
-
-/** fallback copy using a temporary textarea (web only) */
-function fallbackCopy(text: string): void {
-  if (typeof document === "undefined") return;
-  const textarea = document.createElement("textarea");
-  textarea.value = text;
-  textarea.style.position = "fixed";
-  textarea.style.opacity = "0";
-  document.body.appendChild(textarea);
-  textarea.select();
-  try {
-    document.execCommand("copy");
-  } catch (err) {
-    log.warn("[clipboard] execCommand('copy') failed:", err);
-  }
-  document.body.removeChild(textarea);
-}
 
 export function ActiveSessionScreen({ navigation }: Props) {
   const ctx = useContext(SessionContext)!;

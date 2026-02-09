@@ -19,39 +19,11 @@ import {
   DEVICE_NAME_SENDER,
   discoverReceiver,
   en,
-  log,
 } from "../lib/core";
 import { StatusIndicator } from "../components/StatusIndicator";
 import { QRScanner } from "../components/QRScanner";
 import { colors } from "../styles/theme";
-import { isElectron, isMobile } from "../platform";
-
-/** resolve local LAN IP for subnet discovery fallback */
-async function getLocalIp(): Promise<string | null> {
-  // electron: use IPC to get LAN IP from main process
-  if (isElectron && window.electronAPI) {
-    try {
-      return await window.electronAPI.getLocalIp();
-    } catch (err) {
-      log.warn("[network] electron getLocalIp failed:", err);
-      return null;
-    }
-  }
-
-  // react native: use react-native-network-info
-  if (isMobile) {
-    try {
-      const { NetworkInfo } = require("react-native-network-info");
-      const ip: string | null = await NetworkInfo.getIPV4Address();
-      return ip && ip !== "0.0.0.0" ? ip : null;
-    } catch (err) {
-      log.warn("[network] RN NetworkInfo failed:", err);
-      return null;
-    }
-  }
-
-  return null;
-}
+import { getLocalIp } from "../adapters/network";
 
 interface Props {
   navigation: NativeStackNavigationProp<RootStackParamList, "Send">;
