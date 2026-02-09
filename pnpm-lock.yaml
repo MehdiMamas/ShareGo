@@ -74,8 +74,8 @@ importers:
         specifier: 0.83.1
         version: 0.83.1(@babel/core@7.29.0)(@react-native-community/cli@14.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.13)(react@18.3.1)
       react-native-get-random-values:
-        specifier: ~1.11.0
-        version: 1.11.0(react-native@0.83.1(@babel/core@7.29.0)(@react-native-community/cli@14.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.13)(react@18.3.1))
+        specifier: ~2.0.0
+        version: 2.0.0(react-native@0.83.1(@babel/core@7.29.0)(@react-native-community/cli@14.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.13)(react@18.3.1))
       react-native-haptic-feedback:
         specifier: ^2.3.3
         version: 2.3.3(react-native@0.83.1(@babel/core@7.29.0)(@react-native-community/cli@14.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.13)(react@18.3.1))
@@ -4515,10 +4515,10 @@ packages:
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
 
-  react-native-get-random-values@1.11.0:
-    resolution: {integrity: sha512-4BTbDbRmS7iPdhYLRcz3PGFIpFJBwNZg9g42iwa2P6FOv9vZj/xJc678RZXnLNZzd0qd7Q3CCF6Yd+CU2eoXKQ==}
+  react-native-get-random-values@2.0.0:
+    resolution: {integrity: sha512-wx7/aPqsUIiWsG35D+MsUJd8ij96e3JKddklSdrdZUrheTx89gPtz3Q2yl9knBArj5u26Cl23T88ai+Q0vypdQ==}
     peerDependencies:
-      react-native: '>=0.56'
+      react-native: '>=0.81'
 
   react-native-haptic-feedback@2.3.3:
     resolution: {integrity: sha512-svS4D5PxfNv8o68m9ahWfwje5NqukM3qLS48+WTdhbDkNUkOhP9rDfDSRHzlhk4zq+ISjyw95EhLeh8NkKX5vQ==}
@@ -10877,7 +10877,7 @@ snapshots:
 
   react-is@18.3.1: {}
 
-  react-native-get-random-values@1.11.0(react-native@0.83.1(@babel/core@7.29.0)(@react-native-community/cli@14.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.13)(react@18.3.1)):
+  react-native-get-random-values@2.0.0(react-native@0.83.1(@babel/core@7.29.0)(@react-native-community/cli@14.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.13)(react@18.3.1)):
     dependencies:
       fast-base64-decode: 1.0.0
       react-native: 0.83.1(@babel/core@7.29.0)(@react-native-community/cli@14.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.13)(react@18.3.1)
