@@ -95,8 +95,22 @@ function interfacePriority(name: string): number {
     return 90;
   }
 
-  // windows Wi-Fi/ethernet
-  if (lower.includes("wi-fi") || lower.includes("wifi") || lower.includes("ethernet")) {
+  // windows Wi-Fi/ethernet — many possible naming conventions
+  if (
+    lower.includes("wi-fi") ||
+    lower.includes("wifi") ||
+    lower.includes("wireless") ||
+    lower.includes("wlan")
+  ) {
+    return 100;
+  }
+
+  if (
+    lower.includes("ethernet") ||
+    lower.includes("local area connection") ||
+    lower.includes("realtek") ||
+    lower.includes("intel")
+  ) {
     return 95;
   }
 

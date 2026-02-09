@@ -7,9 +7,11 @@ import { app, BrowserWindow, clipboard, ipcMain } from "electron";
 import path from "path";
 import { ElectronWsServer } from "./ws-server.js";
 import { getLanIp } from "./net-utils.js";
+import { ElectronMdnsAdapter } from "./mdns-adapter.js";
 
 let mainWindow: BrowserWindow | null = null;
 const wsServer = new ElectronWsServer();
+const mdnsAdapter = new ElectronMdnsAdapter();
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -121,6 +123,58 @@ function registerIpcHandlers(): void {
     const ip = getLanIp();
     if (!ip) throw new Error("failed to detect LAN IP address");
     return ip;
+  });
+
+  // mdns discovery (browse for receivers)
+  ipcMain.handle(
+    "mdns:browse",
+    async (_event, serviceType: string, sessionCode: string, timeoutMs: number) => {
+      if (typeof serviceType !== "string" || typeof sessionCode !== "string") {
+        throw new Error("invalid mdns:browse arguments");
+      }
+
+      const results = mdnsAdapter.browse(serviceType);
+      const timer = setTimeout(() => mdnsAdapter.stopBrowsing(), timeoutMs || 5000);
+
+      try {
+        for await (const service of results) {
+          if (service.sessionId === sessionCode) {
+            clearTimeout(timer);
+            mdnsAdapter.stopBrowsing();
+            return {
+              address: service.address,
+              sessionId: service.sessionId,
+              publicKey: service.publicKey ?? null,
+            };
+          }
+        }
+      } catch {
+        // browsing ended
+      } finally {
+        clearTimeout(timer);
+      }
+
+      return null;
+    },
+  );
+
+  ipcMain.on("mdns:stop-browse", () => {
+    mdnsAdapter.stopBrowsing();
+  });
+
+  // mdns advertising (receiver side)
+  ipcMain.handle(
+    "mdns:advertise",
+    async (_event, serviceType: string, port: number, meta: Record<string, string>) => {
+      if (typeof serviceType !== "string" || typeof port !== "number") {
+        throw new Error("invalid mdns:advertise arguments");
+      }
+      await mdnsAdapter.advertise(serviceType, port, meta);
+    },
+  );
+
+  ipcMain.on("mdns:stop-advertise", () => {
+    mdnsAdapter.stopAdvertising();
   });
 }
 

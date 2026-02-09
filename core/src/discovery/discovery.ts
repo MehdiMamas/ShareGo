@@ -142,6 +142,9 @@ export function stopAdvertising(adapter: DiscoveryAdapter): void {
 
 // -- subnet scanning fallback (legacy) --
 
+/** max concurrent ws connections during subnet scan to avoid overwhelming the network stack */
+const SUBNET_SCAN_CONCURRENCY = 20;
+
 async function discoverViaSubnet(opts: DiscoveryOptions): Promise<string | null> {
   const { port, getLocalIp, signal, timeout = DISCOVERY_HOST_TIMEOUT_MS } = opts;
 
@@ -151,70 +154,62 @@ async function discoverViaSubnet(opts: DiscoveryOptions): Promise<string | null>
   if (parts.length !== 4) return null;
   const subnet = `${parts[0]}.${parts[1]}.${parts[2]}`;
 
-  const sockets: WebSocket[] = [];
-  const timeouts: ReturnType<typeof setTimeout>[] = [];
+  log.debug(`[discovery] subnet scan starting on ${subnet}.0/24 port ${port}`);
+
   let found = false;
 
-  return new Promise<string | null>((resolveOuter) => {
-    let pending = 254;
+  // probe a single host — resolves to the address if WS opens, null otherwise
+  function probeHost(ip: string): Promise<string | null> {
+    if (found || signal?.aborted) return Promise.resolve(null);
 
-    function finish(result: string | null) {
-      if (found) return;
-      found = true;
-      for (const t of timeouts) clearTimeout(t);
-      const snapshot = [...sockets];
-      for (const ws of snapshot) {
-        try {
-          ws.close();
-        } catch (e) {
-          log.warn("[discovery] socket close failed:", e);
-        }
-      }
-      resolveOuter(result);
-    }
-
-    if (signal) {
-      if (signal.aborted) {
-        resolveOuter(null);
-        return;
-      }
-      signal.addEventListener("abort", () => finish(null), { once: true });
-    }
-
-    for (let i = 1; i <= 254; i++) {
-      const ip = `${subnet}.${i}`;
+    return new Promise<string | null>((resolve) => {
       const url = `ws://${ip}:${port}`;
       const ws = new WebSocket(url);
-      sockets.push(ws);
-
-      if (found) {
-        try {
-          ws.close();
-        } catch (e) {
-          log.warn("[discovery] socket close failed:", e);
-        }
-        continue;
-      }
 
       const timer = setTimeout(() => {
         try {
           ws.close();
-        } catch (e) {
-          log.warn("[discovery] timeout close failed:", e);
+        } catch {
+          // ignore
         }
-        if (--pending === 0 && !found) finish(null);
+        resolve(null);
       }, timeout);
-      timeouts.push(timer);
 
       ws.onopen = () => {
         clearTimeout(timer);
         ws.close();
-        finish(`${ip}:${port}`);
+        resolve(`${ip}:${port}`);
       };
+
       ws.onerror = () => {
         clearTimeout(timer);
-        if (--pending === 0 && !found) finish(null);
+        resolve(null);
       };
+
+      ws.onclose = () => {
+        clearTimeout(timer);
+        resolve(null);
+      };
+    });
+  }
+
+  // scan in batches to avoid overwhelming the network stack (especially on Windows)
+  const allIps = Array.from({ length: 254 }, (_, i) => `${subnet}.${i + 1}`);
+
+  for (let start = 0; start < allIps.length; start += SUBNET_SCAN_CONCURRENCY) {
+    if (found || signal?.aborted) break;
+
+    const batch = allIps.slice(start, start + SUBNET_SCAN_CONCURRENCY);
+    const results = await Promise.all(batch.map(probeHost));
+
+    const hit = results.find((r) => r !== null);
+    if (hit) {
+      found = true;
+      log.debug(`[discovery] found receiver at ${hit}`);
+      return hit;
     }
-  });
+  }
+
+  log.debug("[discovery] subnet scan found nothing");
+  return null;
 }

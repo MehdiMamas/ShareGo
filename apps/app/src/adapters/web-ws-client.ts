@@ -14,7 +14,11 @@ export class WebWsClientAdapter implements WebSocketClientAdapter {
 
   connect(url: string): Promise<void> {
     return new Promise((resolve, reject) => {
+      let settled = false;
+
       const timeout = setTimeout(() => {
+        if (settled) return;
+        settled = true;
         this.ws?.close();
         reject(new Error("connection timed out"));
       }, WS_CONNECT_TIMEOUT_MS);
@@ -23,11 +27,15 @@ export class WebWsClientAdapter implements WebSocketClientAdapter {
       this.ws.binaryType = "arraybuffer";
 
       this.ws.onopen = () => {
+        if (settled) return;
+        settled = true;
         clearTimeout(timeout);
         resolve();
       };
 
       this.ws.onerror = () => {
+        if (settled) return;
+        settled = true;
         clearTimeout(timeout);
         reject(new Error("websocket connection failed"));
       };
@@ -42,7 +50,13 @@ export class WebWsClientAdapter implements WebSocketClientAdapter {
         }
       };
 
+      // reject if closed before the connection opens (Windows closes aggressively)
       this.ws.onclose = () => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timeout);
+          reject(new Error("websocket closed before connection established"));
+        }
         if (this.closeHandler) this.closeHandler();
       };
     });
