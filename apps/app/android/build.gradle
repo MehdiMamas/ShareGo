@@ -19,25 +19,3 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
-
-// prevent duplicate libc++_shared.so conflicts across all modules (including library test builds)
-subprojects {
-    pluginManager.withPlugin("com.android.library") {
-        android {
-            packaging {
-                jniLibs {
-                    pickFirst '**/*.so'
-                }
-            }
-        }
-    }
-    pluginManager.withPlugin("com.android.application") {
-        android {
-            packaging {
-                jniLibs {
-                    pickFirst '**/*.so'
-                }
-            }
-        }
-    }
-}
