@@ -7,11 +7,31 @@ import { app, BrowserWindow, clipboard, ipcMain } from "electron";
 import path from "path";
 import { ElectronWsServer } from "./ws-server.js";
 import { getLanIp } from "./net-utils.js";
-import { ElectronMdnsAdapter } from "./mdns-adapter.js";
 
 let mainWindow: BrowserWindow | null = null;
 const wsServer = new ElectronWsServer();
-const mdnsAdapter = new ElectronMdnsAdapter();
+
+// lazy-loaded mdns adapter (mdns-adapter imports @sharego/core which is ESM,
+// so it must be dynamically imported from this CJS main process)
+let mdnsAdapter: {
+  advertise(serviceName: string, port: number, meta: Record<string, string>): Promise<void>;
+  browse(serviceName: string): AsyncIterable<{
+    name: string;
+    address: string;
+    sessionId: string;
+    publicKey?: string;
+  }>;
+  stopAdvertising(): void;
+  stopBrowsing(): void;
+} | null = null;
+
+async function getMdnsAdapter() {
+  if (!mdnsAdapter) {
+    const { ElectronMdnsAdapter } = await import("./mdns-adapter.js");
+    mdnsAdapter = new ElectronMdnsAdapter();
+  }
+  return mdnsAdapter;
+}
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -141,14 +161,15 @@ function registerIpcHandlers(): void {
         throw new Error("invalid mdns:browse arguments");
       }
 
-      const results = mdnsAdapter.browse(serviceType);
-      const timer = setTimeout(() => mdnsAdapter.stopBrowsing(), timeoutMs || 5000);
+      const adapter = await getMdnsAdapter();
+      const results = adapter.browse(serviceType);
+      const timer = setTimeout(() => adapter.stopBrowsing(), timeoutMs || 5000);
 
       try {
         for await (const service of results) {
           if (service.sessionId === sessionCode) {
             clearTimeout(timer);
-            mdnsAdapter.stopBrowsing();
+            adapter.stopBrowsing();
             return {
               address: service.address,
               sessionId: service.sessionId,
@@ -166,8 +187,9 @@ function registerIpcHandlers(): void {
     },
   );
 
-  ipcMain.on("mdns:stop-browse", () => {
-    mdnsAdapter.stopBrowsing();
+  ipcMain.on("mdns:stop-browse", async () => {
+    const adapter = await getMdnsAdapter();
+    adapter.stopBrowsing();
   });
 
   // mdns advertising (receiver side)
@@ -177,12 +199,14 @@ function registerIpcHandlers(): void {
       if (typeof serviceType !== "string" || typeof port !== "number") {
         throw new Error("invalid mdns:advertise arguments");
       }
-      await mdnsAdapter.advertise(serviceType, port, meta);
+      const adapter = await getMdnsAdapter();
+      await adapter.advertise(serviceType, port, meta);
     },
   );
 
-  ipcMain.on("mdns:stop-advertise", () => {
-    mdnsAdapter.stopAdvertising();
+  ipcMain.on("mdns:stop-advertise", async () => {
+    const adapter = await getMdnsAdapter();
+    adapter.stopAdvertising();
   });
 }
 
