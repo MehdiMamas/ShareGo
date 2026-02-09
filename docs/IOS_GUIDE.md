@@ -4,14 +4,14 @@ complete guide for running ShareGo on an iPhone or iOS simulator.
 
 ## requirements
 
-| requirement | minimum | recommended |
-|---|---|---|
-| macOS | 13 (Ventura) | 14+ (Sonoma) |
-| Xcode | 15.0 | 16+ (latest from App Store) |
-| iOS device | iOS 13.4+ | iOS 16+ |
-| CocoaPods | 1.14+ | latest |
-| Node.js | 18 | 20 LTS |
-| iPhone model | iPhone 6s or later | iPhone 11+ |
+| requirement  | minimum            | recommended                 |
+| ------------ | ------------------ | --------------------------- |
+| macOS        | 13 (Ventura)       | 14+ (Sonoma)                |
+| Xcode        | 15.0               | 16+ (latest from App Store) |
+| iOS device   | iOS 13.4+          | iOS 16+                     |
+| CocoaPods    | 1.14+              | latest                      |
+| Node.js      | 18                 | 20 LTS                      |
+| iPhone model | iPhone 6s or later | iPhone 11+                  |
 
 > **windows/linux users**: iOS development requires macOS. there is no workaround. you can still build the Android and desktop versions on any OS.
 
@@ -46,6 +46,7 @@ xcodebuild -version
 ```
 
 if not installed:
+
 1. open the **App Store** on your Mac
 2. search for **Xcode**
 3. click **Get** / **Install** (~12 GB download — grab a coffee)
@@ -53,6 +54,7 @@ if not installed:
 5. it will install additional components — let it finish
 
 verify:
+
 ```bash
 xcodebuild -version
 # should print something like: Xcode 16.x Build version xxxxxxx
@@ -79,6 +81,7 @@ sudo gem install cocoapods
 ```
 
 verify:
+
 ```bash
 pod --version
 # should print 1.14+ or higher
@@ -118,6 +121,7 @@ npx react-native run-ios
 ```
 
 this will:
+
 - start the Metro bundler (JS dev server)
 - compile the native iOS app
 - boot an iOS simulator
@@ -162,12 +166,14 @@ the first time you run a development app, iOS will block it. you need to trust t
 #### d. run the app
 
 from terminal:
+
 ```bash
 cd apps/app
 npx react-native run-ios --device
 ```
 
 or from Xcode:
+
 1. select your iPhone from the device dropdown (top of Xcode window)
 2. press **Run** (⌘R)
 
@@ -183,10 +189,10 @@ when ShareGo launches for the first time, iOS will show a permission dialog:
 
 ShareGo requests these permissions — all are required for the app to function:
 
-| permission | why | when prompted |
-|---|---|---|
-| **Camera** | scan QR codes to pair with another device | first time you tap "Scan QR" |
-| **Local Network** | communicate with the other device on your Wi-Fi | first app launch |
+| permission        | why                                             | when prompted                |
+| ----------------- | ----------------------------------------------- | ---------------------------- |
+| **Camera**        | scan QR codes to pair with another device       | first time you tap "Scan QR" |
+| **Local Network** | communicate with the other device on your Wi-Fi | first app launch             |
 
 no data ever leaves your local network. see [THREAT_MODEL.md](THREAT_MODEL.md) for details.
 
@@ -237,6 +243,7 @@ pod install
 ```
 
 if you see ruby/gem errors:
+
 ```bash
 # use homebrew cocoapods instead
 brew install cocoapods
@@ -277,6 +284,7 @@ the first build compiles all native modules (~3-5 minutes). this is normal.
 subsequent builds reuse the cache and are much faster (~15-30 seconds).
 
 to speed up builds:
+
 - close other heavy apps (Xcode is memory-hungry)
 - use `ccache` (uncomment in Podfile's `post_install`)
 - run `npx react-native run-ios --mode Release` for a faster app (but no hot reload)
@@ -300,20 +308,20 @@ npx react-native run-ios --port 8082
 
 ShareGo supports **iOS 13.4 and later**, which covers:
 
-| device | iOS support |
-|---|---|
-| iPhone 16 / 16 Pro / 16 Pro Max / 16e | ✓ |
-| iPhone 15 / 15 Pro / 15 Pro Max | ✓ |
-| iPhone 14 / 14 Pro / 14 Pro Max | ✓ |
-| iPhone 13 / 13 Pro / 13 Pro Max / 13 mini | ✓ |
-| iPhone 12 / 12 Pro / 12 Pro Max / 12 mini | ✓ |
-| iPhone 11 / 11 Pro / 11 Pro Max | ✓ |
-| iPhone XS / XS Max / XR | ✓ |
-| iPhone X | ✓ |
-| iPhone 8 / 8 Plus | ✓ |
-| iPhone 7 / 7 Plus | ✓ |
-| iPhone SE (1st, 2nd, 3rd, 4th gen) | ✓ |
-| iPhone 6s / 6s Plus | ✓ |
+| device                                    | iOS support |
+| ----------------------------------------- | ----------- |
+| iPhone 16 / 16 Pro / 16 Pro Max / 16e     | ✓           |
+| iPhone 15 / 15 Pro / 15 Pro Max           | ✓           |
+| iPhone 14 / 14 Pro / 14 Pro Max           | ✓           |
+| iPhone 13 / 13 Pro / 13 Pro Max / 13 mini | ✓           |
+| iPhone 12 / 12 Pro / 12 Pro Max / 12 mini | ✓           |
+| iPhone 11 / 11 Pro / 11 Pro Max           | ✓           |
+| iPhone XS / XS Max / XR                   | ✓           |
+| iPhone X                                  | ✓           |
+| iPhone 8 / 8 Plus                         | ✓           |
+| iPhone 7 / 7 Plus                         | ✓           |
+| iPhone SE (1st, 2nd, 3rd, 4th gen)        | ✓           |
+| iPhone 6s / 6s Plus                       | ✓           |
 
 > iPhone 6 and earlier are **not supported** (they can't run iOS 13).
 
@@ -321,24 +329,24 @@ ShareGo supports **iOS 13.4 and later**, which covers:
 
 ### free Apple ID (no developer account)
 
-| | detail |
-|---|---|
-| **app lifetime** | 7 days from install |
-| **max apps** | 3 sideloaded apps at a time |
-| **what happens at expiry** | app icon stays but won't launch |
-| **how to fix** | re-run from Xcode or `pnpm run dev:ios:device` (~15-30 seconds) |
-| **cost** | free |
+|                            | detail                                                          |
+| -------------------------- | --------------------------------------------------------------- |
+| **app lifetime**           | 7 days from install                                             |
+| **max apps**               | 3 sideloaded apps at a time                                     |
+| **what happens at expiry** | app icon stays but won't launch                                 |
+| **how to fix**             | re-run from Xcode or `pnpm run dev:ios:device` (~15-30 seconds) |
+| **cost**                   | free                                                            |
 
 after 7 days, you just need to reconnect your phone to your Mac and re-deploy. the build is cached so it's fast. since ShareGo uses ephemeral sessions with no persistent data, expiration has no practical impact — you just need to re-deploy to keep using the app.
 
 ### paid Apple Developer account ($99/year)
 
-| | detail |
-|---|---|
-| **app lifetime** | 365 days from install |
-| **max apps** | unlimited |
+|                    | detail                                                            |
+| ------------------ | ----------------------------------------------------------------- |
+| **app lifetime**   | 365 days from install                                             |
+| **max apps**       | unlimited                                                         |
 | **other benefits** | TestFlight distribution, App Store publishing, push notifications |
-| **cost** | $99/year |
+| **cost**           | $99/year                                                          |
 
 for personal use, the free account works fine — you just need to re-deploy once a week if you use the app regularly.
 
@@ -382,6 +390,7 @@ pnpm run build:ios:debug        # debug build for device
 ```
 
 or use the build script directly:
+
 ```bash
 ./scripts/build-ios.sh --debug --simulator
 ```

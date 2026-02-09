@@ -40,32 +40,20 @@ describe("serializeBinaryData", () => {
     expect(view.getUint32(1, false)).toBe(42);
 
     // check nonce
-    expect(Array.from(buf.slice(5, 5 + NONCE_LENGTH))).toEqual(
-      Array.from(nonce),
-    );
+    expect(Array.from(buf.slice(5, 5 + NONCE_LENGTH))).toEqual(Array.from(nonce));
 
     // check ciphertext
-    expect(Array.from(buf.slice(BINARY_HEADER_SIZE))).toEqual(
-      Array.from(ct),
-    );
+    expect(Array.from(buf.slice(BINARY_HEADER_SIZE))).toEqual(Array.from(ct));
   });
 
   it("should handle sequence number 0", () => {
-    const buf = serializeBinaryData(
-      asSequenceNumber(0),
-      makeNonce(),
-      makeCiphertext(),
-    );
+    const buf = serializeBinaryData(asSequenceNumber(0), makeNonce(), makeCiphertext());
     const view = new DataView(buf.buffer);
     expect(view.getUint32(1, false)).toBe(0);
   });
 
   it("should handle max uint32 sequence number", () => {
-    const buf = serializeBinaryData(
-      asSequenceNumber(0xffffffff),
-      makeNonce(),
-      makeCiphertext(),
-    );
+    const buf = serializeBinaryData(asSequenceNumber(0xffffffff), makeNonce(), makeCiphertext());
     const view = new DataView(buf.buffer);
     expect(view.getUint32(1, false)).toBe(0xffffffff);
   });
@@ -92,9 +80,9 @@ describe("serializeBinaryData", () => {
 
   it("should reject messages exceeding MAX_MESSAGE_SIZE", () => {
     const hugeCt = new Uint8Array(MAX_MESSAGE_SIZE); // this + header > MAX_MESSAGE_SIZE
-    expect(() =>
-      serializeBinaryData(asSequenceNumber(1), makeNonce(), hugeCt),
-    ).toThrow("too large");
+    expect(() => serializeBinaryData(asSequenceNumber(1), makeNonce(), hugeCt)).toThrow(
+      "too large",
+    );
   });
 });
 

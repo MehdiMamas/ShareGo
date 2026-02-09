@@ -7,6 +7,7 @@ Version: 1
 The ShareGo protocol defines how two devices on the same local network establish a secure session and exchange sensitive data. It operates entirely on LAN with no internet dependency.
 
 The protocol has two phases:
+
 1. **Bootstrap** — session creation and peer discovery (QR code or manual code)
 2. **Wire protocol** — handshake, authentication, encrypted data transfer, and teardown
 
@@ -32,12 +33,12 @@ Used when a phone is involved (phone has a camera).
 }
 ```
 
-| Field  | Type   | Description                              |
-|--------|--------|------------------------------------------|
-| `v`    | number | Protocol version (always 1)              |
-| `sid`  | string | Session ID (6-char alphanumeric)         |
-| `addr` | string | Receiver's LAN IP and port               |
-| `pk`   | string | Receiver's ephemeral X25519 public key   |
+| Field  | Type   | Description                                      |
+| ------ | ------ | ------------------------------------------------ |
+| `v`    | number | Protocol version (always 1)                      |
+| `sid`  | string | Session ID (6-char alphanumeric)                 |
+| `addr` | string | Receiver's LAN IP and port                       |
+| `pk`   | string | Receiver's ephemeral X25519 public key           |
 | `exp`  | number | QR expiry in seconds from creation (default: 30) |
 
 > **Auto-regeneration:** when the QR expires (default 30 seconds), the receiver automatically generates a new session with fresh keys and displays a new QR code. This limits the window for QR code leakage without requiring user intervention. The overall session TTL is 300 seconds (5 minutes).
@@ -68,12 +69,12 @@ All messages are UTF-8 JSON, sent as binary WebSocket frames.
 
 Every message includes:
 
-| Field  | Type   | Description                                 |
-|--------|--------|---------------------------------------------|
-| `v`    | number | Protocol version                            |
-| `type` | string | Message type (see below)                    |
-| `sid`  | string | Session ID                                  |
-| `seq`  | number | Monotonic sequence number (replay detection)|
+| Field  | Type   | Description                                  |
+| ------ | ------ | -------------------------------------------- |
+| `v`    | number | Protocol version                             |
+| `type` | string | Message type (see below)                     |
+| `sid`  | string | Session ID                                   |
+| `seq`  | number | Monotonic sequence number (replay detection) |
 
 ### Message types
 
@@ -246,12 +247,12 @@ The QR code contains only bootstrap information (address, public key, session ID
 
 These values are defined in `core/src/config.ts` and are the single source of truth:
 
-| Constant               | Value     | Description                                 |
-|------------------------|-----------|---------------------------------------------|
-| `BOOTSTRAP_TTL`        | 30s       | QR/code expiry before auto-regeneration     |
-| `SESSION_TTL`          | 300s      | Maximum session lifetime                    |
-| `DEFAULT_PORT`         | 4040      | WebSocket server port                       |
-| `SESSION_CODE_LENGTH`  | 6         | Length of the alphanumeric session code      |
-| `WS_CONNECT_TIMEOUT_MS`| 10000ms   | WebSocket connection timeout                |
-| `MAX_MESSAGE_SIZE`     | 65536     | Maximum WebSocket message size (64 KB)      |
-| `MAX_SEQ_GAP`          | 100       | Maximum allowed gap in sequence numbers     |
+| Constant                | Value   | Description                             |
+| ----------------------- | ------- | --------------------------------------- |
+| `BOOTSTRAP_TTL`         | 30s     | QR/code expiry before auto-regeneration |
+| `SESSION_TTL`           | 300s    | Maximum session lifetime                |
+| `DEFAULT_PORT`          | 4040    | WebSocket server port                   |
+| `SESSION_CODE_LENGTH`   | 6       | Length of the alphanumeric session code |
+| `WS_CONNECT_TIMEOUT_MS` | 10000ms | WebSocket connection timeout            |
+| `MAX_MESSAGE_SIZE`      | 65536   | Maximum WebSocket message size (64 KB)  |
+| `MAX_SEQ_GAP`           | 100     | Maximum allowed gap in sequence numbers |

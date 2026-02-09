@@ -32,7 +32,7 @@ export function ReceiveScreen({ navigation }: Props) {
   const [started, setStarted] = useState(false);
   const [countdown, setCountdown] = useState(bootstrapTtl);
   const [initError, setInitError] = useState<string | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   const transportRef = useRef(transport);
   transportRef.current = transport;
@@ -93,10 +93,7 @@ export function ReceiveScreen({ navigation }: Props) {
     if (countdown !== 0 || !started || regeneratingRef.current) return;
     // guard: don't regenerate if the session has already progressed past waiting
     const state = sessionRef.current.state;
-    if (
-      state !== SessionState.WaitingForSender &&
-      state !== SessionState.Created
-    ) {
+    if (state !== SessionState.WaitingForSender && state !== SessionState.Created) {
       return;
     }
     regeneratingRef.current = true;
@@ -111,8 +108,7 @@ export function ReceiveScreen({ navigation }: Props) {
   }, [countdown, started, startSession]);
 
   const isWaiting =
-    session.state === SessionState.WaitingForSender ||
-    session.state === SessionState.Created;
+    session.state === SessionState.WaitingForSender || session.state === SessionState.Created;
 
   return (
     <ScreenContainer style={styles.container}>
@@ -132,12 +128,12 @@ export function ReceiveScreen({ navigation }: Props) {
 
       {/* content */}
       <View style={styles.content}>
-        {!started && !initError && (
-          <Text style={styles.statusText}>{en.receive.starting}</Text>
-        )}
+        {!started && !initError && <Text style={styles.statusText}>{en.receive.starting}</Text>}
 
         {initError && (
-          <Text style={styles.errorText}>{en.receive.failedStart.replace("{{detail}}", initError)}</Text>
+          <Text style={styles.errorText}>
+            {en.receive.failedStart.replace("{{detail}}", initError)}
+          </Text>
         )}
 
         {isWaiting && session.qrPayload && session.sessionId && (
@@ -165,9 +161,7 @@ export function ReceiveScreen({ navigation }: Props) {
           <Text style={styles.statusText}>{en.receive.handshaking}</Text>
         )}
 
-        {session.error && (
-          <Text style={styles.errorText}>{session.error}</Text>
-        )}
+        {session.error && <Text style={styles.errorText}>{session.error}</Text>}
       </View>
 
       {/* approval dialog */}

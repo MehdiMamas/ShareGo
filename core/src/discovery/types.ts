@@ -24,11 +24,7 @@ export interface DiscoveryAdapter {
    * @param port - port the receiver is listening on
    * @param meta - TXT record metadata (session id, public key, etc.)
    */
-  advertise(
-    serviceName: string,
-    port: number,
-    meta: Record<string, string>,
-  ): Promise<void>;
+  advertise(serviceName: string, port: number, meta: Record<string, string>): Promise<void>;
 
   /**
    * browse for ShareGo receivers on the local network.

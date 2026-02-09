@@ -1,10 +1,4 @@
-import {
-  SessionState,
-  SessionRole,
-  SessionEvent,
-  type SessionEventMap,
-  type PairingRequest,
-} from "./types.js";
+import { SessionState, SessionRole, SessionEvent, type SessionEventMap } from "./types.js";
 import { createActor } from "xstate";
 import { sessionMachine, STATE_TO_EVENT } from "./machine.js";
 // sessionMachine is used in constructor to create the actor
@@ -24,10 +18,7 @@ import {
   NONCE_LENGTH,
   constantTimeEqual,
 } from "../crypto/index.js";
-import {
-  type ILocalTransport,
-  type TransportState,
-} from "../transport/index.js";
+import { type ILocalTransport, type TransportState } from "../transport/index.js";
 import {
   MessageType,
   type ProtocolMessage,
@@ -49,19 +40,8 @@ import {
   DEFAULT_PORT,
   MAX_SEQ_GAP,
 } from "../config.js";
-import type {
-  SessionId,
-  Base64PublicKey,
-  Base64Nonce,
-  Base64Proof,
-  SequenceNumber,
-} from "../types/index.js";
-import {
-  asSessionId,
-  asBase64PublicKey,
-  asBase64Nonce,
-  asSequenceNumber,
-} from "../types/index.js";
+import type { SessionId, Base64PublicKey, Base64Proof, SequenceNumber } from "../types/index.js";
+import { asSessionId, asBase64PublicKey, asBase64Nonce, asSequenceNumber } from "../types/index.js";
 
 export { DEFAULT_PORT };
 
@@ -91,8 +71,7 @@ export class Session {
   private createdAt: number;
   private config: Required<SessionConfig>;
   private transport: ILocalTransport | null = null;
-  private listeners: Map<SessionEvent, Set<(...args: any[]) => void>> =
-    new Map();
+  private listeners: Map<SessionEvent, Set<(...args: any[]) => void>> = new Map();
   private flushTimer: ReturnType<typeof setTimeout> | null = null;
   private closing = false;
   private machineActor;
@@ -157,10 +136,7 @@ export class Session {
     this.listeners.get(event)?.delete(cb);
   }
 
-  private emit<E extends SessionEvent>(
-    event: E,
-    ...args: Parameters<SessionEventMap[E]>
-  ): void {
+  private emit<E extends SessionEvent>(event: E, ...args: Parameters<SessionEventMap[E]>): void {
     const cbs = this.listeners.get(event);
     if (!cbs) return;
     for (const cb of cbs) {
@@ -302,10 +278,7 @@ export class Session {
     }
 
     // send CLOSE if transport is connected
-    if (
-      this.transport &&
-      this.transport.getState() === "connected"
-    ) {
+    if (this.transport && this.transport.getState() === "connected") {
       try {
         this.sendMessage({
           ...createBaseFields(MessageType.CLOSE, this.id, this.nextSeq()),
@@ -336,7 +309,8 @@ export class Session {
 
   private handleIncoming(data: Uint8Array): void {
     // ignore messages after session is closed or rejected
-    if (this.getState() === SessionState.Closed || this.getState() === SessionState.Rejected) return;
+    if (this.getState() === SessionState.Closed || this.getState() === SessionState.Rejected)
+      return;
 
     // enforce session expiry before spending CPU on deserialization
     if (this.isSessionExpired()) {
@@ -397,10 +371,7 @@ export class Session {
           break;
       }
     } catch (err) {
-      this.emit(
-        SessionEvent.Error,
-        err instanceof Error ? err : new Error(String(err)),
-      );
+      this.emit(SessionEvent.Error, err instanceof Error ? err : new Error(String(err)));
     }
   }
 
@@ -447,7 +418,10 @@ export class Session {
 
     const peerPk = fromBase64(msg.pk);
     if (peerPk.length !== PUBLIC_KEY_LENGTH) {
-      this.emit(SessionEvent.Error, new Error(`invalid public key length: got ${peerPk.length}, expected ${PUBLIC_KEY_LENGTH}`));
+      this.emit(
+        SessionEvent.Error,
+        new Error(`invalid public key length: got ${peerPk.length}, expected ${PUBLIC_KEY_LENGTH}`),
+      );
       this.close();
       return;
     }
@@ -477,7 +451,12 @@ export class Session {
     if (!this.peerPublicKey) {
       const peerPk = fromBase64(msg.pk);
       if (peerPk.length !== PUBLIC_KEY_LENGTH) {
-        this.emit(SessionEvent.Error, new Error(`invalid public key length: got ${peerPk.length}, expected ${PUBLIC_KEY_LENGTH}`));
+        this.emit(
+          SessionEvent.Error,
+          new Error(
+            `invalid public key length: got ${peerPk.length}, expected ${PUBLIC_KEY_LENGTH}`,
+          ),
+        );
         this.close();
         return;
       }
@@ -485,11 +464,7 @@ export class Session {
     }
 
     // derive shared secret
-    this.sharedSecret = deriveSharedSecret(
-      this.keyPair!,
-      this.peerPublicKey,
-      false,
-    );
+    this.sharedSecret = deriveSharedSecret(this.keyPair!, this.peerPublicKey, false);
 
     // prove we have the correct key by encrypting the challenge nonce
     const challengeNonce = fromBase64(msg.nonce);
@@ -497,9 +472,7 @@ export class Session {
 
     this.sendMessage({
       ...createBaseFields(MessageType.AUTH, this.id, this.nextSeq()),
-      proof: toBase64(
-        new Uint8Array([...proof.nonce, ...proof.ciphertext]),
-      ) as Base64Proof,
+      proof: toBase64(new Uint8Array([...proof.nonce, ...proof.ciphertext])) as Base64Proof,
     });
   }
 
@@ -513,17 +486,14 @@ export class Session {
     }
 
     // derive shared secret on receiver side
-    this.sharedSecret = deriveSharedSecret(
-      this.keyPair!,
-      this.peerPublicKey!,
-      true,
-    );
+    this.sharedSecret = deriveSharedSecret(this.keyPair!, this.peerPublicKey!, true);
 
     // verify the proof — always zero proof material regardless of outcome
     const proofBytes = fromBase64(msg.proof);
     const proofNonce = proofBytes.slice(0, NONCE_LENGTH);
     const proofCiphertext = proofBytes.slice(NONCE_LENGTH);
 
+    // eslint-disable-next-line no-useless-assignment -- initial value is the fallback if decrypt throws
     let authValid = false;
     try {
       const decrypted = decrypt(
@@ -582,10 +552,7 @@ export class Session {
     const ciphertext = fromBase64(msg.ciphertext);
     const nonce = fromBase64(msg.nonce);
 
-    const plaintext = decrypt(
-      { ciphertext, nonce },
-      this.sharedSecret.encryptionKey,
-    );
+    const plaintext = decrypt({ ciphertext, nonce }, this.sharedSecret.encryptionKey);
 
     this.emit(SessionEvent.DataReceived, plaintext);
 
@@ -618,7 +585,11 @@ export class Session {
   // -- transport state --
 
   private handleTransportState(ts: TransportState): void {
-    if (ts === "disconnected" && this.getState() !== SessionState.Closed && this.getState() !== SessionState.Rejected) {
+    if (
+      ts === "disconnected" &&
+      this.getState() !== SessionState.Closed &&
+      this.getState() !== SessionState.Rejected
+    ) {
       this.emit(SessionEvent.Error, new Error("transport disconnected"));
       // transition before cleanup so StateChanged event fires while listeners exist
       this.transition(SessionState.Closed);
@@ -639,7 +610,7 @@ export class Session {
   }
 
   private nextSeq(): SequenceNumber {
-    if ((this.seq as number) >= 0xFFFFFFFF) {
+    if ((this.seq as number) >= 0xffffffff) {
       throw new Error("sequence number overflow");
     }
     this.seq = asSequenceNumber((this.seq as number) + 1);
@@ -651,9 +622,7 @@ export class Session {
     const key = `${current}->${next}`;
     const eventType = STATE_TO_EVENT[key];
     if (!eventType) {
-      throw new Error(
-        `invalid state transition: ${current} -> ${next}`,
-      );
+      throw new Error(`invalid state transition: ${current} -> ${next}`);
     }
 
     // advance the xstate actor — single source of truth for state
@@ -661,9 +630,7 @@ export class Session {
     const after = this.getState();
 
     if (after !== next) {
-      throw new Error(
-        `invalid state transition: ${current} -> ${next} (machine reached ${after})`,
-      );
+      throw new Error(`invalid state transition: ${current} -> ${next} (machine reached ${after})`);
     }
 
     this.emit(SessionEvent.StateChanged, next);
@@ -671,9 +638,7 @@ export class Session {
 
   private assertState(expected: SessionState): void {
     if (this.getState() !== expected) {
-      throw new Error(
-        `expected state ${expected}, got ${this.getState()}`,
-      );
+      throw new Error(`expected state ${expected}, got ${this.getState()}`);
     }
   }
 

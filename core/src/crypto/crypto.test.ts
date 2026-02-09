@@ -50,9 +50,7 @@ describe("deriveSharedSecret", () => {
     const receiverSecret = deriveSharedSecret(receiver, sender.publicKey, true);
     const senderSecret = deriveSharedSecret(sender, receiver.publicKey, false);
 
-    expect(toBase64(receiverSecret.encryptionKey)).toBe(
-      toBase64(senderSecret.encryptionKey),
-    );
+    expect(toBase64(receiverSecret.encryptionKey)).toBe(toBase64(senderSecret.encryptionKey));
   });
 
   it("should produce 32-byte encryption keys", () => {

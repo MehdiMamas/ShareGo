@@ -10,14 +10,14 @@ Windows, macOS, Linux, Android, iOS — all using the same shared crypto and pro
 
 ## Crypto primitives
 
-| Primitive         | Algorithm                              | Library                     |
-|-------------------|----------------------------------------|-----------------------------|
-| Key exchange      | X25519 (ephemeral, per-session)        | libsodium `crypto_kx`      |
-| Encryption        | XChaCha20-Poly1305 (AEAD)             | libsodium `crypto_aead`    |
-| Key derivation    | BLAKE2b (via libsodium key exchange)   | libsodium `crypto_kx`      |
-| Nonce generation  | Random (24 bytes per message)          | libsodium `randombytes_buf` |
-| Session ID        | Random (6-char alphanumeric)           | libsodium `randombytes_buf` |
-| Memory zeroing    | Best-effort via `sodium.memzero()`     | libsodium `memzero`        |
+| Primitive        | Algorithm                            | Library                     |
+| ---------------- | ------------------------------------ | --------------------------- |
+| Key exchange     | X25519 (ephemeral, per-session)      | libsodium `crypto_kx`       |
+| Encryption       | XChaCha20-Poly1305 (AEAD)            | libsodium `crypto_aead`     |
+| Key derivation   | BLAKE2b (via libsodium key exchange) | libsodium `crypto_kx`       |
+| Nonce generation | Random (24 bytes per message)        | libsodium `randombytes_buf` |
+| Session ID       | Random (6-char alphanumeric)         | libsodium `randombytes_buf` |
+| Memory zeroing   | Best-effort via `sodium.memzero()`   | libsodium `memzero`         |
 
 All crypto is performed by libsodium (`libsodium-wrappers-sumo`), a well-audited, portable crypto library. No platform-specific crypto APIs are used.
 
@@ -54,6 +54,7 @@ If the libsodium library itself has a vulnerability, all crypto is affected. We 
 **Threat:** An attacker photographs the QR code or observes the manual pairing code.
 
 **Mitigation:**
+
 - QR codes and manual codes expire after 30 seconds and auto-regenerate with fresh keys
 - Codes are one-use: after the first sender connects, the code is invalidated
 - The QR contains only the public key and address, not any sensitive data
@@ -64,6 +65,7 @@ If the libsodium library itself has a vulnerability, all crypto is affected. We 
 **Threat:** An attacker captures encrypted messages and replays them later.
 
 **Mitigation:**
+
 - Each session uses fresh ephemeral keys — replayed messages from a previous session will fail decryption
 - Each message has a monotonically increasing sequence number — duplicate or out-of-order messages are rejected
 - Each DATA message uses a fresh random nonce — identical plaintext produces different ciphertext
@@ -73,6 +75,7 @@ If the libsodium library itself has a vulnerability, all crypto is affected. We 
 **Threat:** An attacker on the same network attempts to join a session they were not invited to.
 
 **Mitigation:**
+
 - Sessions are limited to exactly 2 participants
 - The receiver must explicitly approve every pairing request
 - After the first sender is accepted, no additional connections are allowed
@@ -84,6 +87,7 @@ If the libsodium library itself has a vulnerability, all crypto is affected. We 
 **Threat:** A user accidentally sends the same sensitive data multiple times or to the wrong session.
 
 **Mitigation:**
+
 - Sessions are short-lived (default 5-minute TTL)
 - Each session requires explicit creation and pairing
 - The UI should confirm before sending (app-level, not protocol-level)
@@ -93,6 +97,7 @@ If the libsodium library itself has a vulnerability, all crypto is affected. We 
 **Threat:** After receiving a password or OTP, it remains in the device clipboard indefinitely.
 
 **Mitigation:**
+
 - The app provides an auto-clear option: clipboard is cleared after a configurable timeout (e.g. 30 seconds)
 - The UI warns the user that data has been copied to clipboard
 - On Android 13+: clipboard auto-clear is handled by the OS for sensitive content
@@ -102,6 +107,7 @@ If the libsodium library itself has a vulnerability, all crypto is affected. We 
 **Threat:** An attacker takes over an existing session by impersonating one of the participants.
 
 **Mitigation:**
+
 - Ephemeral X25519 keys are generated per session and never reused
 - The shared key is derived from both participants' ephemeral keys — an attacker cannot derive the same shared key without the secret key
 - The challenge-response handshake verifies that both sides possess the correct keys before any data flows
@@ -114,6 +120,7 @@ If the libsodium library itself has a vulnerability, all crypto is affected. We 
 **Mitigation for QR mode:** The receiver's public key is embedded in the QR code, which is transmitted out-of-band (displayed on screen, scanned by camera). An attacker would need to both intercept the QR scan AND the network connection simultaneously.
 
 **Mitigation for manual pairing mode:** The receiver's public key is exchanged in the CHALLENGE message over the WebSocket. In this mode, a MITM is theoretically possible if the attacker intercepts before the CHALLENGE. However:
+
 - The receiver must approve the pairing (and sees the device name)
 - Future enhancement: display a verification code derived from both public keys for visual confirmation (like Signal's safety numbers)
 

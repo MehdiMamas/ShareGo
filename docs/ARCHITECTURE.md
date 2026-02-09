@@ -10,13 +10,13 @@ No cloud servers. No relay. No signaling. No internet required.
 
 ShareGo runs on all five major platforms from a single shared core:
 
-| Platform | Shell              | Build target              |
-|----------|--------------------|---------------------------|
-| Windows  | Electron           | .exe / .msi (NSIS)        |
-| macOS    | Electron           | .dmg / .app               |
-| Linux    | Electron           | .AppImage / .deb          |
-| Android  | React Native bare  | Native APK/AAB            |
-| iOS      | React Native bare  | Native IPA                |
+| Platform | Shell             | Build target       |
+| -------- | ----------------- | ------------------ |
+| Windows  | Electron          | .exe / .msi (NSIS) |
+| macOS    | Electron          | .dmg / .app        |
+| Linux    | Electron          | .AppImage / .deb   |
+| Android  | React Native bare | Native APK/AAB     |
+| iOS      | React Native bare | Native IPA         |
 
 All platforms share a unified React Native + react-native-web codebase in `apps/app/`. The TypeScript core (crypto, protocol, session, transport) lives in `@sharego/core`. Desktop uses Electron for the native shell (Node.js main process for WebSocket server, mDNS). Mobile uses React Native bare.
 

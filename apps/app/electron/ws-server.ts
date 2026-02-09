@@ -99,7 +99,11 @@ export class ElectronWsServer {
    */
   async stop(): Promise<void> {
     if (this.peer) {
-      try { this.peer.close(); } catch (e) { console.warn("[ws-server] peer close failed:", e); }
+      try {
+        this.peer.close();
+      } catch (e) {
+        console.warn("[ws-server] peer close failed:", e);
+      }
       this.peer = null;
     }
 

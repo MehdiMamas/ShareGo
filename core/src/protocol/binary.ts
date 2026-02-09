@@ -8,7 +8,7 @@
  * DATA messages use this compact binary format to avoid base64 overhead.
  */
 
-import type { SessionId, SequenceNumber, Base64Ciphertext, Base64Nonce } from "../types/index.js";
+import type { SequenceNumber } from "../types/index.js";
 import { asSequenceNumber } from "../types/index.js";
 import { NONCE_LENGTH, AEAD_TAG_LENGTH } from "../crypto/index.js";
 import { MAX_MESSAGE_SIZE } from "../config.js";
@@ -51,7 +51,9 @@ export function serializeBinaryData(
 
   const totalSize = BINARY_HEADER_SIZE + ciphertext.length;
   if (totalSize > MAX_MESSAGE_SIZE) {
-    throw new Error(`binary message too large: ${totalSize} bytes exceeds ${MAX_MESSAGE_SIZE} limit`);
+    throw new Error(
+      `binary message too large: ${totalSize} bytes exceeds ${MAX_MESSAGE_SIZE} limit`,
+    );
   }
 
   const buf = new Uint8Array(totalSize);

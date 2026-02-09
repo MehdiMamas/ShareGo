@@ -54,9 +54,11 @@ class ElectronWsClient implements WebSocketClientAdapter {
     }
     const base64 = btoa(binary);
     // catch IPC rejection if peer disconnected between send calls
-    getElectronAPI().wsSend(base64).catch((err: unknown) => {
-      log.warn("[electron-ws] send failed:", err);
-    });
+    getElectronAPI()
+      .wsSend(base64)
+      .catch((err: unknown) => {
+        log.warn("[electron-ws] send failed:", err);
+      });
   }
 
   onMessage(handler: (data: Uint8Array) => void): void {

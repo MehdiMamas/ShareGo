@@ -11,11 +11,11 @@
 
 import { log } from "../logger.js";
 
-import type { DiscoveryAdapter, DiscoveredService } from "./types.js";
+import type { DiscoveryAdapter } from "./types.js";
 import { MDNS_SERVICE_TYPE, MDNS_TXT_KEYS } from "./types.js";
 import { DISCOVERY_HOST_TIMEOUT_MS, MDNS_BROWSE_TIMEOUT_MS } from "../config.js";
 import type { SessionId, Base64PublicKey, NetworkAddress } from "../types/index.js";
-import { asSessionId, asBase64PublicKey, asNetworkAddress } from "../types/index.js";
+import { asNetworkAddress } from "../types/index.js";
 import { PROTOCOL_VERSION } from "../protocol/types.js";
 
 export interface DiscoveryOptions {
@@ -43,9 +43,7 @@ export interface DiscoveryResult {
  * discover a receiver on the local network.
  * tries mDNS first (if adapter is provided), then falls back to subnet scanning.
  */
-export async function discoverReceiver(
-  opts: DiscoveryOptions,
-): Promise<DiscoveryResult | null> {
+export async function discoverReceiver(opts: DiscoveryOptions): Promise<DiscoveryResult | null> {
   const { discoveryAdapter, signal } = opts;
 
   // try mDNS first if an adapter is available
@@ -79,6 +77,7 @@ async function discoverViaMdns(
 
   const results = adapter.browse(MDNS_SERVICE_TYPE);
 
+  // eslint-disable-next-line no-async-promise-executor -- uses for-await on async iterator
   return new Promise<DiscoveryResult | null>(async (resolve) => {
     const timer = setTimeout(() => {
       adapter.stopBrowsing();
@@ -143,9 +142,7 @@ export function stopAdvertising(adapter: DiscoveryAdapter): void {
 
 // -- subnet scanning fallback (legacy) --
 
-async function discoverViaSubnet(
-  opts: DiscoveryOptions,
-): Promise<string | null> {
+async function discoverViaSubnet(opts: DiscoveryOptions): Promise<string | null> {
   const { port, getLocalIp, signal, timeout = DISCOVERY_HOST_TIMEOUT_MS } = opts;
 
   const localIp = await getLocalIp();
@@ -167,13 +164,20 @@ async function discoverViaSubnet(
       for (const t of timeouts) clearTimeout(t);
       const snapshot = [...sockets];
       for (const ws of snapshot) {
-        try { ws.close(); } catch (e) { log.warn("[discovery] socket close failed:", e); }
+        try {
+          ws.close();
+        } catch (e) {
+          log.warn("[discovery] socket close failed:", e);
+        }
       }
       resolveOuter(result);
     }
 
     if (signal) {
-      if (signal.aborted) { resolveOuter(null); return; }
+      if (signal.aborted) {
+        resolveOuter(null);
+        return;
+      }
       signal.addEventListener("abort", () => finish(null), { once: true });
     }
 
@@ -184,12 +188,20 @@ async function discoverViaSubnet(
       sockets.push(ws);
 
       if (found) {
-        try { ws.close(); } catch (e) { log.warn("[discovery] socket close failed:", e); }
+        try {
+          ws.close();
+        } catch (e) {
+          log.warn("[discovery] socket close failed:", e);
+        }
         continue;
       }
 
       const timer = setTimeout(() => {
-        try { ws.close(); } catch (e) { log.warn("[discovery] timeout close failed:", e); }
+        try {
+          ws.close();
+        } catch (e) {
+          log.warn("[discovery] timeout close failed:", e);
+        }
         if (--pending === 0 && !found) finish(null);
       }, timeout);
       timeouts.push(timer);

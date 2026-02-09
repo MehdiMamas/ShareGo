@@ -5,12 +5,7 @@
  * connected -> disconnected (on error or drop)
  * any -> closed (explicit close)
  */
-export type TransportState =
-  | "idle"
-  | "listening"
-  | "connected"
-  | "disconnected"
-  | "closed";
+export type TransportState = "idle" | "listening" | "connected" | "disconnected" | "closed";
 
 export type TransportStateCallback = (state: TransportState) => void;
 export type MessageCallback = (data: Uint8Array) => void;

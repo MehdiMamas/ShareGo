@@ -14,8 +14,8 @@ const sodium = _sodium;
 const clientSeed = new Uint8Array(32);
 const serverSeed = new Uint8Array(32);
 for (let i = 0; i < 32; i++) {
-  clientSeed[i] = i;           // 0x00..0x1f
-  serverSeed[i] = i + 0x80;   // 0x80..0x9f
+  clientSeed[i] = i; // 0x00..0x1f
+  serverSeed[i] = i + 0x80; // 0x80..0x9f
 }
 
 // generate deterministic keypairs from seeds (crypto_box_seed_keypair = X25519)

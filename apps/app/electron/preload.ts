@@ -7,20 +7,15 @@ import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("electronAPI", {
   // clipboard (uses electron's native clipboard — works without user gesture)
-  copyToClipboard: (text: string): void =>
-    ipcRenderer.send("clipboard:copy", text),
+  copyToClipboard: (text: string): void => ipcRenderer.send("clipboard:copy", text),
 
   // ws server control
-  startWsServer: (port: number): Promise<string> =>
-    ipcRenderer.invoke("ws:start", port),
-  stopWsServer: (): Promise<void> =>
-    ipcRenderer.invoke("ws:stop"),
-  wsSend: (data: string): Promise<void> =>
-    ipcRenderer.invoke("ws:send", data),
+  startWsServer: (port: number): Promise<string> => ipcRenderer.invoke("ws:start", port),
+  stopWsServer: (): Promise<void> => ipcRenderer.invoke("ws:stop"),
+  wsSend: (data: string): Promise<void> => ipcRenderer.invoke("ws:send", data),
 
   // network
-  getLocalIp: (): Promise<string> =>
-    ipcRenderer.invoke("net:get-local-ip"),
+  getLocalIp: (): Promise<string> => ipcRenderer.invoke("net:get-local-ip"),
 
   // ws events (from main -> renderer)
   onWsConnection: (cb: () => void) => {

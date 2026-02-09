@@ -14,6 +14,8 @@
   },
   "main": "dist-electron/main.js",
   "scripts": {
+    "typecheck": "tsc --noEmit && tsc --noEmit -p electron/tsconfig.json",
+    "lint": "eslint src/ electron/",
     "build:electron-main": "tsc -p electron/tsconfig.json",
     "build:web": "vite build",
     "build:electron": "pnpm run build:electron-main && pnpm run build:web",
@@ -104,6 +106,7 @@
     "@react-navigation/native-stack": "^6.9.0",
     "@sharego/core": "workspace:*",
     "@types/js-sha1": "^0.6.3",
+    "bonjour-service": "^1.3.0",
     "buffer": "^6.0.3",
     "fast-text-encoding": "^1.0.6",
     "js-sha1": "^0.7.0",
@@ -123,8 +126,7 @@
     "react-native-vision-camera": "^4.7.3",
     "react-native-web": "^0.19.12",
     "tweetnacl": "^1.0.3",
-    "ws": "^8.18.0",
-    "bonjour-service": "^1.3.0"
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
@@ -135,6 +137,7 @@
     "@react-native/metro-config": "^0.83.1",
     "@types/jest": "^30.0.0",
     "@types/react": "^19.2.13",
+    "@types/react-dom": "^19.2.3",
     "@types/ws": "^8.5.12",
     "@vitejs/plugin-react": "^5.1.3",
     "detox": "^20.47.0",

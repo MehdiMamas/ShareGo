@@ -1,0 +1,145 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# cancel in-progress runs for the same branch/PR
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── fast checks: typecheck + core unit tests ──────────────────────
+  quality:
+    name: Typecheck & tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # core must be built first so app can resolve @sharego/core types
+      - name: Build core
+        run: pnpm run build:core
+
+      - name: Typecheck all packages
+        run: pnpm run typecheck
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Check formatting
+        run: pnpm run format:check
+
+      - name: Core unit tests
+        run: pnpm run test:core
+
+  # ── desktop build verification (always: linux) ────────────────────
+  build-electron-linux:
+    name: Electron (Linux)
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build core
+        run: pnpm run build:core
+
+      - name: Build Electron app
+        working-directory: apps/app
+        run: pnpm run build:electron
+
+  # ── desktop build verification (main only: macOS + Windows) ──────
+  build-electron-platform:
+    name: Electron (${{ matrix.label }})
+    needs: quality
+    if: github.event_name == 'push'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: macOS
+            runner: macos-latest
+          - label: Windows
+            runner: windows-latest
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build core
+        run: pnpm run build:core
+
+      - name: Build Electron app
+        working-directory: apps/app
+        run: pnpm run build:electron
+
+  # ── android build verification (main branch only) ────────────────
+  build-android:
+    name: Android
+    needs: quality
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('apps/app/android/**/*.gradle*', 'apps/app/android/gradle.properties') }}
+          restore-keys: gradle-
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build core
+        run: pnpm run build:core
+
+      - name: Build debug APK
+        working-directory: apps/app/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --build-cache

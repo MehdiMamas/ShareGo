@@ -9,7 +9,10 @@
     "test": "turbo run test",
     "test:core": "turbo run test --filter=@sharego/core",
     "test:e2e": "turbo run test:e2e",
+    "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "dev:desktop": "turbo run dev --filter=sharego-app",
     "dev:mobile": "pnpm --filter sharego-app start",
     "dev:ios": "bash scripts/dev-ios.sh",
@@ -33,14 +36,30 @@
     "check:desktop": "bash scripts/check.sh desktop",
     "check:android": "bash scripts/check.sh android",
     "check:ios": "bash scripts/check.sh ios",
-    "version:sync": "node scripts/sync-version.mjs"
+    "version:sync": "node scripts/sync-version.mjs",
+    "prepare": "husky"
   },
   "packageManager": "pnpm@10.17.0",
   "engines": {
     "node": ">=18.0.0"
   },
   "devDependencies": {
-    "turbo": "^2.8.3"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.8.1",
+    "turbo": "^2.8.3",
+    "typescript-eslint": "^8.54.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml,html,css}": [
+      "prettier --write"
+    ]
   },
   "pnpm": {
     "overrides": {

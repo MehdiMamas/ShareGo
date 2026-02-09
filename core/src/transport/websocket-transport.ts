@@ -13,11 +13,13 @@ function isValidAddress(addr: string): boolean {
   const match = addr.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3}):(\d{1,5})$/);
   if (!match) return false;
   const octets = [match[1], match[2], match[3], match[4]];
-  if (!octets.every((o) => {
-    if (o.length > 1 && o.startsWith("0")) return false; // reject leading zeros
-    const n = parseInt(o, 10);
-    return n >= 0 && n <= 255;
-  })) {
+  if (
+    !octets.every((o) => {
+      if (o.length > 1 && o.startsWith("0")) return false; // reject leading zeros
+      const n = parseInt(o, 10);
+      return n >= 0 && n <= 255;
+    })
+  ) {
     return false;
   }
   const portStr = match[5];
@@ -155,7 +157,11 @@ export class WebSocketTransport implements ILocalTransport {
       await client.connect(url);
     } catch (err) {
       // don't leave transport in inconsistent state on connection failure
-      try { client.close(); } catch { /* best effort */ }
+      try {
+        client.close();
+      } catch {
+        /* best effort */
+      }
       throw err;
     }
 

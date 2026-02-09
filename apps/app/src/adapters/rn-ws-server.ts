@@ -19,7 +19,8 @@ const OP_PING = 0x09;
 const OP_PONG = 0x0a;
 
 function computeAcceptKey(key: string): string {
-  const hash = sha1(key + WS_MAGIC);
+  // @ts-expect-error js-sha1 types declare a namespace, not a callable default export
+  const hash: string = sha1(key + WS_MAGIC);
   const bytes: number[] = [];
   for (let i = 0; i < hash.length; i += 2) {
     bytes.push(parseInt(hash.substr(i, 2), 16));
@@ -297,8 +298,7 @@ export class RnWsServerAdapter implements WebSocketServerAdapter {
 
       this.server.listen({ port, host: "0.0.0.0" }, async () => {
         const address = this.server!.address();
-        const boundPort =
-          address && typeof address === "object" ? address.port : port;
+        const boundPort = address && typeof address === "object" ? address.port : port;
 
         // detect actual LAN IP since server.address() returns 0.0.0.0
         let host = "0.0.0.0";

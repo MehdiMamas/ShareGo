@@ -7,6 +7,7 @@ import {
   FlatList,
   StyleSheet,
   KeyboardAvoidingView,
+  Platform,
   Switch,
 } from "react-native";
 import { ScreenContainer } from "../components/ScreenContainer";
@@ -20,6 +21,12 @@ import { colors } from "../styles/theme";
 import { copyToClipboard } from "../adapters/clipboard";
 import type { ReceivedItem, SentItem } from "../hooks/useSession";
 
+interface Props {
+  navigation: NativeStackNavigationProp<RootStackParamList, "ActiveSession">;
+}
+
+type ListItem = { type: "sent"; data: SentItem } | { type: "received"; data: ReceivedItem };
+
 const MASKED_TEXT = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
 
 export function ActiveSessionScreen({ navigation }: Props) {
@@ -29,7 +36,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
   const [copied, setCopied] = useState<number | null>(null);
   const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set());
   const [autoCopy, setAutoCopy] = useState(true);
-  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const flatListRef = useRef<FlatList>(null);
   const prevReceivedCountRef = useRef(session.receivedItems.length);
 
@@ -91,21 +98,13 @@ export function ActiveSessionScreen({ navigation }: Props) {
   };
 
   const items: ListItem[] = [
-    ...session.sentItems.map(
-      (s): ListItem => ({ type: "sent", data: s }),
-    ),
-    ...session.receivedItems.map(
-      (r): ListItem => ({ type: "received", data: r }),
-    ),
+    ...session.sentItems.map((s): ListItem => ({ type: "sent", data: s })),
+    ...session.receivedItems.map((r): ListItem => ({ type: "received", data: r })),
   ].sort((a, b) => {
     const timeA =
-      a.type === "sent"
-        ? (a.data as SentItem).timestamp
-        : (a.data as ReceivedItem).timestamp;
+      a.type === "sent" ? (a.data as SentItem).timestamp : (a.data as ReceivedItem).timestamp;
     const timeB =
-      b.type === "sent"
-        ? (b.data as SentItem).timestamp
-        : (b.data as ReceivedItem).timestamp;
+      b.type === "sent" ? (b.data as SentItem).timestamp : (b.data as ReceivedItem).timestamp;
     return timeA - timeB;
   });
 
@@ -116,14 +115,9 @@ export function ActiveSessionScreen({ navigation }: Props) {
       const isVisible = visibleItems.has(key);
       return (
         <View style={styles.sentBubble}>
-          <Text style={styles.messageText}>
-            {isVisible ? sent.text : MASKED_TEXT}
-          </Text>
+          <Text style={styles.messageText}>{isVisible ? sent.text : MASKED_TEXT}</Text>
           <View style={styles.actionRow}>
-            <TouchableOpacity
-              style={styles.eyeButton}
-              onPress={() => toggleVisibility(key)}
-            >
+            <TouchableOpacity style={styles.eyeButton} onPress={() => toggleVisibility(key)}>
               {isVisible ? (
                 <EyeOffIcon size={16} color={colors.sentStatusText} />
               ) : (
@@ -143,29 +137,21 @@ export function ActiveSessionScreen({ navigation }: Props) {
     const isVisible = visibleItems.has(key);
     return (
       <View style={styles.receivedBubble}>
-        <Text style={styles.messageText}>
-          {isVisible ? received.text : MASKED_TEXT}
-        </Text>
+        <Text style={styles.messageText}>{isVisible ? received.text : MASKED_TEXT}</Text>
         <View style={styles.actionRow}>
-          <TouchableOpacity
-            style={styles.eyeButton}
-            onPress={() => toggleVisibility(key)}
-          >
+          <TouchableOpacity style={styles.eyeButton} onPress={() => toggleVisibility(key)}>
             {isVisible ? (
               <EyeOffIcon size={16} color={colors.textSecondary} />
             ) : (
               <EyeIcon size={16} color={colors.textSecondary} />
             )}
           </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.copyButton,
-                copied === received.id && styles.copiedButton,
-              ]}
-              onPress={() => handleCopy(received.text, received.id)}
-            >
-              <Text style={styles.copyButtonText}>
-                {copied === received.id ? en.session.copied : en.session.copy}
+          <TouchableOpacity
+            style={[styles.copyButton, copied === received.id && styles.copiedButton]}
+            onPress={() => handleCopy(received.text, received.id)}
+          >
+            <Text style={styles.copyButtonText}>
+              {copied === received.id ? en.session.copied : en.session.copy}
             </Text>
           </TouchableOpacity>
         </View>
@@ -182,9 +168,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
         {/* header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.sessionTitle}>
-              session {session.sessionId}
-            </Text>
+            <Text style={styles.sessionTitle}>session {session.sessionId}</Text>
             <StatusIndicator state={session.state} />
           </View>
           <View style={styles.headerActions}>
@@ -197,10 +181,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
                 thumbColor={colors.white}
               />
             </View>
-            <TouchableOpacity
-              style={styles.endButton}
-              onPress={() => session.endSession()}
-            >
+            <TouchableOpacity style={styles.endButton} onPress={() => session.endSession()}>
               <Text style={styles.endButtonText}>{en.session.endSession}</Text>
             </TouchableOpacity>
           </View>
@@ -225,9 +206,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
               <Text style={styles.emptyText}>{en.session.emptyHint}</Text>
             </View>
           }
-          contentContainerStyle={
-            items.length === 0 ? styles.emptyList : undefined
-          }
+          contentContainerStyle={items.length === 0 ? styles.emptyList : undefined}
         />
 
         {/* input */}
@@ -242,10 +221,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
             onSubmitEditing={handleSend}
           />
           <TouchableOpacity
-            style={[
-              styles.sendButton,
-              !input.trim() && styles.disabledSend,
-            ]}
+            style={[styles.sendButton, !input.trim() && styles.disabledSend]}
             disabled={!input.trim()}
             onPress={handleSend}
           >
@@ -253,9 +229,7 @@ export function ActiveSessionScreen({ navigation }: Props) {
           </TouchableOpacity>
         </View>
 
-        {session.error && (
-          <Text style={styles.errorText}>{session.error}</Text>
-        )}
+        {session.error && <Text style={styles.errorText}>{session.error}</Text>}
       </KeyboardAvoidingView>
     </ScreenContainer>
   );

@@ -19,7 +19,6 @@ export async function copyToClipboard(text: string): Promise<void> {
   if (isMobile) {
     try {
       // dynamic require to keep it out of the web/electron bundle
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const RNClipboard = require("@react-native-clipboard/clipboard").default;
       RNClipboard.setString(text);
     } catch (err) {

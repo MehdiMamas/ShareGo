@@ -6,10 +6,10 @@
 import type { WebSocketServerAdapter, ConnectionHandler } from "../lib/core";
 
 export class RnWsServerAdapter implements WebSocketServerAdapter {
-  start(_port: number, _handler: ConnectionHandler): Promise<string> {
+  start(_port: number): Promise<string> {
     throw new Error("RnWsServerAdapter is not available on web");
   }
-  send(_data: Uint8Array): void {
+  onConnection(_handler: ConnectionHandler): void {
     throw new Error("RnWsServerAdapter is not available on web");
   }
   stop(): Promise<void> {

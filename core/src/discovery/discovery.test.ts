@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { discoverReceiver, advertiseReceiver, stopAdvertising } from "./discovery.js";
 import { MDNS_SERVICE_TYPE, MDNS_TXT_KEYS } from "./types.js";
 import type { DiscoveryAdapter, DiscoveredService } from "./types.js";
@@ -135,15 +135,11 @@ describe("advertiseReceiver", () => {
 
     await advertiseReceiver(adapter, 4040, TEST_SESSION, TEST_PK);
 
-    expect(adapter.advertise).toHaveBeenCalledWith(
-      MDNS_SERVICE_TYPE,
-      4040,
-      {
-        [MDNS_TXT_KEYS.sid]: TEST_SESSION,
-        [MDNS_TXT_KEYS.pk]: TEST_PK,
-        [MDNS_TXT_KEYS.v]: String(PROTOCOL_VERSION),
-      },
-    );
+    expect(adapter.advertise).toHaveBeenCalledWith(MDNS_SERVICE_TYPE, 4040, {
+      [MDNS_TXT_KEYS.sid]: TEST_SESSION,
+      [MDNS_TXT_KEYS.pk]: TEST_PK,
+      [MDNS_TXT_KEYS.v]: String(PROTOCOL_VERSION),
+    });
   });
 });
 

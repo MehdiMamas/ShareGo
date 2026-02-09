@@ -118,4 +118,3 @@ export const STATE_TO_EVENT: Record<string, SessionMachineEvent["type"]> = {
   [`${SessionState.Active}->${SessionState.Closed}`]: "END_SESSION",
   [`${SessionState.Rejected}->${SessionState.Closed}`]: "END_SESSION",
 };
-
