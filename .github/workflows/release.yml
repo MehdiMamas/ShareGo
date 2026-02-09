@@ -13,7 +13,7 @@ jobs:
     name: Build & test core
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: pnpm/action-setup@v4
 
@@ -28,7 +28,7 @@ jobs:
 
       - run: pnpm run test:core
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: core-dist
           path: core/dist/
@@ -49,7 +49,7 @@ jobs:
             runner: ubuntu-22.04
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: pnpm/action-setup@v4
 
@@ -61,7 +61,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       # download pre-built core
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: core-dist
           path: core/dist/
@@ -112,7 +112,7 @@ jobs:
     needs: build-core
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: pnpm/action-setup@v4
 
@@ -141,7 +141,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       # download pre-built core
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: core-dist
           path: core/dist/
