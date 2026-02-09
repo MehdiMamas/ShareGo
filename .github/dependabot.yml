@@ -6,25 +6,27 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     groups:
-      # group minor + patch updates to reduce PR noise
+      # group ALL minor + patch updates into a single PR
       minor-and-patch:
         update-types:
           - "minor"
           - "patch"
-        exclude-patterns:
-          - "react-native"
-          - "react-native-*"
-          - "@react-native/*"
-          - "@react-native-*/*"
-    # react-native upgrades are breaking even for minor bumps — handle manually
+      # group remaining major bumps into a single PR (only non-ignored ones)
+      major:
+        update-types:
+          - "major"
     # major bumps on core framework deps require coordinated migration — handle manually
     ignore:
       - dependency-name: "react-native"
         update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "react-native-*"
+        update-types: ["version-update:semver-major"]
       - dependency-name: "@react-native/*"
         update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "@react-native-*/*"
+        update-types: ["version-update:semver-major"]
       - dependency-name: "react"
         update-types: ["version-update:semver-major"]
       - dependency-name: "react-dom"
@@ -38,13 +40,17 @@ updates:
     labels:
       - "dependencies"
 
-  # github actions
+  # github actions — group ALL into a single PR
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 1
+    groups:
+      all-actions:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "ci"
