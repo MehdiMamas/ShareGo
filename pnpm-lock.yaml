@@ -80,8 +80,8 @@ importers:
         specifier: ^2.3.3
         version: 2.3.3(react-native@0.75.5(@babel/core@7.29.0)(@babel/preset-env@7.29.0(@babel/core@7.29.0))(@types/react@19.2.13)(encoding@0.1.13)(react@18.3.1)(typescript@5.9.3))
       react-native-libsodium:
-        specifier: ^1.6.0
-        version: 1.6.0(react-native@0.75.5(@babel/core@7.29.0)(@babel/preset-env@7.29.0(@babel/core@7.29.0))(@types/react@19.2.13)(encoding@0.1.13)(react@18.3.1)(typescript@5.9.3))(react@18.3.1)
+        specifier: ^1.7.0
+        version: 1.7.0(react-native@0.75.5(@babel/core@7.29.0)(@babel/preset-env@7.29.0(@babel/core@7.29.0))(@types/react@19.2.13)(encoding@0.1.13)(react@18.3.1)(typescript@5.9.3))(react@18.3.1)
       react-native-network-info:
         specifier: ^5.2.2
         version: 5.2.2(react-native@0.75.5(@babel/core@7.29.0)(@babel/preset-env@7.29.0(@babel/core@7.29.0))(@types/react@19.2.13)(encoding@0.1.13)(react@18.3.1)(typescript@5.9.3))
@@ -1802,9 +1802,6 @@ packages:
   '@types/libsodium-wrappers-sumo@0.8.2':
     resolution: {integrity: sha512-uFOBpg/r21hExVlh2ty8YpDfSR+Yy3Jn8XS4+SSjitbhTxdYq+pBz/49XRxyUFe8SzqujHf/Wu0/O4d+FUtNfQ==}
     deprecated: This is a stub types definition. libsodium-wrappers-sumo provides its own type definitions, so you do not need this installed.
-
-  '@types/libsodium-wrappers@0.7.14':
-    resolution: {integrity: sha512-5Kv68fXuXK0iDuUir1WPGw2R9fOZUlYlSAa0ztMcL0s0BfIDTqg9GXz8K30VJpPP3sxWhbolnQma2x+/TfkzDQ==}
 
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
@@ -4853,9 +4850,9 @@ packages:
     peerDependencies:
       react-native: '>=0.60.0'
 
-  react-native-libsodium@1.6.0:
-    resolution: {integrity: sha512-a6yNoqXUgNSM6ZGC7gY39VGIZwlQHJZZFX3vr3vD6AuDDpsHUSfSBV6XPcr+So/d3GY0OduXWb8nwspIXIR5Ew==}
-    engines: {node: '>= 16.0.0'}
+  react-native-libsodium@1.7.0:
+    resolution: {integrity: sha512-0I2FcCeyR2HUiUOIvoukteZFMY2WIhPCQ6OOOYy33nQiyGFpwW6I4ky/f18SdSN84n/GLvgC9DOF0fJaKTYYJg==}
+    engines: {node: '>= 20.20.0'}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -8034,8 +8031,6 @@ snapshots:
   '@types/libsodium-wrappers-sumo@0.8.2':
     dependencies:
       libsodium-wrappers-sumo: 0.8.2
-
-  '@types/libsodium-wrappers@0.7.14': {}
 
   '@types/ms@2.1.0': {}
 
@@ -11856,10 +11851,9 @@ snapshots:
     dependencies:
       react-native: 0.75.5(@babel/core@7.29.0)(@babel/preset-env@7.29.0(@babel/core@7.29.0))(@types/react@19.2.13)(encoding@0.1.13)(react@18.3.1)(typescript@5.9.3)
 
-  react-native-libsodium@1.6.0(react-native@0.75.5(@babel/core@7.29.0)(@babel/preset-env@7.29.0(@babel/core@7.29.0))(@types/react@19.2.13)(encoding@0.1.13)(react@18.3.1)(typescript@5.9.3))(react@18.3.1):
+  react-native-libsodium@1.7.0(react-native@0.75.5(@babel/core@7.29.0)(@babel/preset-env@7.29.0(@babel/core@7.29.0))(@types/react@19.2.13)(encoding@0.1.13)(react@18.3.1)(typescript@5.9.3))(react@18.3.1):
     dependencies:
       '@noble/hashes': 1.8.0
-      '@types/libsodium-wrappers': 0.7.14
       libsodium-wrappers: 0.8.2
       libsodium-wrappers-sumo: 0.8.2
       react: 18.3.1
