@@ -75,9 +75,9 @@ check_node() {
   fi
 }
 
-# check npm exists
-check_npm() {
-  require_cmd npm "install node.js which includes npm (https://nodejs.org)"
+# check pnpm exists
+check_pnpm() {
+  require_cmd pnpm "install via corepack: corepack enable && corepack prepare pnpm@latest --activate"
 }
 
 # check that node_modules exist
@@ -85,7 +85,7 @@ check_node_modules() {
   if [ -d "$PROJECT_ROOT/node_modules" ]; then
     ok "node_modules installed"
   else
-    fail "node_modules missing — run 'npm install' in the project root first"
+    fail "node_modules missing — run 'pnpm install' in the project root first"
   fi
 }
 

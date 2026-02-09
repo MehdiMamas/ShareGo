@@ -15,16 +15,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: pnpm
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
-      - run: npm run build:core
+      - run: pnpm run build:core
 
-      - run: npm run test:core
+      - run: pnpm run test:core
 
       - uses: actions/upload-artifact@v4
         with:
@@ -49,12 +51,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: pnpm
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
       # download pre-built core
       - uses: actions/download-artifact@v4
@@ -65,7 +69,7 @@ jobs:
       # build electron main process + vite web bundle
       - name: Build Electron
         working-directory: apps/app
-        run: npm run build:electron
+        run: pnpm run build:electron
 
       # package with electron-builder
       - name: Package desktop app
@@ -94,10 +98,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: pnpm
 
       - uses: actions/setup-java@v4
         with:
@@ -116,7 +122,7 @@ jobs:
           key: gradle-${{ hashFiles('apps/app/android/**/*.gradle*', 'apps/app/android/gradle.properties') }}
           restore-keys: gradle-
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
       # download pre-built core
       - uses: actions/download-artifact@v4
@@ -131,26 +137,6 @@ jobs:
           SHAREGO_KEYSTORE_BASE64: ${{ secrets.SHAREGO_KEYSTORE_BASE64 }}
         run: |
           echo "$SHAREGO_KEYSTORE_BASE64" | base64 -d > apps/app/android/app/sharego-release.keystore
-
-      # npm workspace hoisting is unpredictable — ensure react-native deps
-      # are accessible from both root and app-level node_modules
-      - name: Fix monorepo node_modules resolution
-        run: |
-          # ensure react-native is findable at root (for hoisted native modules like libsodium)
-          if [ ! -d node_modules/react-native ]; then
-            ln -sf ${{ github.workspace }}/apps/app/node_modules/react-native node_modules/react-native
-          fi
-          if [ ! -d node_modules/@react-native ]; then
-            ln -sf ${{ github.workspace }}/apps/app/node_modules/@react-native node_modules/@react-native
-          fi
-          # ensure react-native is findable at app level (for settings.gradle)
-          mkdir -p apps/app/node_modules
-          if [ ! -d apps/app/node_modules/react-native ]; then
-            ln -sf ${{ github.workspace }}/node_modules/react-native apps/app/node_modules/react-native
-          fi
-          if [ ! -d apps/app/node_modules/@react-native ]; then
-            ln -sf ${{ github.workspace }}/node_modules/@react-native apps/app/node_modules/@react-native
-          fi
 
       - name: Build release APK
         working-directory: apps/app/android

@@ -4,21 +4,17 @@
   "private": true,
   "license": "MIT",
   "description": "Serverless, end-to-end encrypted, local-network-only sharing for sensitive data",
-  "workspaces": [
-    "core",
-    "apps/app"
-  ],
   "scripts": {
     "build": "turbo run build",
     "test": "turbo run test",
     "test:core": "turbo run test --filter=@sharego/core",
     "test:e2e": "turbo run test:e2e",
     "lint": "turbo run lint",
-    "dev:desktop": "turbo run dev --filter=sharego-desktop",
-    "dev:mobile": "npm run start --workspace=sharego-mobile",
+    "dev:desktop": "turbo run dev --filter=sharego-app",
+    "dev:mobile": "pnpm --filter sharego-app start",
     "dev:ios": "bash scripts/dev-ios.sh",
     "dev:ios:device": "bash scripts/dev-ios.sh --device",
-    "dev:android": "npm run android --workspace=sharego-mobile",
+    "dev:android": "pnpm --filter sharego-app android",
     "setup": "bash scripts/setup.sh",
     "setup:ios": "bash scripts/setup.sh ios",
     "setup:android": "bash scripts/setup.sh android",
@@ -39,16 +35,18 @@
     "check:ios": "bash scripts/check.sh ios",
     "version:sync": "node scripts/sync-version.mjs"
   },
-  "packageManager": "npm@10.9.3",
+  "packageManager": "pnpm@10.17.0",
   "engines": {
     "node": ">=18.0.0"
   },
   "devDependencies": {
     "turbo": "^2.8.3"
   },
-  "overrides": {
-    "react-native-screens": "3.35.0",
-    "react-native-safe-area-context": "4.14.0",
-    "react-native-svg": "15.3.0"
+  "pnpm": {
+    "overrides": {
+      "react-native-screens": "3.35.0",
+      "react-native-safe-area-context": "4.14.0",
+      "react-native-svg": "15.3.0"
+    }
   }
 }

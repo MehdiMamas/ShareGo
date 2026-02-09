@@ -42,7 +42,7 @@ IOS_DIR="$MOBILE_DIR/ios"
 step "checking prerequisites"
 
 check_node
-check_npm
+check_pnpm
 check_node_modules
 
 # xcode
@@ -88,7 +88,7 @@ assert_preflight
 # -- build core first --
 step "building core library"
 cd "$PROJECT_ROOT"
-npm run build:core
+pnpm run build:core
 if [ ! -f "$PROJECT_ROOT/core/dist/index.js" ]; then
   die "core build failed — fix TypeScript errors above"
 fi
@@ -96,7 +96,7 @@ ok "core built"
 
 # -- run tests --
 step "running core tests"
-npm run test:core
+pnpm run test:core
 ok "all tests passed"
 
 # -- install pods --

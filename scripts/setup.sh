@@ -118,14 +118,14 @@ ok "node $NODE_VERSION"
 # ================================================================
 # step 2: install npm dependencies
 # ================================================================
-step "installing npm dependencies"
+step "installing dependencies"
 cd "$PROJECT_ROOT"
 
 if [ -d "node_modules" ] && [ -d "core/node_modules" ] || [ -L "core/node_modules" ]; then
-  info "node_modules already exist — running npm install to sync"
+  info "node_modules already exist — running pnpm install to sync"
 fi
 
-npm install
+pnpm install
 ok "all workspace dependencies installed"
 
 # ================================================================
@@ -133,7 +133,7 @@ ok "all workspace dependencies installed"
 # ================================================================
 step "building @sharego/core"
 cd "$PROJECT_ROOT"
-npm run build:core
+pnpm run build:core
 
 if [ ! -f "$PROJECT_ROOT/core/dist/index.js" ]; then
   die "core build failed — check TypeScript errors above"
@@ -293,13 +293,13 @@ setup_desktop() {
   # build electron main process
   step "building electron main process"
   cd "$PROJECT_ROOT/apps/app"
-  npm run build:electron 2>/dev/null && ok "electron main process compiled" || warn "electron build failed — check TypeScript errors"
+  pnpm run build:electron 2>/dev/null && ok "electron main process compiled" || warn "electron build failed — check TypeScript errors"
 
   printf "\n"
   printf "  ${BOLD}${GREEN}Desktop setup complete!${RESET}\n"
   printf "\n"
   printf "  to start development:\n"
-  printf "    ${CYAN}npm run dev:desktop${RESET}\n"
+  printf "    ${CYAN}pnpm run dev:desktop${RESET}\n"
   printf "\n"
 }
 
@@ -342,13 +342,13 @@ printf "${BOLD}${CYAN}╰──────────────────�
 printf "\n"
 printf "  ${BOLD}useful commands:${RESET}\n"
 printf "\n"
-printf "    ${CYAN}npm run dev:desktop${RESET}        start desktop app in dev mode\n"
-printf "    ${CYAN}npm run dev:mobile${RESET}         start metro bundler for mobile\n"
-printf "    ${CYAN}npm run dev:ios${RESET}            run iOS app on simulator\n"
-printf "    ${CYAN}npm run dev:android${RESET}        run Android app on emulator/device\n"
-printf "    ${CYAN}npm run test:core${RESET}          run core library tests\n"
-printf "    ${CYAN}npm run check${RESET}              check all prerequisites\n"
-printf "    ${CYAN}npm run check:ios${RESET}          check iOS prerequisites only\n"
+printf "    ${CYAN}pnpm run dev:desktop${RESET}        start desktop app in dev mode\n"
+printf "    ${CYAN}pnpm run dev:mobile${RESET}         start metro bundler for mobile\n"
+printf "    ${CYAN}pnpm run dev:ios${RESET}            run iOS app on simulator\n"
+printf "    ${CYAN}pnpm run dev:android${RESET}        run Android app on emulator/device\n"
+printf "    ${CYAN}pnpm run test:core${RESET}          run core library tests\n"
+printf "    ${CYAN}pnpm run check${RESET}              check all prerequisites\n"
+printf "    ${CYAN}pnpm run check:ios${RESET}          check iOS prerequisites only\n"
 printf "\n"
 printf "  ${DIM}for detailed guides, see docs/BUILDING.md and docs/IOS_GUIDE.md${RESET}\n"
 printf "\n"

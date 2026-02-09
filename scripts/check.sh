@@ -17,7 +17,7 @@ banner "prerequisite check ($TARGET)"
 # ---------- common ----------
 step "common prerequisites"
 check_node
-check_npm
+check_pnpm
 check_node_modules
 check_core_built
 
@@ -32,14 +32,14 @@ if [ "$TARGET" = "all" ] || [ "$TARGET" = "desktop" ]; then
   if [ -d "$PROJECT_ROOT/apps/app/node_modules/electron" ] || [ -d "$PROJECT_ROOT/node_modules/electron" ]; then
     ok "electron package installed"
   else
-    fail "electron not installed — run 'npm install'"
+    fail "electron not installed — run 'pnpm install'"
   fi
 
   # check electron main process compiles
   if [ -f "$PROJECT_ROOT/apps/app/dist-electron/main.js" ]; then
     ok "electron main process built"
   else
-    warn "electron main process not built — run 'npm run build:electron' in apps/app"
+    warn "electron main process not built — run 'pnpm run build:electron' in apps/app"
   fi
 fi
 

@@ -63,7 +63,7 @@ for (const rel of jsonTargets) {
 // Cargo.toml no longer exists (Tauri was removed in v2 refactor)
 
 if (checkOnly && !allMatch) {
-  console.error("\nversion mismatch detected. run 'npm run version:sync' to fix.");
+  console.error("\nversion mismatch detected. run 'pnpm run version:sync' to fix.");
   process.exit(1);
 }
 

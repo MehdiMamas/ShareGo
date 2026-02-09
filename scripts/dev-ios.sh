@@ -106,11 +106,11 @@ step "checking dependencies"
 cd "$PROJECT_ROOT"
 
 if [ ! -d "node_modules" ]; then
-  info "installing npm dependencies..."
-  npm install
+  info "installing dependencies..."
+  pnpm install
   ok "dependencies installed"
 else
-  ok "npm dependencies present"
+  ok "dependencies present"
 fi
 
 # ================================================================
@@ -118,7 +118,7 @@ fi
 # ================================================================
 if [ ! -f "$PROJECT_ROOT/core/dist/index.js" ]; then
   step "building core library"
-  npm run build:core
+  pnpm run build:core
   ok "core built"
 else
   ok "core library already built"

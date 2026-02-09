@@ -9,14 +9,14 @@ banner "build: @sharego/core"
 # -- preflight --
 step "checking prerequisites"
 check_node
-check_npm
+check_pnpm
 check_node_modules
 assert_preflight
 
 # -- build --
 step "building core library"
 cd "$PROJECT_ROOT"
-npm run build:core
+pnpm run build:core
 
 if [ ! -f "$PROJECT_ROOT/core/dist/index.js" ]; then
   die "core build produced no output — check for TypeScript errors above"
