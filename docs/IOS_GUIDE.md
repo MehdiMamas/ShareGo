@@ -92,10 +92,10 @@ from the project root:
 
 ```bash
 # install all workspace dependencies
-npm install
+pnpm install
 
 # build the shared core library
-npm run build:core
+pnpm run build:core
 ```
 
 ### 5. install iOS pods
@@ -326,7 +326,7 @@ ShareGo supports **iOS 13.4 and later**, which covers:
 | **app lifetime** | 7 days from install |
 | **max apps** | 3 sideloaded apps at a time |
 | **what happens at expiry** | app icon stays but won't launch |
-| **how to fix** | re-run from Xcode or `npm run dev:ios:device` (~15-30 seconds) |
+| **how to fix** | re-run from Xcode or `pnpm run dev:ios:device` (~15-30 seconds) |
 | **cost** | free |
 
 after 7 days, you just need to reconnect your phone to your Mac and re-deploy. the build is cached so it's fast. since ShareGo uses ephemeral sessions with no persistent data, expiration has no practical impact — you just need to re-deploy to keep using the app.
@@ -347,7 +347,7 @@ for personal use, the free account works fine — you just need to re-deploy onc
 when your app expires:
 
 1. connect your iPhone to your Mac via USB
-2. run `npm run dev:ios:device` (or press Run in Xcode)
+2. run `pnpm run dev:ios:device` (or press Run in Xcode)
 3. the app is re-installed and re-signed automatically
 4. done — the 7-day timer resets
 
@@ -376,9 +376,9 @@ to test ShareGo properly, you need two devices on the same Wi-Fi network:
 
 ```bash
 # from project root
-npm run build:ios              # release build for device
-npm run build:ios:simulator    # release build for simulator
-npm run build:ios:debug        # debug build for device
+pnpm run build:ios              # release build for device
+pnpm run build:ios:simulator    # release build for simulator
+pnpm run build:ios:debug        # debug build for device
 ```
 
 or use the build script directly:

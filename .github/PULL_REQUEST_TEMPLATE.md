@@ -20,7 +20,7 @@
 
 - [ ] I have read [CONTRIBUTING.md](docs/CONTRIBUTING.md)
 - [ ] Type check passes: `cd core && npx tsc --noEmit`
-- [ ] Tests pass: `npm run test:core`
+- [ ] Tests pass: `pnpm run test:core`
 - [ ] UI parity: changes applied to both desktop and mobile (if applicable)
 - [ ] User-facing text added to `core/src/i18n/en.ts` (not hardcoded)
 - [ ] Config values from `core/src/config.ts` (not hardcoded)

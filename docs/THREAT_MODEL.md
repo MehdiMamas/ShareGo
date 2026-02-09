@@ -54,7 +54,7 @@ If the libsodium library itself has a vulnerability, all crypto is affected. We 
 **Threat:** An attacker photographs the QR code or observes the manual pairing code.
 
 **Mitigation:**
-- QR codes and manual codes expire after 10 seconds and auto-regenerate with fresh keys
+- QR codes and manual codes expire after 30 seconds and auto-regenerate with fresh keys
 - Codes are one-use: after the first sender connects, the code is invalidated
 - The QR contains only the public key and address, not any sensitive data
 - The receiver must explicitly approve the pairing — a stolen code alone is not enough
@@ -76,7 +76,7 @@ If the libsodium library itself has a vulnerability, all crypto is affected. We 
 - Sessions are limited to exactly 2 participants
 - The receiver must explicitly approve every pairing request
 - After the first sender is accepted, no additional connections are allowed
-- The session ID is 6 characters from a 32-character alphabet (32^6 ≈ 1.07 billion combinations) — brute-forcing within the 10-second window is impractical
+- The session ID is 6 characters from a 32-character alphabet (32^6 ≈ 1.07 billion combinations) — brute-forcing within the 30-second window is impractical
 - The handshake requires a challenge-response proof of key possession
 
 ### Accidental data re-send

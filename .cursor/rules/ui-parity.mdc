@@ -12,7 +12,7 @@ all platforms (desktop, mobile) share a SINGLE unified codebase in `apps/app/`. 
 | screen | purpose | required elements |
 |---|---|---|
 | HomeScreen | landing / entry | app title, description text, "show QR code / show code" button, "scan QR code / enter code" button |
-| ReceiveScreen | receiver flow | QR code display, session code, local address, 10-second auto-regen countdown, status indicator, approval dialog |
+| ReceiveScreen | receiver flow | QR code display, session code, local address, 30-second auto-regen countdown, status indicator, approval dialog |
 | SendScreen | sender flow | QR scanner (camera), manual code input (6-char), address input, connect button, status indicator |
 | ActiveSession | data exchange | message list (sent + received), text input, send button, delivery status, copy button, end session button |
 

@@ -22,7 +22,7 @@ ShareGo is a serverless, end-to-end encrypted, local-network-only app for secure
 5. All crypto uses libsodium — no platform-specific crypto APIs
 6. Ephemeral keys only — never persist secrets to disk
 7. QR and manual code are bootstrap only — never data channels
-8. Bootstrap auto-regenerates every 10 seconds with fresh keys
+8. Bootstrap auto-regenerates every 30 seconds with fresh keys
 9. Feature and UI parity between desktop and mobile — no exceptions
 
 ## Repo layout

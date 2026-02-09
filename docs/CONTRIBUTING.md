@@ -48,7 +48,7 @@ These are non-negotiable. Do not submit changes that violate them:
 - Use vitest (`describe`, `it`, `expect`)
 - Test state transitions explicitly
 - Never use direct SQL or database calls in tests
-- Run: `npm test` from the `core/` directory
+- Run: `pnpm test` from the `core/` directory
 
 ## Making changes
 
@@ -81,7 +81,7 @@ App shells are thin wrappers. They should:
 1. Branch from `main` (the default branch)
 2. Make your changes
 3. Run type check: `cd core && npx tsc --noEmit`
-4. Run tests: `cd core && npm test`
+4. Run tests: `cd core && pnpm test`
 5. Update docs if you changed protocol, security, or architecture
 6. Open a PR with:
    - Summary of what changed and why

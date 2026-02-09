@@ -3,7 +3,7 @@
 ## prerequisites
 
 - Node.js >= 18
-- npm >= 9
+- pnpm >= 10 (`corepack enable && corepack prepare pnpm@latest --activate`)
 - Git
 
 ## one-command setup
@@ -28,9 +28,9 @@ the script auto-detects your OS and installs all required dependencies.
 ```bash
 git clone https://github.com/MehdiMamas/ShareGo.git
 cd ShareGo
-npm install
-npm run build:core
-npm run test:core
+pnpm install
+pnpm run build:core
+pnpm run test:core
 ```
 
 ## platform-specific setup
@@ -54,8 +54,8 @@ npm run test:core
 **manual setup:**
 ```bash
 # install dependencies
-npm install
-npm run build:core
+pnpm install
+pnpm run build:core
 
 # install iOS native deps
 cd apps/app/ios
@@ -111,8 +111,8 @@ npx react-native run-android
 
 **manual setup:**
 ```bash
-npm install
-npm run build:core
+pnpm install
+pnpm run build:core
 
 cd apps/app
 npx react-native run-android         # dev build on emulator/device
@@ -148,29 +148,29 @@ Electron requires only Node.js — no Rust or system webview needed.
 **quick start:**
 ```bash
 ./scripts/setup.sh desktop
-npm run dev:desktop
+pnpm run dev:desktop
 ```
 
 **manual setup:**
 ```bash
-npm install
-npm run build:core
+pnpm install
+pnpm run build:core
 
 # build electron main process
 cd apps/app
-npm run build:electron
+pnpm run build:electron
 
 # run in development
-npm run dev:electron
+pnpm run dev:electron
 ```
 
 **production build:**
 ```bash
 # build for current platform
-npm run build:desktop
+pnpm run build:desktop
 
 # build with debug info
-npm run build:desktop:debug
+pnpm run build:desktop:debug
 ```
 
 electron-builder outputs:
@@ -180,13 +180,13 @@ electron-builder outputs:
 
 ## monorepo structure
 
-this is an npm workspaces monorepo powered by Turborepo. the `core` package is shared between desktop and mobile.
+this is a pnpm workspaces monorepo powered by Turborepo. the `core` package is shared between desktop and mobile. workspaces are defined in `pnpm-workspace.yaml`.
 
 ```bash
-npm install          # installs all workspaces
+pnpm install         # installs all workspaces
 turbo run build      # builds all packages (core first, then app)
-npm run build:core   # builds core only
-npm run test:core    # tests core only
+pnpm run build:core  # builds core only
+pnpm run test:core   # tests core only
 ```
 
 ## all scripts
@@ -195,50 +195,50 @@ npm run test:core    # tests core only
 
 | command | description |
 |---|---|
-| `npm run setup` | one-command setup for all platforms |
-| `npm run setup:ios` | setup for iOS development |
-| `npm run setup:android` | setup for Android development |
-| `npm run setup:desktop` | setup for desktop development |
-| `npm run dev:desktop` | start desktop app in dev mode |
-| `npm run dev:mobile` | start metro bundler for mobile |
-| `npm run dev:ios` | run iOS app on simulator |
-| `npm run dev:ios:device` | run iOS app on physical iPhone |
-| `npm run dev:android` | run Android app on emulator/device |
+| `pnpm run setup` | one-command setup for all platforms |
+| `pnpm run setup:ios` | setup for iOS development |
+| `pnpm run setup:android` | setup for Android development |
+| `pnpm run setup:desktop` | setup for desktop development |
+| `pnpm run dev:desktop` | start desktop app in dev mode |
+| `pnpm run dev:mobile` | start metro bundler for mobile |
+| `pnpm run dev:ios` | run iOS app on simulator |
+| `pnpm run dev:ios:device` | run iOS app on physical iPhone |
+| `pnpm run dev:android` | run Android app on emulator/device |
 
 ### build
 
 | command | description |
 |---|---|
-| `npm run build:core` | build core library |
-| `npm run build:ios` | release build for iOS (device) |
-| `npm run build:ios:debug` | debug build for iOS |
-| `npm run build:ios:simulator` | release build for iOS simulator |
-| `npm run build:android` | release APK for Android |
-| `npm run build:android:debug` | debug APK |
-| `npm run build:android:aab` | release AAB (Play Store) |
-| `npm run build:desktop` | release build for current OS |
-| `npm run build:desktop:debug` | debug build for current OS |
-| `npm run build:all` | build core + desktop |
+| `pnpm run build:core` | build core library |
+| `pnpm run build:ios` | release build for iOS (device) |
+| `pnpm run build:ios:debug` | debug build for iOS |
+| `pnpm run build:ios:simulator` | release build for iOS simulator |
+| `pnpm run build:android` | release APK for Android |
+| `pnpm run build:android:debug` | debug APK |
+| `pnpm run build:android:aab` | release AAB (Play Store) |
+| `pnpm run build:desktop` | release build for current OS |
+| `pnpm run build:desktop:debug` | debug build for current OS |
+| `pnpm run build:all` | build core + desktop |
 
 ### check & test
 
 | command | description |
 |---|---|
-| `npm run check` | check all platform prerequisites |
-| `npm run check:ios` | check iOS prerequisites only |
-| `npm run check:android` | check Android prerequisites only |
-| `npm run check:desktop` | check desktop prerequisites only |
-| `npm run test:core` | run core library tests |
+| `pnpm run check` | check all platform prerequisites |
+| `pnpm run check:ios` | check iOS prerequisites only |
+| `pnpm run check:android` | check Android prerequisites only |
+| `pnpm run check:desktop` | check desktop prerequisites only |
+| `pnpm run test:core` | run core library tests |
 
 ## checking prerequisites
 
 before building, you can check if everything is installed:
 
 ```bash
-npm run check              # check all platforms
-npm run check:ios          # iOS only
-npm run check:android      # Android only
-npm run check:desktop      # desktop only
+pnpm run check             # check all platforms
+pnpm run check:ios         # iOS only
+pnpm run check:android     # Android only
+pnpm run check:desktop     # desktop only
 ```
 
 the check script reports which tools are installed and which are missing, with install instructions for each.

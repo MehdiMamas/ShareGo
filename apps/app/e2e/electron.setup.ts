@@ -4,7 +4,7 @@
  * launches the electron app and provides a helper to get
  * the browser window for testing.
  *
- * requires: npm run build:electron before running tests
+ * requires: pnpm run build:electron before running tests
  */
 
 import { _electron as electron, type ElectronApplication, type Page } from "playwright-core";

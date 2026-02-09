@@ -7,7 +7,7 @@ import { defineConfig } from "@playwright/test";
  * the full user flow: home screen, receive, send, and active session.
  *
  * to run: npx playwright test
- * requires: npm run build:electron first
+ * requires: pnpm run build:electron first
  */
 export default defineConfig({
   testDir: "./e2e",

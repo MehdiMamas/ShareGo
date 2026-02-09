@@ -45,19 +45,19 @@ the setup script installs all dependencies, builds the core library, and runs pl
 
 ```bash
 # desktop (any OS)
-npm run dev:desktop
+pnpm run dev:desktop
 
 # iOS simulator (macOS only)
-npm run dev:ios
+pnpm run dev:ios
 
 # iOS device (macOS only)
-npm run dev:ios:device
+pnpm run dev:ios:device
 
 # android
-npm run dev:android
+pnpm run dev:android
 
 # just the metro bundler (mobile)
-npm run dev:mobile
+pnpm run dev:mobile
 ```
 
 ## iOS setup
@@ -75,8 +75,8 @@ iOS requires macOS, Xcode, and CocoaPods. the minimum iOS version is **13.4** (i
 ### manual setup
 
 ```bash
-npm install                            # install all dependencies
-npm run build:core                     # build shared core library
+pnpm install                           # install all dependencies
+pnpm run build:core                    # build shared core library
 cd apps/app/ios && pod install         # install native iOS deps
 cd ..
 npx react-native run-ios              # run on simulator
@@ -111,10 +111,10 @@ see [docs/BUILDING.md](docs/BUILDING.md) for detailed Android setup.
 ./scripts/setup.sh desktop    # install platform deps
 
 # development
-npm run dev:desktop
+pnpm run dev:desktop
 
 # production build
-npm run build:desktop
+pnpm run build:desktop
 ```
 
 build outputs: `.dmg` (macOS), `.exe`/NSIS (Windows), `.AppImage`/`.deb` (Linux).
@@ -172,28 +172,28 @@ docs/               architecture, protocol spec, threat model, ios guide
 
 all security logic lives in `@sharego/core`. app shells are thin wrappers that provide platform-specific APIs (websocket server, camera, clipboard) and UI.
 
-## all npm scripts
+## all scripts
 
 | script | description |
 |---|---|
-| `npm run setup` | one-command setup for all platforms |
-| `npm run setup:ios` | setup for iOS development |
-| `npm run setup:android` | setup for Android development |
-| `npm run setup:desktop` | setup for desktop development |
-| `npm run dev:desktop` | start desktop app in dev mode |
-| `npm run dev:mobile` | start metro bundler |
-| `npm run dev:ios` | run iOS app on simulator |
-| `npm run dev:ios:device` | run iOS app on physical iPhone |
-| `npm run dev:android` | run Android app on emulator/device |
-| `npm run build:core` | build core library |
-| `npm run build:ios` | release build for iOS |
-| `npm run build:android` | release build for Android |
-| `npm run build:desktop` | release build for desktop |
-| `npm run test:core` | run core library tests |
-| `npm run check` | check all prerequisites |
-| `npm run check:ios` | check iOS prerequisites |
-| `npm run check:android` | check Android prerequisites |
-| `npm run check:desktop` | check desktop prerequisites |
+| `pnpm run setup` | one-command setup for all platforms |
+| `pnpm run setup:ios` | setup for iOS development |
+| `pnpm run setup:android` | setup for Android development |
+| `pnpm run setup:desktop` | setup for desktop development |
+| `pnpm run dev:desktop` | start desktop app in dev mode |
+| `pnpm run dev:mobile` | start metro bundler |
+| `pnpm run dev:ios` | run iOS app on simulator |
+| `pnpm run dev:ios:device` | run iOS app on physical iPhone |
+| `pnpm run dev:android` | run Android app on emulator/device |
+| `pnpm run build:core` | build core library |
+| `pnpm run build:ios` | release build for iOS |
+| `pnpm run build:android` | release build for Android |
+| `pnpm run build:desktop` | release build for desktop |
+| `pnpm run test:core` | run core library tests |
+| `pnpm run check` | check all prerequisites |
+| `pnpm run check:ios` | check iOS prerequisites |
+| `pnpm run check:android` | check Android prerequisites |
+| `pnpm run check:desktop` | check desktop prerequisites |
 
 ## environment
 

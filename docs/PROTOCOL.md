@@ -38,9 +38,9 @@ Used when a phone is involved (phone has a camera).
 | `sid`  | string | Session ID (6-char alphanumeric)         |
 | `addr` | string | Receiver's LAN IP and port               |
 | `pk`   | string | Receiver's ephemeral X25519 public key   |
-| `exp`  | number | QR expiry in seconds from creation (default: 10) |
+| `exp`  | number | QR expiry in seconds from creation (default: 30) |
 
-> **Auto-regeneration:** when the QR expires (default 10 seconds), the receiver automatically generates a new session with fresh keys and displays a new QR code. This limits the window for QR code leakage without requiring user intervention. The overall session TTL is 300 seconds (5 minutes).
+> **Auto-regeneration:** when the QR expires (default 30 seconds), the receiver automatically generates a new session with fresh keys and displays a new QR code. This limits the window for QR code leakage without requiring user intervention. The overall session TTL is 300 seconds (5 minutes).
 
 4. Sender (phone) scans the QR code
 5. Sender extracts address and public key, connects via WebSocket
@@ -232,7 +232,7 @@ Session teardown. Both sides zero secrets after receiving or sending CLOSE.
 
 1. **Exactly 2 participants** — the receiver rejects any connection after the first sender joins
 2. **No late join** — once a session is active, no new participants can be added. Create a new session instead.
-3. **Bootstrap expiry** — QR codes and manual codes expire (default 10 seconds). After expiry, the receiver auto-regenerates a new session with fresh keys.
+3. **Bootstrap expiry** — QR codes and manual codes expire (default 30 seconds). After expiry, the receiver auto-regenerates a new session with fresh keys.
 4. **Session TTL** — sessions expire after a configurable time (default 5 minutes) regardless of activity.
 5. **One-use bootstrap** — a QR code or manual code can only be used once. After the first sender connects, the bootstrap is invalidated.
 6. **Receiver approval** — the receiver must explicitly approve or reject every pairing request. There is no auto-accept.
@@ -248,7 +248,7 @@ These values are defined in `core/src/config.ts` and are the single source of tr
 
 | Constant               | Value     | Description                                 |
 |------------------------|-----------|---------------------------------------------|
-| `BOOTSTRAP_TTL`        | 10s       | QR/code expiry before auto-regeneration     |
+| `BOOTSTRAP_TTL`        | 30s       | QR/code expiry before auto-regeneration     |
 | `SESSION_TTL`          | 300s      | Maximum session lifetime                    |
 | `DEFAULT_PORT`         | 4040      | WebSocket server port                       |
 | `SESSION_CODE_LENGTH`  | 6         | Length of the alphanumeric session code      |

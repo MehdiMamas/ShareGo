@@ -95,7 +95,7 @@ Created ──────────> WaitingForSender ──> Handshaking ─
 
 ```bash
 # run core tests to verify session logic
-npm run test:core
+pnpm run test:core
 
 # type-check core for compilation errors
 cd core && npx tsc --noEmit

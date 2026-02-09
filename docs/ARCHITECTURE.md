@@ -32,7 +32,7 @@ These are non-negotiable constraints. If a platform cannot meet them, the platfo
 6. **Ephemeral secrets, in-memory only** — keys are never persisted to disk
 7. **v1: sensitive text only** — passwords, OTPs, short text. Files/images are a future extension.
 8. **All 5 platforms** — Windows, macOS, Linux, Android, iOS
-9. **Auto-regenerating bootstrap** — QR codes and session codes expire after 10 seconds and auto-regenerate with fresh keys. Sessions expire after 5 minutes total.
+9. **Auto-regenerating bootstrap** — QR codes and session codes expire after 30 seconds and auto-regenerate with fresh keys. Sessions expire after 5 minutes total.
 
 ## Tech stack decisions
 
@@ -47,6 +47,7 @@ One implementation of crypto, protocol, session logic, and transport abstraction
 - Discovery: `DiscoveryAdapter` interface (mDNS preferred, subnet scan fallback)
 - Types: branded types for compile-time safety (`SessionId`, `NetworkAddress`, `Base64PublicKey`, etc.)
 - Config: shared constants in `core/src/config.ts` (TTLs, ports, limits)
+- Logger: pluggable `Logger` interface in `core/src/logger.ts` — replaces silent catches
 - i18n: all user-facing text in `core/src/i18n/en.ts` (single source of truth for both platforms)
 
 ### Desktop: Electron (Windows, macOS, Linux)
@@ -85,15 +86,15 @@ One implementation of crypto, protocol, session logic, and transport abstraction
 ShareGo/
   core/
     src/
-      crypto/           libsodium wrappers, key exchange, encrypt/decrypt
+      crypto/           libsodium wrappers, key exchange, encrypt/decrypt, constantTimeEqual
       protocol/         message types, serialization, validation, binary DATA frames
       session/          XState state machine, session controller, events
       transport/        ILocalTransport interface + WebSocketTransport
       discovery/        DiscoveryAdapter interface, mDNS + subnet fallback
       types/            branded types (SessionId, NetworkAddress, etc.)
-      utils/            legacy subnet discovery helpers (deprecated)
       i18n/             translation resources (en.ts) — single source of truth
       config.ts         shared constants (TTLs, ports, limits) — single source of truth
+      logger.ts         pluggable Logger interface (setLogger, log.debug/warn/error)
       index.ts          barrel export
     package.json
     tsconfig.json
@@ -101,12 +102,14 @@ ShareGo/
   apps/
     app/                unified app (desktop + mobile)
       electron/         Electron main process (ws-server, net-utils, mdns-adapter, preload)
+        package.json    runtime-only deps for Electron main process (ws, bonjour-service)
       src/
-        adapters/       platform-specific transport adapters
+        adapters/       platform adapters (transport, clipboard, network)
         components/     shared React Native components
         hooks/          useSession, useTransport
         screens/        HomeScreen, ReceiveScreen, SendScreen, ActiveSessionScreen
         styles/         theme.ts (shared design tokens)
+        types/          web.d.ts (RN ViewStyle augmentation for react-native-web)
         lib/            core re-exports
         platform.ts     runtime platform detection
         App.tsx         entry point
@@ -134,7 +137,9 @@ ShareGo/
   .github/
     workflows/          CI/CD (release builds for all platforms)
   turbo.json            Turborepo task pipeline
-  package.json          monorepo root (npm workspaces + turbo)
+  package.json          monorepo root (pnpm workspaces + turbo)
+  pnpm-workspace.yaml   workspace package definitions
+  .npmrc                pnpm config (hoisted node_modules for react native)
   tsconfig.base.json    shared TypeScript config
   SECURITY.md           vulnerability reporting policy
   CODE_OF_CONDUCT.md    contributor code of conduct
