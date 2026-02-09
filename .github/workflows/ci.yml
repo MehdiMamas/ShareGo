@@ -241,7 +241,7 @@ jobs:
         working-directory: apps/app/android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --build-cache
+          ./gradlew :app:assembleDebug --no-daemon --build-cache
 
   # ── detox e2e (android emulator, main only) ─────────────────────
   e2e-android:
@@ -301,7 +301,7 @@ jobs:
         working-directory: apps/app/android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug assembleAndroidTest -DtestBuildType=debug --no-daemon --build-cache
+          ./gradlew :app:assembleDebug :app:assembleAndroidTest -DtestBuildType=debug --no-daemon --build-cache
 
       - name: Run Detox tests on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
