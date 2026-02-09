@@ -102,7 +102,7 @@
   },
   "dependencies": {
     "@react-native-clipboard/clipboard": "^1.16.3",
-    "@react-navigation/native": "^6.1.0",
+    "@react-navigation/native": "^7.1.28",
     "@react-navigation/native-stack": "^6.9.0",
     "@sharego/core": "workspace:*",
     "@types/js-sha1": "^0.6.3",
