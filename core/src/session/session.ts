@@ -1,5 +1,6 @@
 import { SessionState, SessionRole, SessionEvent, type SessionEventMap } from "./types.js";
 import { createActor } from "xstate";
+import { log } from "../logger.js";
 import { sessionMachine, STATE_TO_EVENT } from "./machine.js";
 // sessionMachine is used in constructor to create the actor
 import {
@@ -144,7 +145,7 @@ export class Session {
         (cb as (...a: any[]) => void)(...args);
       } catch (err) {
         // don't let listener errors crash the session
-        console.error("session event listener error:", err);
+        log.error("[session] event listener error:", err);
       }
     }
   }
@@ -270,6 +271,7 @@ export class Session {
   close(): void {
     if (this.getState() === SessionState.Closed || this.closing) return;
     this.closing = true;
+    log.debug(`[session] ${this.id} closing (role=${this.role})`);
 
     // cancel any pending flush timer from a previous close() call
     if (this.flushTimer) {
@@ -534,12 +536,23 @@ export class Session {
   private handleAccept(): void {
     if (this.role !== SessionRole.Sender) return;
     if (this.getState() !== SessionState.Handshaking) return;
+    if (!this.sharedSecret) {
+      this.emit(SessionEvent.Error, new Error("accept received but no shared secret"));
+      this.close();
+      return;
+    }
     this.transition(SessionState.Active);
   }
 
   /** sender handles REJECT */
   private handleReject(): void {
     if (this.role !== SessionRole.Sender) return;
+    if (
+      this.getState() !== SessionState.Handshaking &&
+      this.getState() !== SessionState.PendingApproval
+    ) {
+      return;
+    }
     this.transition(SessionState.Rejected);
     this.cleanup();
   }
@@ -571,6 +584,7 @@ export class Session {
 
   /** handle CLOSE from peer */
   private handleClose(): void {
+    if (this.closing) return;
     this.closing = true;
     // cancel any pending flush timer from a prior close() call
     if (this.flushTimer) {
@@ -585,6 +599,7 @@ export class Session {
   // -- transport state --
 
   private handleTransportState(ts: TransportState): void {
+    log.debug(`[session] ${this.id} transport state: ${ts}`);
     if (
       ts === "disconnected" &&
       this.getState() !== SessionState.Closed &&
@@ -622,6 +637,7 @@ export class Session {
     const key = `${current}->${next}`;
     const eventType = STATE_TO_EVENT[key];
     if (!eventType) {
+      log.error(`[session] invalid transition: ${current} -> ${next}`);
       throw new Error(`invalid state transition: ${current} -> ${next}`);
     }
 
@@ -630,9 +646,11 @@ export class Session {
     const after = this.getState();
 
     if (after !== next) {
+      log.error(`[session] transition failed: ${current} -> ${next}, landed on ${after}`);
       throw new Error(`invalid state transition: ${current} -> ${next} (machine reached ${after})`);
     }
 
+    log.debug(`[session] ${this.id} ${current} -> ${next}`);
     this.emit(SessionEvent.StateChanged, next);
   }
 

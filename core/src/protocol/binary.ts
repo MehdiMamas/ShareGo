@@ -63,7 +63,11 @@ export function serializeBinaryData(
   buf[0] = BINARY_DATA_TYPE;
 
   // 4-byte big-endian sequence number
-  view.setUint32(1, seq as number, false);
+  const seqNum = seq as number;
+  if (seqNum < 0 || seqNum > 0xffffffff || !Number.isFinite(seqNum)) {
+    throw new Error(`invalid sequence number: ${seqNum}`);
+  }
+  view.setUint32(1, seqNum, false);
 
   // 24-byte nonce
   buf.set(nonce, 5);

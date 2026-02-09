@@ -26,8 +26,8 @@ export function getLanIp(): string | null {
     if (!addrs) continue;
 
     for (const addr of addrs) {
-      // skip non-IPv4
-      if (addr.family !== "IPv4") continue;
+      // skip non-IPv4 (Node.js 18+ may return numeric 4 instead of "IPv4")
+      if (addr.family !== "IPv4" && (addr.family as unknown) !== 4) continue;
 
       // skip loopback
       if (addr.internal) continue;
@@ -95,8 +95,22 @@ function interfacePriority(name: string): number {
     return 90;
   }
 
-  // windows Wi-Fi/ethernet
-  if (lower.includes("wi-fi") || lower.includes("wifi") || lower.includes("ethernet")) {
+  // windows Wi-Fi/ethernet — many possible naming conventions
+  if (
+    lower.includes("wi-fi") ||
+    lower.includes("wifi") ||
+    lower.includes("wireless") ||
+    lower.includes("wlan")
+  ) {
+    return 100;
+  }
+
+  if (
+    lower.includes("ethernet") ||
+    lower.includes("local area connection") ||
+    lower.includes("realtek") ||
+    lower.includes("intel")
+  ) {
     return 95;
   }
 

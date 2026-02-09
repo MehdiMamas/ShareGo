@@ -214,10 +214,14 @@ function assertReady(): void {
 
 /** constant-time comparison to prevent timing attacks on secret data */
 export function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) {
-    diff |= a[i] ^ b[i];
+  // avoid early return on length mismatch — compare in constant time
+  // regardless of whether lengths match to prevent timing side-channels
+  const len = Math.max(a.length, b.length);
+  let diff = a.length ^ b.length; // non-zero if lengths differ
+  for (let i = 0; i < len; i++) {
+    const ai = i < a.length ? a[i] : 0;
+    const bi = i < b.length ? b[i] : 0;
+    diff |= ai ^ bi;
   }
   return diff === 0;
 }
