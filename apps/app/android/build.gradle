@@ -18,4 +18,13 @@ buildscript {
     }
 }
 
+allprojects {
+    repositories {
+        // detox ships its android library as a local maven repo inside the npm package
+        maven {
+            url("$rootDir/../node_modules/detox/Detox-android")
+        }
+    }
+}
+
 apply plugin: "com.facebook.react.rootproject"
