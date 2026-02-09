@@ -166,7 +166,7 @@ jobs:
         run: pnpm run build:core
 
       - name: Cache CocoaPods
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: apps/app/ios/Pods
           key: pods-${{ hashFiles('apps/app/ios/Podfile.lock') }}
@@ -262,7 +262,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: |
             ~/.gradle/caches
