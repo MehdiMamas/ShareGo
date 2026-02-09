@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { initCrypto } from "./lib/core";
@@ -65,8 +65,10 @@ export default function App() {
         <SessionContext.Provider value={{ session, transport }}>
           <NavigationContainer
             theme={{
+              ...DefaultTheme,
               dark: true,
               colors: {
+                ...DefaultTheme.colors,
                 primary: colors.primary,
                 background: colors.background,
                 card: colors.surface,
