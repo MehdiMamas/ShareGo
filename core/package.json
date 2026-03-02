@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "libsodium-wrappers-sumo": "^0.8.2",
-    "xstate": "^5.26.0"
+    "xstate": "^5.28.0"
   },
   "devDependencies": {
     "@types/libsodium-wrappers-sumo": "^0.8.2",
