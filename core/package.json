@@ -16,12 +16,12 @@
   },
   "dependencies": {
     "libsodium-wrappers-sumo": "^0.8.2",
-    "xstate": "^5.26.0"
+    "xstate": "^5.28.0"
   },
   "devDependencies": {
     "@types/libsodium-wrappers-sumo": "^0.8.2",
-    "fast-check": "^4.5.3",
+    "fast-check": "^4.6.0",
     "typescript": "^5.7.0",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.1"
   }
 }
