@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
 
       - uses: actions/setup-node@v6
         with:
@@ -28,7 +28,7 @@ jobs:
 
       - run: pnpm run test:core
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: core-dist
           path: core/dist/
@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
 
       - uses: actions/setup-node@v6
         with:
@@ -61,7 +61,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       # download pre-built core
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: core-dist
           path: core/dist/
@@ -114,7 +114,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
 
       - uses: actions/setup-node@v6
         with:
@@ -127,7 +127,7 @@ jobs:
           java-version: 17
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       # cache gradle dependencies and build outputs
       - uses: actions/cache@v5
@@ -141,7 +141,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       # download pre-built core
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: core-dist
           path: core/dist/
