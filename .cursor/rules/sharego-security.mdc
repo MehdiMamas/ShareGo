@@ -9,31 +9,31 @@ alwaysApply: true
 
 - Never add cloud servers, relay services, or internet fallbacks
 - Never persist keys, secrets, or session data to disk or local storage
-- Never use platform-specific crypto APIs — always use libsodium
-- Never bypass the receiver approval step for pairing
-- Never allow more than 2 participants in a session
-- Never send sensitive data through QR codes or pairing codes
-- Never disable or weaken AEAD encryption
-- Never reuse ephemeral keys across sessions
-- Never skip memory zeroing of secrets on session close
+- Never bypass the receiver approval step
+- Never allow more than 2 participants
+- Never put a secret in a QR code or a pairing code
+- Never disable or weaken AEAD, and never reuse a nonce
+- Never reuse an ephemeral key across sessions
+- Never trust an mDNS TXT record as a public key. Only the QR code pins a key. Typed codes rely on the verification number
 
 ## Always do these
 
-- Use `crypto_aead_xchacha20poly1305_ietf_encrypt` for all data encryption
-- Generate a fresh random nonce for every DATA message
-- Generate fresh X25519 key pairs for every session
-- Validate protocol version and message type on every received message
-- Check sequence numbers for replay detection
-- Call `zeroMemory()` on all key material when a session ends
-- Use constant-time comparison for any secret comparison
+- Encrypt with XChaCha20-Poly1305 and a fresh 24-byte nonce
+- Derive keys with HKDF-SHA256 over the exact handshake bytes
+- Generate a new X25519 key pair for every code
+- Check the protocol version and message type on every frame
+- Require the next sequence number, and bind it as AEAD associated data
+- Wipe session keys on close with `SecretKeyData.destroy()` (`overwriteWhenDestroyed: true`)
+- Compare pinned public keys in constant time
 
-## Crypto surface (auditable)
+## Crypto
 
-| Operation       | Primitive                   | Source                |
-|-----------------|-----------------------------|-----------------------|
-| Key exchange    | X25519                      | `crypto_kx_keypair`   |
-| Encryption      | XChaCha20-Poly1305 (AEAD)  | `crypto_aead_*_ietf`  |
-| Nonces          | 24-byte random              | `randombytes_buf`     |
-| Memory zeroing  | Best-effort                 | `sodium.memzero`      |
+| Operation | Primitive | Where |
+| --- | --- | --- |
+| Key agreement | X25519 | `lib/core/crypto.dart` |
+| Derivation | HKDF-SHA256 | `lib/core/crypto.dart` |
+| Encryption | XChaCha20-Poly1305 | `lib/core/crypto.dart` |
+| Nonce | 24 random bytes | `cryptography` |
+| Wipe | overwrite on destroy for AEAD keys | `SecretKeyData` |
 
-See `docs/THREAT_MODEL.md` for full threat analysis.
+`cryptography_flutter` may call the operating system for the same algorithms. Do not add a second crypto library. The X25519 private key wipe is best-effort. See `docs/THREAT_MODEL.md`.

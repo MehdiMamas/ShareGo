@@ -1,274 +1,66 @@
-# building ShareGo
+# Building
 
-## prerequisites
-
-- Node.js >= 18
-- pnpm >= 10 (`corepack enable && corepack prepare pnpm@latest --activate`)
-- Git
-
-## one-command setup
-
-the easiest way to set up your development environment:
+Install [Flutter](https://docs.flutter.dev/get-started/install) stable, then:
 
 ```bash
-# setup everything for your platform
-./scripts/setup.sh
-
-# or setup for a specific platform
-./scripts/setup.sh ios
-./scripts/setup.sh android
-./scripts/setup.sh desktop
-./scripts/setup.sh core
+flutter pub get
+flutter doctor
+flutter test
+flutter run
 ```
 
-the script auto-detects your OS and installs all required dependencies.
+`just test` and `just build-macos` (and the other `just build-*` recipes) do the same thing if you have [just](https://github.com/casey/just) installed.
 
-## quick start (core only)
+Windows binaries are built on Windows. A Mac cannot produce the `.exe`. Linux binaries are built on Linux.
+
+## Android
+
+Install Android Studio or the command-line SDK. `flutter build apk --release` writes `build/app/outputs/flutter-apk/app-release.apk`.
+
+Without `android/key.properties`, the release APK is signed with the debug key. That is fine for a one-off install. To sign with a key you can reuse:
 
 ```bash
-git clone https://github.com/MehdiMamas/ShareGo.git
-cd ShareGo
-pnpm install
-pnpm run build:core
-pnpm run test:core
+keytool -genkey -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
 ```
 
-## platform-specific setup
+`android/key.properties` (not committed):
 
-### iOS (react native bare)
-
-> requires macOS. see [IOS_GUIDE.md](IOS_GUIDE.md) for the complete guide with troubleshooting.
-
-**requirements:**
-
-- macOS 13+ (Ventura or later)
-- Xcode (latest from App Store)
-- CocoaPods: `brew install cocoapods`
-- iOS deployment target: 13.4+ (iPhone 6s and later)
-
-**quick start:**
-
-```bash
-./scripts/setup.sh ios     # install everything
-./scripts/dev-ios.sh        # run on simulator
+```
+storePassword=...
+keyPassword=...
+keyAlias=upload
+storeFile=upload-keystore.jks
 ```
 
-**manual setup:**
+Put `upload-keystore.jks` in `android/app/`. For GitHub Releases, set these repository secrets so the workflow signs with the same key:
 
-```bash
-# install dependencies
-pnpm install
-pnpm run build:core
+- `ANDROID_KEYSTORE_BASE64` (base64 of the `.jks` file)
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_PASSWORD`
+- `ANDROID_KEY_ALIAS`
 
-# install iOS native deps
-cd apps/app/ios
-pod install
-cd ..
+If the secrets are absent, the release APK is still built and signed with the runner's debug key.
 
-# run on simulator
-npx react-native run-ios
+## macOS
 
-# run on a specific simulator
-npx react-native run-ios --simulator="iPhone 15 Pro"
+`flutter build macos --release` writes `build/macos/Build/Products/Release/ShareGo.app`. The app is sandboxed and is allowed incoming and outgoing network connections.
 
-# run on physical device (requires code signing — see IOS_GUIDE.md)
-npx react-native run-ios --device
-```
+The app is unsigned. macOS will say it cannot be opened. Use System Settings, or `xattr -dr com.apple.quarantine` on the app after you have checked the download. Signing and notarization can be added later with an Apple Developer account. The release workflow is not set up for that yet.
 
-**physical device setup:**
+## iOS
 
-1. open `apps/app/ios/ShareGo.xcworkspace` in Xcode
-2. select your Apple ID under **Signing & Capabilities > Team**
-3. connect iPhone via USB, tap "Trust This Computer"
-4. on iPhone: **Settings > General > VPN & Device Management** — trust developer
-5. run from Xcode (⌘R) or terminal: `npx react-native run-ios --device`
+`flutter build ios --release --no-codesign` produces an unsigned `Runner.app`. The release workflow zips it as `Payload/Runner.app` into `ShareGo-unsigned.ipa` for AltStore or Sideloadly. A paid Apple Developer account is required before this can be installed as a normal App Store or TestFlight build. That signing step is not in the workflow yet.
 
-a free Apple ID works for development (apps expire after 7 days).
+The camera, local network, and Bonjour usage strings are in `ios/Runner/Info.plist`.
 
-**iOS permissions (already configured in Info.plist):**
+## Windows
 
-```xml
-<key>NSCameraUsageDescription</key>
-<string>ShareGo needs camera access to scan QR codes for pairing</string>
+`flutter build windows --release`. Zip the contents of `build/windows/x64/runner/Release/`. The first run may ask to allow ShareGo through the firewall. Allow it on private networks.
 
-<key>NSLocalNetworkUsageDescription</key>
-<string>ShareGo uses local network to share data between devices on the same Wi-Fi</string>
+## Linux
 
-<key>NSBonjourServices</key>
-<array>
-  <string>_sharego._tcp</string>
-</array>
-```
+Install `clang`, `cmake`, `ninja-build`, `pkg-config`, `libgtk-3-dev`, `liblzma-dev`, `libavahi-client-dev`, and `libavahi-common-dev`. Then `flutter build linux --release`. The bundle is `build/linux/x64/release/bundle/`.
 
-### android (react native bare)
+## Releases
 
-**requirements:**
-
-- [Android Studio](https://developer.android.com/studio) with Android SDK (API 34)
-- JDK 17+
-- `ANDROID_HOME` environment variable
-
-**quick start:**
-
-```bash
-./scripts/setup.sh android
-cd apps/app
-npx react-native run-android
-```
-
-**manual setup:**
-
-```bash
-pnpm install
-pnpm run build:core
-
-cd apps/app
-npx react-native run-android         # dev build on emulator/device
-```
-
-**release build:**
-
-```bash
-cd apps/app/android
-./gradlew assembleRelease            # APK
-./gradlew bundleRelease              # AAB (for Play Store)
-```
-
-**environment setup (macOS):**
-
-```bash
-# add to ~/.zshrc
-export ANDROID_HOME=$HOME/Library/Android/sdk
-export PATH=$ANDROID_HOME/platform-tools:$PATH
-export PATH=$ANDROID_HOME/emulator:$PATH
-```
-
-**environment setup (linux):**
-
-```bash
-# add to ~/.bashrc
-export ANDROID_HOME=$HOME/Android/Sdk
-export PATH=$ANDROID_HOME/platform-tools:$PATH
-export PATH=$ANDROID_HOME/emulator:$PATH
-```
-
-### desktop — Electron (windows, macOS, linux)
-
-Electron requires only Node.js — no Rust or system webview needed.
-
-**quick start:**
-
-```bash
-./scripts/setup.sh desktop
-pnpm run dev:desktop
-```
-
-**manual setup:**
-
-```bash
-pnpm install
-pnpm run build:core
-
-# build electron main process
-cd apps/app
-pnpm run build:electron
-
-# run in development
-pnpm run dev:electron
-```
-
-**production build:**
-
-```bash
-# build for current platform
-pnpm run build:desktop
-
-# build with debug info
-pnpm run build:desktop:debug
-```
-
-electron-builder outputs:
-
-- **macOS:** `.dmg`, `.app` in `apps/app/release/`
-- **Windows:** `.exe`, `.msi` in `apps/app/release/`
-- **Linux:** `.AppImage`, `.deb` in `apps/app/release/`
-
-## monorepo structure
-
-this is a pnpm workspaces monorepo powered by Turborepo. the `core` package is shared between desktop and mobile. workspaces are defined in `pnpm-workspace.yaml`.
-
-```bash
-pnpm install         # installs all workspaces
-turbo run build      # builds all packages (core first, then app)
-pnpm run build:core  # builds core only
-pnpm run test:core   # tests core only
-```
-
-## all scripts
-
-### setup & dev
-
-| command                   | description                         |
-| ------------------------- | ----------------------------------- |
-| `pnpm run setup`          | one-command setup for all platforms |
-| `pnpm run setup:ios`      | setup for iOS development           |
-| `pnpm run setup:android`  | setup for Android development       |
-| `pnpm run setup:desktop`  | setup for desktop development       |
-| `pnpm run dev:desktop`    | start desktop app in dev mode       |
-| `pnpm run dev:mobile`     | start metro bundler for mobile      |
-| `pnpm run dev:ios`        | run iOS app on simulator            |
-| `pnpm run dev:ios:device` | run iOS app on physical iPhone      |
-| `pnpm run dev:android`    | run Android app on emulator/device  |
-
-### build
-
-| command                        | description                     |
-| ------------------------------ | ------------------------------- |
-| `pnpm run build:core`          | build core library              |
-| `pnpm run build:ios`           | release build for iOS (device)  |
-| `pnpm run build:ios:debug`     | debug build for iOS             |
-| `pnpm run build:ios:simulator` | release build for iOS simulator |
-| `pnpm run build:android`       | release APK for Android         |
-| `pnpm run build:android:debug` | debug APK                       |
-| `pnpm run build:android:aab`   | release AAB (Play Store)        |
-| `pnpm run build:desktop`       | release build for current OS    |
-| `pnpm run build:desktop:debug` | debug build for current OS      |
-| `pnpm run build:all`           | build core + desktop            |
-
-### check & test
-
-| command                  | description                      |
-| ------------------------ | -------------------------------- |
-| `pnpm run check`         | check all platform prerequisites |
-| `pnpm run check:ios`     | check iOS prerequisites only     |
-| `pnpm run check:android` | check Android prerequisites only |
-| `pnpm run check:desktop` | check desktop prerequisites only |
-| `pnpm run test:core`     | run core library tests           |
-
-## checking prerequisites
-
-before building, you can check if everything is installed:
-
-```bash
-pnpm run check             # check all platforms
-pnpm run check:ios         # iOS only
-pnpm run check:android     # Android only
-pnpm run check:desktop     # desktop only
-```
-
-the check script reports which tools are installed and which are missing, with install instructions for each.
-
-## environment
-
-no `.env` files are used. ShareGo has no cloud services, no API keys, and no secrets to configure. all crypto keys are ephemeral and generated at runtime.
-
-## build outputs
-
-| platform        | debug  | release                |
-| --------------- | ------ | ---------------------- |
-| iOS (device)    | `.app` | `.app` (needs signing) |
-| iOS (simulator) | `.app` | `.app`                 |
-| Android         | `.apk` | `.apk` / `.aab`        |
-| macOS           | binary | `.dmg`, `.app`         |
-| Windows         | binary | `.msi`, `.exe`         |
-| Linux           | binary | `.deb`, `.AppImage`    |
+Pushing a tag `v*` runs `.github/workflows/release.yml`, which builds all five artifacts and attaches them to a GitHub Release. `flutter analyze` and `flutter test` run on every push and pull request.
