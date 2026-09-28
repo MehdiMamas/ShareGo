@@ -70,7 +70,7 @@ class _ShotAppState extends State<_ShotApp> {
       await Future<void>.delayed(Duration(milliseconds: pause));
       await _save(_order[i]);
     }
-    print('STAGE done');
+    stderr.writeln('STAGE done');
     exit(0);
   }
 
@@ -84,7 +84,7 @@ class _ShotAppState extends State<_ShotApp> {
     final data = await image.toByteData(format: ui.ImageByteFormat.png);
     final file = File('${Directory.systemTemp.path}/sharego-$name.png');
     file.writeAsBytesSync(data!.buffer.asUint8List());
-    print('SHOTFILE ${file.path}');
+    stderr.writeln('SHOTFILE ${file.path}');
   }
 
   @override
