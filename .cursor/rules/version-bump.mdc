@@ -1,28 +1,13 @@
 ---
-description: version bump parity — all 3 version locations must be updated together
+description: the app version lives in one file
 alwaysApply: true
 ---
 
-# version bump rule
+# version bump
 
-when bumping the project version, ALL 3 locations must be updated in the same commit. never bump one without the others. you can also use the `pnpm run version:sync` script to propagate the root version to all sub-packages.
+The version is the `version` field in `pubspec.yaml` only (`major.minor.patch+build`).
 
-## version locations (all must match)
-
-| # | file | field |
-|---|---|---|
-| 1 | `package.json` (root) | `"version"` |
-| 2 | `core/package.json` | `"version"` |
-| 3 | `apps/app/package.json` | `"version"` |
-
-## process
-
-1. determine the new version (semver: major.minor.patch)
-2. update root `package.json` version, then run `pnpm run version:sync`
-3. commit as `chore: bump version to x.y.z`
-4. if a lockfile update is needed (new dependency added), run `pnpm install` and commit the lockfile BEFORE tagging
-5. tag and push: `git tag vx.y.z && git push origin vx.y.z`
-
-## common mistake to avoid
-
-if you added a new dependency in the same release, run `pnpm install` to update `pnpm-lock.yaml` BEFORE creating the version tag. CI uses `pnpm install --frozen-lockfile` which requires the lockfile to be in sync.
+1. Change that field.
+2. If dependencies changed, run `flutter pub get` and commit `pubspec.lock` before tagging.
+3. Commit as `chore: bump version to x.y.z`.
+4. Tag and push `vx.y.z`. The release workflow builds the downloads from that tag.

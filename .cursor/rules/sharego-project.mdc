@@ -5,51 +5,33 @@ alwaysApply: true
 
 # ShareGo project context
 
-ShareGo is a serverless, end-to-end encrypted, local-network-only app for securely sharing sensitive data (passwords, OTPs, text) between exactly 2 devices on the same Wi-Fi.
+ShareGo sends a short secret between exactly 2 devices on the same Wi-Fi. There is no server and no relay.
 
-## Supported platforms
+## Stack
 
-- Desktop: Windows, macOS, Linux (Electron)
-- Mobile: Android, iOS (React Native bare)
-- Unified app in `apps/app/` using React Native + react-native-web
+One Flutter app in this repository. It builds Android, iOS, macOS, Windows, and Linux. There is no React Native and no Electron.
 
-## Architecture invariants (never violate these)
+## Invariants
 
-1. No cloud servers, no TURN, no signaling, no relay
-2. Same Wi-Fi / local network only
-3. Exactly 2 participants per session, no late join
-4. Receiver creates session, sender joins
-5. All crypto uses libsodium — no platform-specific crypto APIs
-6. Ephemeral keys only — never persist secrets to disk
-7. QR and manual code are bootstrap only — never data channels
-8. Bootstrap auto-regenerates every 30 seconds with fresh keys
-9. Feature and UI parity between desktop and mobile — no exceptions
+1. No cloud, TURN, signaling, or relay
+2. Same local network only
+3. Exactly 2 participants, no late join
+4. Receiver listens, sender connects, receiver approves
+5. Crypto goes through the `cryptography` package (X25519, HKDF-SHA256, XChaCha20-Poly1305)
+6. Ephemeral keys only. Never persist secrets
+7. QR and the 6-character code are bootstrap only
+8. The code and keys regenerate every 30 seconds until a valid handshake
+9. User-facing text lives in `lib/strings.dart`
+10. Timeouts and limits live in `lib/config.dart`
 
-## Repo layout
+## Layout
 
-- `core/src/crypto/` — libsodium wrappers (keygen, exchange, encrypt, decrypt)
-- `core/src/protocol/` — message types, serialization, QR payload, binary DATA frames
-- `core/src/session/` — XState state machine, SessionController, lifecycle, events
-- `core/src/transport/` — ILocalTransport interface, WebSocketTransport
-- `core/src/discovery/` — DiscoveryAdapter interface, mDNS + subnet fallback
-- `core/src/types/` — branded types (SessionId, NetworkAddress, Base64PublicKey, etc.)
-- `core/src/utils/` — legacy subnet discovery helpers (deprecated)
-- `core/src/i18n/` — translation resources (en.ts — single source of truth for all user-facing text)
-- `core/src/config.ts` — shared constants (timeouts, ports, limits — single source of truth)
-- `apps/app/` — unified app (desktop + mobile)
-- `apps/app/electron/` — Electron main process (ws-server, net-utils, mdns-adapter)
-- `apps/app/src/` — React Native + react-native-web UI (screens, components, hooks, adapters)
-- `scripts/` — setup, build, check, and dev convenience scripts
-- `docs/` — ARCHITECTURE.md, PROTOCOL.md, THREAT_MODEL.md, REJECTED.md, BUILDING.md, CONTRIBUTING.md, IOS_GUIDE.md
+- `lib/core/crypto.dart` — key agreement, derivation, encrypt, decrypt, wipe
+- `lib/core/frames.dart` — length-prefixed TCP frames
+- `lib/core/protocol.dart` — messages, QR payload, code format
+- `lib/core/session.dart` — receiver and sender
+- `lib/core/discovery.dart` — mDNS, with typed-address fallback
+- `lib/ui/` — screens
+- `docs/` — protocol, architecture, threat model, building
 
-## Key design rules
-
-- All security logic lives in `@sharego/core` — app shells are thin wrappers
-- Transport is pluggable via `ILocalTransport` interface
-- Every message is typed via the `ProtocolMessage` union
-- Session state transitions are governed by XState machine in `core/src/session/machine.ts`
-- `SessionController` is the framework-agnostic session manager — hooks thin-wrap it
-- All user-facing text comes from `core/src/i18n/en.ts` — never hardcode strings in app code
-- All timing/config values come from `core/src/config.ts` — never hardcode values in app code
-- Comments should be lowercase and only added when they explain *why*, not *what*
-- Default branch is `main`
+Comments are lowercase and only explain why. The version is `version` in `pubspec.yaml`.

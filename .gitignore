@@ -1,91 +1,81 @@
-# ============================================================
-# ShareGo — comprehensive .gitignore
-# covers: Node.js, TypeScript, React Native, Electron, Xcode,
-#         Android/Gradle, CocoaPods, Turborepo, Vitest, macOS/Windows
-# ============================================================
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+coverage/
 
-# -- dependencies --
-node_modules/
-.pnp
-.pnp.js
+# IntelliJ / Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
 
-# -- build output --
-dist/
-*.tsbuildinfo
-*.tgz
+# Android
+**/android/.gradle
+**/android/captures/
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/key.properties
+**/*.keystore
+**/*.jks
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
 
-# -- turborepo --
-.turbo/
+# iOS / macOS
+**/ios/**/*.mode1v3
+**/ios/**/*.mode2v3
+**/ios/**/*.moved-aside
+**/ios/**/*.pbxuser
+**/ios/**/*.perspectivev3
+**/ios/**/*sync/
+**/ios/**/.sconsign.dblite
+**/ios/**/.tags*
+**/ios/**/.vagrant/
+**/ios/**/DerivedData/
+**/ios/**/Icon?
+**/ios/**/Pods/
+**/ios/**/.symlinks/
+**/ios/**/profile
+**/ios/**/xcuserdata
+**/ios/.generated/
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/ephemeral
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.*
 
-# -- electron --
-apps/app/dist-electron/
-apps/app/release/
-**/release/
+**/macos/Flutter/ephemeral
+**/macos/Pods/
+**/macos/**/xcuserdata
 
-# -- react native --
-# metro bundler cache
-.metro-health-check*
-# bundled JS assets
-**/ios/main.jsbundle
-**/ios/main.jsbundle.map
-# hermes compiled bytecode
-**/ios/assets/__node_modules/
+# Windows
+**/windows/flutter/ephemeral
 
-# -- ios / xcode --
-**/ios/build/
-**/ios/DerivedData/
-**/ios/Pods/
-**/ios/.xcode.env.local
-**/xcuserdata/
-*.xcuserstate
-*.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
-*.pbxuser
-!default.pbxuser
-*.mode1v3
-!default.mode1v3
-*.mode2v3
-!default.mode2v3
-*.perspectivev3
-!default.perspectivev3
-*.hmap
+# Linux
+**/linux/flutter/ephemeral
+
+# Symbols and packages
+app.*.symbols
+app.*.map.json
+*.apk
+*.aab
 *.ipa
 *.dSYM.zip
 *.dSYM
+*.dmg
 
-# cocoapods (we commit Podfile.lock but not Pods/)
-# Podfile.lock is committed for reproducible builds
-
-# -- android / gradle --
-**/android/app/build/
-**/android/build/
-**/android/.gradle/
-**/android/local.properties
-**/android/captures/
-**/android/.cxx/
-*.apk
-*.aab
-*.keystore
-!debug.keystore
-
-# -- vitest / jest --
-coverage/
-
-# -- OS files --
-.DS_Store
-Thumbs.db
-Desktop.ini
-ehthumbs.db
-*~
-*.swp
-*.swo
-
-# -- editor / IDE --
-.idea/
-.vscode/settings.json
-.vscode/launch.json
-*.iml
-
-# -- environment / secrets (safety net) --
+# Secrets
 .env
 .env.*
 !.env.example
@@ -96,21 +86,16 @@ ehthumbs.db
 credentials.json
 secrets.json
 
-# -- logs --
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# OS / editor
+.DS_Store
+Thumbs.db
+Desktop.ini
+*~
+*.swp
+.vscode/settings.json
+.vscode/launch.json
 
-# -- test output --
-test-results/
-playwright-report/
-e2e-results/
-
-# -- personal / project management (not part of source) --
+# Local notes
 .progress/
 .cursor/rules/personal-context.mdc
 .cursor/plans/
-
-# -- tauri legacy (safe to keep if stale artifacts remain) --
-**/src-tauri/target/

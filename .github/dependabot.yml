@@ -1,56 +1,28 @@
 version: 2
 updates:
-  # npm dependencies
-  - package-ecosystem: "npm"
+  - package-ecosystem: pub
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: weekly
+      day: monday
     open-pull-requests-limit: 3
     groups:
-      # group ALL minor + patch updates into a single PR
-      minor-and-patch:
-        update-types:
-          - "minor"
-          - "patch"
-      # group remaining major bumps into a single PR (only non-ignored ones)
-      major:
-        update-types:
-          - "major"
-    # major bumps on core framework deps require coordinated migration — handle manually
-    ignore:
-      - dependency-name: "react-native"
-        update-types: ["version-update:semver-minor", "version-update:semver-major"]
-      - dependency-name: "react-native-*"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@react-native/*"
-        update-types: ["version-update:semver-minor", "version-update:semver-major"]
-      - dependency-name: "@react-native-*/*"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "react"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "react-dom"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@react-navigation/*"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "electron"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "electron-builder"
-        update-types: ["version-update:semver-major"]
-    labels:
-      - "dependencies"
-
-  # github actions — group ALL into a single PR
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 1
-    groups:
-      all-actions:
+      dart:
         patterns:
           - "*"
     labels:
-      - "dependencies"
-      - "ci"
+      - dependencies
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 1
+    groups:
+      actions:
+        patterns:
+          - "*"
+    labels:
+      - dependencies
+      - ci

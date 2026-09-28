@@ -50,9 +50,9 @@ The following are in scope for security reports:
 ShareGo is designed with security as a primary goal:
 
 - **No cloud servers** — all communication stays on local network
-- **End-to-end encryption** — XChaCha20-Poly1305 (AEAD) via libsodium
+- **End-to-end encryption** — XChaCha20-Poly1305 (AEAD) via the `cryptography` package
 - **Ephemeral keys** — fresh X25519 key pairs generated per session, never persisted
-- **Memory zeroing** — key material is wiped from memory when sessions end
+- **Memory wiping** — derived session keys are overwritten when the session ends. See the threat model for the limit on the X25519 private key.
 - **No data persistence** — nothing is written to disk
 
 For full details, see [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
