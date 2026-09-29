@@ -1,0 +1,24 @@
+name: Dependabot auto-merge
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable auto-merge
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # required checks still have to pass; this only queues the merge
+          already="$(gh pr view "$PR_URL" --json autoMergeRequest --jq .autoMergeRequest)"
+          if [ "$already" = "null" ]; then
+            gh pr merge --auto --squash "$PR_URL"
+          fi

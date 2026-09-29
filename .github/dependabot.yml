@@ -1,4 +1,5 @@
 version: 2
+# labels must already exist on the repo. a missing label makes dependabot comment on every pull request.
 updates:
   - package-ecosystem: pub
     directory: "/"
@@ -6,6 +7,7 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 3
+    rebase-strategy: auto
     groups:
       dart:
         patterns:
@@ -19,6 +21,7 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 1
+    rebase-strategy: auto
     groups:
       actions:
         patterns:
