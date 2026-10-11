@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'strings.dart';
 import 'ui/home_screen.dart';
+import 'ui/theme.dart';
 
 void main() {
   Cryptography.instance = FlutterCryptography.defaultInstance;
@@ -11,17 +12,16 @@ void main() {
 }
 
 class ShareGoApp extends StatelessWidget {
-  const ShareGoApp({super.key});
+  const ShareGoApp({super.key, this.checkForUpdates = true});
+
+  final bool checkForUpdates;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: S.appName,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1B6B4A)),
-        useMaterial3: true,
-      ),
-      home: const HomeScreen(),
+      theme: shareGoTheme(),
+      home: HomeScreen(checkForUpdates: checkForUpdates),
     );
   }
 }

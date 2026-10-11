@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import '../strings.dart';
 import 'receive_screen.dart';
 import 'send_screen.dart';
+import 'update_banner.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.checkForUpdates = false});
+
+  /// on desktop, look for a newer release on GitHub and offer it.
+  final bool checkForUpdates;
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +24,7 @@ class HomeScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (checkForUpdates) const UpdateBanner(),
                   Text(S.appName, style: Theme.of(context).textTheme.headlineLarge),
                   const SizedBox(height: 12),
                   Text(S.tagline, style: Theme.of(context).textTheme.bodyLarge),

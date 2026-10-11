@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "Mehdi Mamas" "\0"
-            VALUE "FileDescription", "sharego" "\0"
+            VALUE "FileDescription", "ShareGo" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "sharego" "\0"
+            VALUE "InternalName", "ShareGo" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 Mehdi Mamas. All rights reserved." "\0"
-            VALUE "OriginalFilename", "sharego.exe" "\0"
-            VALUE "ProductName", "sharego" "\0"
+            VALUE "OriginalFilename", "ShareGo.exe" "\0"
+            VALUE "ProductName", "ShareGo" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

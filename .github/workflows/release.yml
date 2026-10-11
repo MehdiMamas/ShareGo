@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - "v*"
+  # a manual run builds everything but publishes nothing: no release, no TestFlight upload
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -30,7 +32,10 @@ jobs:
             artifact: ShareGo-unsigned.ipa
           - os: windows-latest
             target: windows
-            artifact: ShareGo-windows.zip
+            artifact: |
+              ShareGo-windows.zip
+              ShareGo-windows-setup.exe
+              ShareGo-windows.msi
     steps:
       - uses: actions/checkout@v7
 
@@ -128,7 +133,11 @@ jobs:
                   --entitlements macos/Runner/Release.entitlements --sign "$identity" "$app"
                 codesign --verify --strict --deep --verbose=2 "$app"
               fi
-              hdiutil create -volname ShareGo -srcfolder "$app" -ov -format UDZO ShareGo-macos.dmg
+              # the app next to a link to Applications, so installing or updating is one drag
+              staging=$(mktemp -d)
+              ditto "$app" "$staging/$(basename "$app")"
+              ln -s /Applications "$staging/Applications"
+              hdiutil create -volname ShareGo -srcfolder "$staging" -ov -format UDZO ShareGo-macos.dmg
               if [ -n "${APPLE_SIGNING:-}" ]; then
                 codesign --timestamp --sign "$identity" ShareGo-macos.dmg
                 xcrun notarytool submit ShareGo-macos.dmg --wait \
@@ -162,15 +171,36 @@ jobs:
                 flutter build ipa --release --build-number=${{ github.run_number }} \
                   --export-options-plist="$RUNNER_TEMP/ExportOptions.plist"
                 ipa=$(find build/ios/ipa -maxdepth 1 -name '*.ipa' -print -quit)
-                xcrun altool --upload-app -t ios -f "$ipa" \
-                  --apiKey "$API_KEY_ID" --apiIssuer "$API_ISSUER_ID"
+                if [ "$GITHUB_REF_TYPE" = tag ]; then
+                  xcrun altool --upload-app -t ios -f "$ipa" \
+                    --apiKey "$API_KEY_ID" --apiIssuer "$API_ISSUER_ID"
+                fi
               fi
               ;;
             windows)
               flutter build windows --release
-              powershell -NoProfile -Command "Compress-Archive -Path build\\windows\\x64\\runner\\Release\\* -DestinationPath ShareGo-windows.zip"
+              bundle=build/windows/x64/runner/Release
+              # Flutter needs the Visual C++ runtime. Ship it so ShareGo starts on a PC without it.
+              for dll in msvcp140.dll vcruntime140.dll vcruntime140_1.dll; do
+                cp "/c/Windows/System32/$dll" "$bundle/"
+              done
+              (cd "$bundle" && 7z a -tzip "$GITHUB_WORKSPACE/ShareGo-windows.zip" . > /dev/null)
               ;;
           esac
+
+      - name: Windows installers
+        if: matrix.target == 'windows'
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path pubspec.yaml -Pattern '^version:\s*([0-9.]+)').Matches[0].Groups[1].Value
+          $bundle = "$PWD\build\windows\x64\runner\Release"
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress }
+          & $iscc "/DAppVersion=$version" "/DSourceDir=$bundle" "/O$PWD" windows\installer\ShareGo.iss
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          dotnet tool install --global wix --version 5.0.2
+          wix build -arch x64 -d "Version=$version" -d "SourceDir=$bundle" -o ShareGo-windows.msi windows\installer\ShareGo.wxs
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
       - uses: actions/upload-artifact@v7
         with:
@@ -181,6 +211,7 @@ jobs:
   release:
     name: Publish
     needs: build
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v8
@@ -198,3 +229,5 @@ jobs:
             dist/ShareGo-macos.dmg
             dist/ShareGo-unsigned.ipa
             dist/ShareGo-windows.zip
+            dist/ShareGo-windows-setup.exe
+            dist/ShareGo-windows.msi
