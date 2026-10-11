@@ -28,3 +28,30 @@ jobs:
           name: store-shots
           path: store-shots
           if-no-files-found: error
+
+  readme:
+    name: Readme
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Screenshots
+        run: |
+          flutter pub get
+          flutter build macos --debug -t tool/readme_shots.dart
+          # the app saves each screen and prints SHOTFILE <path>, then quits
+          build/macos/Build/Products/Debug/ShareGo.app/Contents/MacOS/ShareGo 2> readme.log || { cat readme.log; exit 1; }
+          mkdir -p readme-shots
+          grep '^SHOTFILE ' readme.log | cut -d' ' -f2- | while read -r file; do cp "$file" readme-shots/; done
+          ls readme-shots
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: readme-shots
+          path: readme-shots
+          if-no-files-found: error

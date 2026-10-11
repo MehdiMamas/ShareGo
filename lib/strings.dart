@@ -42,6 +42,16 @@ abstract final class S {
   static const invalidCode = 'Enter the 6-character code.';
   static const back = 'Back';
   static const tryAgain = 'Try again';
+  static const update = 'Update';
+  static const download = 'Download';
+  static const later = 'Later';
+  static const downloadingUpdate = 'Downloading the update.';
+  static const updateFailed =
+      'The update could not be downloaded. Try again, or download it from GitHub.';
+  static const dragToApplications =
+      'Drag ShareGo to Applications to replace this version, then open it again.';
+
+  static String updateAvailable(String version) => 'ShareGo $version is available.';
 
   static String countdown(int seconds) => 'New code in ${seconds}s';
 

@@ -80,7 +80,22 @@ Export compliance was answered as "standard encryption algorithms, not distribut
 
 ## Windows
 
-`flutter build windows --release`. Zip the contents of `build/windows/x64/runner/Release/`. The first run may ask to allow ShareGo through the firewall. Allow it on private networks.
+`flutter build windows --release` writes `build/windows/x64/runner/Release/`. The first run may ask to allow ShareGo through the firewall. Allow it on private networks.
+
+The release workflow copies `msvcp140.dll`, `vcruntime140.dll` and `vcruntime140_1.dll` into that folder, so ShareGo starts on a PC without the Visual C++ runtime, and then builds three files from it:
+
+- `ShareGo-windows.zip`: the folder as is.
+- `ShareGo-windows-setup.exe`: [Inno Setup 6](https://jrsoftware.org/isinfo.php), from `windows/installer/ShareGo.iss`. Installs for the current user without admin rights. This is the copy that updates itself.
+  ```
+  iscc /DAppVersion=2.0.2 /DSourceDir=<Release folder> windows\installer\ShareGo.iss
+  ```
+- `ShareGo-windows.msi`: [WiX 5](https://wixtoolset.org), from `windows/installer/ShareGo.wxs`. Installs for all users in Program Files.
+  ```
+  dotnet tool install --global wix --version 5.0.2
+  wix build -arch x64 -d Version=2.0.2 -d SourceDir=<Release folder> -o ShareGo-windows.msi windows\installer\ShareGo.wxs
+  ```
+
+Neither installer is code signed.
 
 ## Linux
 
@@ -88,4 +103,16 @@ Install `clang`, `cmake`, `ninja-build`, `pkg-config`, `libgtk-3-dev`, `liblzma-
 
 ## Releases
 
-Pushing a tag `v*` runs `.github/workflows/release.yml`, which builds all five artifacts and attaches them to a GitHub Release. `flutter analyze` and `flutter test` run on every push and pull request.
+Pushing a tag `v*` runs `.github/workflows/release.yml`, which builds every artifact, attaches them to a GitHub Release and uploads the iOS build to TestFlight. Running the workflow by hand (`gh workflow run release.yml --ref <branch>`) builds the same artifacts but publishes nothing. `flutter analyze` and `flutter test` run on every push and pull request.
+
+Before tagging, bump `version` in `pubspec.yaml` and `AppConfig.version` in `lib/config.dart` together. A test fails when they differ.
+
+### Updates
+
+The desktop apps read `https://api.github.com/repos/MehdiMamas/ShareGo/releases/latest` at launch and every 6 hours (`lib/core/updates.dart`). A release counts as newer when its tag, without the `v`, is a higher version than `AppConfig.version`. Downloads are checked against the SHA-256 that GitHub reports for each asset, and are refused when it is missing or does not match.
+
+- Windows, installed with the setup exe: downloads `ShareGo-windows-setup.exe`, runs it with `/SILENT`, and quits. The installer reopens ShareGo.
+- macOS: downloads `ShareGo-macos.dmg` to Downloads and opens it.
+- MSI, zip, and Linux: opens the release page.
+
+So the asset names must stay the same from release to release.

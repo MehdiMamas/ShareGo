@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/MehdiMamas/ShareGo/releases/tag/v2.0.1"><strong>Download v2.0.1</strong></a>
+  <a href="https://github.com/MehdiMamas/ShareGo/releases/latest"><strong>Download the latest release</strong></a>
 </p>
 
 <p align="center">
@@ -23,11 +23,17 @@
 
 | File | What to do |
 | --- | --- |
-| [ShareGo-windows.zip](https://github.com/MehdiMamas/ShareGo/releases/download/v2.0.1/ShareGo-windows.zip) | Unzip and run `ShareGo.exe`. Allow it on private networks when Windows asks. |
-| [ShareGo-macos.dmg](https://github.com/MehdiMamas/ShareGo/releases/download/v2.0.1/ShareGo-macos.dmg) | Open the disk image and move ShareGo to Applications. |
-| [ShareGo-android.apk](https://github.com/MehdiMamas/ShareGo/releases/download/v2.0.1/ShareGo-android.apk) | Install the APK. |
-| [ShareGo-linux.tar.gz](https://github.com/MehdiMamas/ShareGo/releases/download/v2.0.1/ShareGo-linux.tar.gz) | Unpack and run `ShareGo`. |
-| [ShareGo-unsigned.ipa](https://github.com/MehdiMamas/ShareGo/releases/download/v2.0.1/ShareGo-unsigned.ipa) | Sideload with AltStore or Sideloadly. |
+| [ShareGo-windows-setup.exe](https://github.com/MehdiMamas/ShareGo/releases/latest/download/ShareGo-windows-setup.exe) | Run the installer. No admin rights needed. ShareGo updates itself from then on. Allow it on private networks when Windows asks. |
+| [ShareGo-windows.msi](https://github.com/MehdiMamas/ShareGo/releases/latest/download/ShareGo-windows.msi) | Installs for all users, for admins and deployment tools. Update it with the next MSI. |
+| [ShareGo-windows.zip](https://github.com/MehdiMamas/ShareGo/releases/latest/download/ShareGo-windows.zip) | Unzip and run `ShareGo.exe`, no install. |
+| [ShareGo-macos.dmg](https://github.com/MehdiMamas/ShareGo/releases/latest/download/ShareGo-macos.dmg) | Open the disk image and drag ShareGo to Applications. |
+| [ShareGo-android.apk](https://github.com/MehdiMamas/ShareGo/releases/latest/download/ShareGo-android.apk) | Install the APK. |
+| [ShareGo-linux.tar.gz](https://github.com/MehdiMamas/ShareGo/releases/latest/download/ShareGo-linux.tar.gz) | Unpack and run `ShareGo`. |
+| [ShareGo-unsigned.ipa](https://github.com/MehdiMamas/ShareGo/releases/latest/download/ShareGo-unsigned.ipa) | Sideload with AltStore or Sideloadly. |
+
+The desktop apps check GitHub for a new release when they start and every 6 hours. On Windows (setup exe) the update installs with one click and ShareGo reopens. On macOS the new DMG is downloaded and opened; drag ShareGo to Applications to replace the old copy.
+
+The Windows installers are not code signed yet, so SmartScreen may warn on first run. Choose **More info**, then **Run anyway**.
 
 ## How a transfer works
 

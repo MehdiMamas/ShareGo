@@ -10,6 +10,7 @@ import 'package:sharego/ui/chat_screen.dart';
 import 'package:sharego/ui/home_screen.dart';
 import 'package:sharego/ui/receive_screen.dart';
 import 'package:sharego/ui/send_screen.dart';
+import 'package:sharego/ui/theme.dart';
 
 /// walks the app through each screen in the iOS simulator for the App Store
 /// shots. tool/store_shots.sh takes a screenshot each time this writes
@@ -156,10 +157,7 @@ class _ShotAppState extends State<_ShotApp> {
     return MaterialApp(
       navigatorKey: _navigator,
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1B6B4A)),
-        useMaterial3: true,
-      ),
+      theme: shareGoTheme(),
       home: const HomeScreen(),
     );
   }

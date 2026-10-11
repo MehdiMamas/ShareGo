@@ -5,7 +5,7 @@ import 'package:sharego/strings.dart';
 
 void main() {
   testWidgets('home offers receive and send', (tester) async {
-    await tester.pumpWidget(const ShareGoApp());
+    await tester.pumpWidget(const ShareGoApp(checkForUpdates: false));
     expect(find.text(S.appName), findsOneWidget);
     expect(find.text(S.showCode), findsOneWidget);
     expect(find.text(S.enterCode), findsOneWidget);

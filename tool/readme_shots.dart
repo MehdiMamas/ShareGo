@@ -12,6 +12,7 @@ import 'package:sharego/ui/chat_screen.dart';
 import 'package:sharego/ui/home_screen.dart';
 import 'package:sharego/ui/receive_screen.dart';
 import 'package:sharego/ui/send_screen.dart';
+import 'package:sharego/ui/theme.dart';
 
 /// runs the real macOS window through each screen so the readme shots use the
 /// app's fonts. the capture script watches for lines that start with STAGE.
@@ -98,10 +99,7 @@ class _ShotAppState extends State<_ShotApp> {
     };
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1B6B4A)),
-        useMaterial3: true,
-      ),
+      theme: shareGoTheme(),
       home: RepaintBoundary(key: _boundary, child: screen),
     );
   }

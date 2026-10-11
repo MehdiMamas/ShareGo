@@ -129,7 +129,13 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       padding: const EdgeInsets.all(24),
       children: [
         if (payload != null)
-          Center(child: QrImageView(data: payload, size: 220))
+          // dark modules on white, so cameras can read it on the dark theme
+          Center(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: QrImageView(data: payload, size: 220, backgroundColor: Colors.white),
+            ),
+          )
         else
           const Text(S.noAddress),
         const SizedBox(height: 16),
