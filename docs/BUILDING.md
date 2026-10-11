@@ -92,10 +92,25 @@ The release workflow copies `msvcp140.dll`, `vcruntime140.dll` and `vcruntime140
 - `ShareGo-windows.msi`: [WiX 5](https://wixtoolset.org), from `windows/installer/ShareGo.wxs`. Installs for all users in Program Files.
   ```
   dotnet tool install --global wix --version 5.0.2
-  wix build -arch x64 -d Version=2.0.2 -d SourceDir=<Release folder> -o ShareGo-windows.msi windows\installer\ShareGo.wxs
+  wix extension add -g WixToolset.UI.wixext/5.0.2
+  wix build -arch x64 -ext WixToolset.UI.wixext -d Version=2.0.2 -d SourceDir=<Release folder> -o ShareGo-windows.msi windows\installer\ShareGo.wxs
   ```
 
-Neither installer is code signed.
+Both installers show `windows/installer/privacy.txt` (the MSI shows it with the license, from `license.rtf`) and let the user turn the update check off. The setup exe has a **Check for updates** task; the MSI takes `UPDATECHECK=0`. Either writes `ShareGo.ini` next to `ShareGo.exe` with `check=false` under `[updates]`, which `updateCheckEnabled()` in `lib/core/updates.dart` reads. If you change what ShareGo sends over the network, update `privacy.txt`, `license.rtf` and [PRIVACY.md](PRIVACY.md) together.
+
+### Signing with SignPath
+
+Windows releases are signed through [SignPath Foundation](https://signpath.org) under the [code signing policy](CODE_SIGNING.md). On a tag, or on a manual run with **sign** checked, the release workflow makes two signing requests and waits for each to be approved in SignPath:
+
+1. `ShareGo.exe`, before the zip and the installers are made, so all three carry the signed copy.
+2. `ShareGo-windows-setup.exe` and `ShareGo-windows.msi`.
+
+It then checks each signature with `Get-AuthenticodeSignature`. Signing is skipped while the `SIGNPATH_ORGANIZATION_ID` variable is unset. One-time setup in SignPath and GitHub:
+
+- SignPath project `sharego`, linked to this repository as a GitHub trusted build system, with the SignPath GitHub App installed on it.
+- Artifact configurations `exe` and `installers`, copied from [.signpath/artifact-configurations](../.signpath/artifact-configurations). Change them here first, then in SignPath.
+- Signing policy `release-signing`, with manual approval.
+- Repository variable `SIGNPATH_ORGANIZATION_ID` and secret `SIGNPATH_API_TOKEN` (a CI user's token with submitter rights on `release-signing`).
 
 ## Linux
 
@@ -103,7 +118,7 @@ Install `clang`, `cmake`, `ninja-build`, `pkg-config`, `libgtk-3-dev`, `liblzma-
 
 ## Releases
 
-Pushing a tag `v*` runs `.github/workflows/release.yml`, which builds every artifact, attaches them to a GitHub Release and uploads the iOS build to TestFlight. Running the workflow by hand (`gh workflow run release.yml --ref <branch>`) builds the same artifacts but publishes nothing. `flutter analyze` and `flutter test` run on every push and pull request.
+Pushing a tag `v*` runs `.github/workflows/release.yml`, which builds every artifact, signs the Windows files, attaches them to a draft GitHub Release and uploads the iOS build to TestFlight. Running the workflow by hand (`gh workflow run release.yml --ref <branch>`) builds the same artifacts but publishes nothing. `flutter analyze` and `flutter test` run on every push and pull request.
 
 Before tagging, bump `version` in `pubspec.yaml` and `AppConfig.version` in `lib/config.dart` together. A test fails when they differ.
 

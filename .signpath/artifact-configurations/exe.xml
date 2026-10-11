@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SignPath artifact configuration "exe": signs ShareGo.exe only. Flutter, plugin and
+     Visual C++ runtime DLLs are not ours and stay as their vendors shipped them. -->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <!-- pubspec.yaml version with the build number, e.g. 2.0.2+3 -->
+    <parameter name="version" required="true" />
+  </parameters>
+  <zip-file>
+    <pe-file path="ShareGo.exe" product-name="ShareGo" product-version="${version}" company-name="Mehdi Mamas">
+      <authenticode-sign />
+    </pe-file>
+  </zip-file>
+</artifact-configuration>

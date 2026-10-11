@@ -37,7 +37,7 @@ class _UpdateBannerState extends State<UpdateBanner> {
   @override
   void initState() {
     super.initState();
-    if (!_desktop) return;
+    if (!_desktop || !updateCheckEnabled()) return;
     _check();
     _timer = Timer.periodic(AppConfig.updateCheckInterval, (_) => _check());
   }

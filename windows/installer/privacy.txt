@@ -1,0 +1,12 @@
+Privacy
+
+ShareGo sends text straight to one other device on your local network, encrypted on your device. It has no account, analytics, advertising or crash reporting, and it stores nothing on disk.
+
+The only connection ShareGo makes outside your network is the update check. When it starts, and every 6 hours while it runs, it asks GitHub (api.github.com) for the latest ShareGo release. When you choose to install an update, it downloads it from GitHub. GitHub sees your IP address and the ShareGo version. Nothing else is sent.
+
+To turn the update check off, clear "Check for updates" on the next page, or put these lines in ShareGo.ini next to ShareGo.exe:
+
+[updates]
+check=false
+
+Full privacy policy: https://github.com/MehdiMamas/ShareGo/blob/main/docs/PRIVACY.md

@@ -76,6 +76,36 @@ bool isNewer(String candidate, String current) {
   return false;
 }
 
+/// false when [ini] has `check=false` under `[updates]`. the installers
+/// write ShareGo.ini next to ShareGo.exe when the update check is turned off.
+bool updateCheckAllowed(String ini) {
+  var section = '';
+  for (final raw in const LineSplitter().convert(ini)) {
+    final line = raw.trim();
+    if (line.startsWith('[') && line.endsWith(']')) {
+      section = line.substring(1, line.length - 1).trim().toLowerCase();
+      continue;
+    }
+    final eq = line.indexOf('=');
+    if (section != 'updates' || eq < 0) continue;
+    if (line.substring(0, eq).trim().toLowerCase() == 'check') {
+      return line.substring(eq + 1).trim().toLowerCase() != 'false';
+    }
+  }
+  return true;
+}
+
+/// reads ShareGo.ini next to the running executable, if there is one.
+bool updateCheckEnabled() {
+  final dir = File(Platform.resolvedExecutable).parent.path;
+  final file = File('$dir${Platform.pathSeparator}ShareGo.ini');
+  try {
+    return !file.existsSync() || updateCheckAllowed(file.readAsStringSync());
+  } on FileSystemException {
+    return true;
+  }
+}
+
 /// asks GitHub for the latest release. returns null when it is not newer
 /// than this build, or when the check fails for any reason.
 Future<Release?> checkForUpdate() async {

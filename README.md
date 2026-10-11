@@ -10,7 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/MehdiMamas/ShareGo/releases/latest"><strong>Download the latest release</strong></a>
+  <a href="https://github.com/MehdiMamas/ShareGo/releases/latest"><strong>Download the latest release</strong></a><br>
+  <a href="docs/CODE_SIGNING.md">Code signing policy</a> · <a href="docs/PRIVACY.md">Privacy policy</a>
 </p>
 
 <p align="center">
@@ -31,9 +32,9 @@
 | [ShareGo-linux.tar.gz](https://github.com/MehdiMamas/ShareGo/releases/latest/download/ShareGo-linux.tar.gz) | Unpack and run `ShareGo`. |
 | [ShareGo-unsigned.ipa](https://github.com/MehdiMamas/ShareGo/releases/latest/download/ShareGo-unsigned.ipa) | Sideload with AltStore or Sideloadly. |
 
-The desktop apps check GitHub for a new release when they start and every 6 hours. On Windows (setup exe) the update installs with one click and ShareGo reopens. On macOS the new DMG is downloaded and opened; drag ShareGo to Applications to replace the old copy.
+The desktop apps check GitHub for a new release when they start and every 6 hours. On Windows (setup exe) the update installs with one click and ShareGo reopens. On macOS the new DMG is downloaded and opened; drag ShareGo to Applications to replace the old copy. Both Windows installers let you turn the check off; see the [privacy policy](docs/PRIVACY.md).
 
-The Windows installers are not code signed yet, so SmartScreen may warn on first run. Choose **More info**, then **Run anyway**.
+Windows releases are signed through SignPath; see the [code signing policy](docs/CODE_SIGNING.md). Until a signed release is out, SmartScreen may warn on first run. Choose **More info**, then **Run anyway**.
 
 ## How a transfer works
 

@@ -34,11 +34,13 @@ OutputBaseFilename=ShareGo-windows-setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+InfoBeforeFile=privacy.txt
 CloseApplications=yes
 RestartApplications=no
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "updatecheck"; Description: "Check for updates (asks GitHub at start and every 6 hours)"; GroupDescription: "Updates:"
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -47,9 +49,15 @@ Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 Name: "{autoprograms}\ShareGo"; Filename: "{app}\ShareGo.exe"
 Name: "{autodesktop}\ShareGo"; Filename: "{app}\ShareGo.exe"; Tasks: desktopicon
 
+[INI]
+; read by ShareGo at start. a silent update keeps the earlier choice.
+Filename: "{app}\ShareGo.ini"; Section: "updates"; Key: "check"; String: "true"; Tasks: updatecheck
+Filename: "{app}\ShareGo.ini"; Section: "updates"; Key: "check"; String: "false"; Tasks: not updatecheck
+
 [Run]
 ; no skipifsilent: after a silent update from inside the app, open it again
 Filename: "{app}\ShareGo.exe"; Description: "{cm:LaunchProgram,ShareGo}"; Flags: nowait postinstall
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\data"
+Type: files; Name: "{app}\ShareGo.ini"
