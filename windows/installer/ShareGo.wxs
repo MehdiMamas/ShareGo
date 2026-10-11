@@ -3,9 +3,10 @@
   deployment tool. It installs for all users in Program Files. Copies
   installed this way do not update themselves; the app links to the release
   page instead. The release workflow runs:
-    wix build -arch x64 -d Version=2.0.2 -d SourceDir=<flutter Release folder> -o ShareGo-windows.msi windows\installer\ShareGo.wxs
+    wix extension add -g WixToolset.UI.wixext/5.0.2
+    wix build -arch x64 -ext WixToolset.UI.wixext -d Version=2.0.2 -d SourceDir=<flutter Release folder> -o ShareGo-windows.msi windows\installer\ShareGo.wxs
 -->
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
   <Package Name="ShareGo" Manufacturer="Mehdi Mamas" Version="$(Version)"
            UpgradeCode="A576FCB6-03AB-4A8E-9F8B-65648F6406CA" Scope="perMachine">
     <MajorUpgrade DowngradeErrorMessage="A newer version of ShareGo is already installed." />
@@ -15,6 +16,13 @@
     <Property Id="ARPPRODUCTICON" Value="ShareGo.ico" />
     <Property Id="ARPURLINFOABOUT" Value="https://github.com/MehdiMamas/ShareGo" />
     <Property Id="ARPHELPLINK" Value="https://github.com/MehdiMamas/ShareGo/issues" />
+
+    <!-- the privacy notice and the license, shown before installing -->
+    <WixVariable Id="WixUILicenseRtf" Value="$(sys.SOURCEFILEDIR)license.rtf" />
+    <ui:WixUI Id="WixUI_Minimal" />
+
+    <!-- msiexec /i ShareGo-windows.msi UPDATECHECK=0 turns the update check off -->
+    <Property Id="UPDATECHECK" Value="1" Secure="yes" />
 
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLFOLDER" Name="ShareGo" />
@@ -26,6 +34,11 @@
           <Shortcut Name="ShareGo" Directory="ProgramMenuFolder" WorkingDirectory="INSTALLFOLDER"
                     Icon="ShareGo.ico" Advertise="yes" />
         </File>
+      </Component>
+      <Component Directory="INSTALLFOLDER" Condition="UPDATECHECK = &quot;0&quot;">
+        <RegistryValue Root="HKLM" Key="Software\ShareGo" Name="UpdateCheck" Type="integer" Value="0" KeyPath="yes" />
+        <IniFile Id="NoUpdateCheck" Action="addLine" Directory="INSTALLFOLDER" Name="ShareGo.ini"
+                 Section="updates" Key="check" Value="false" />
       </Component>
       <Files Directory="INSTALLFOLDER" Include="$(SourceDir)\**">
         <Exclude Files="$(SourceDir)\ShareGo.exe" />

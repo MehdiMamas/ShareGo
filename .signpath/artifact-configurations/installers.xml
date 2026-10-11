@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SignPath artifact configuration "installers": signs the Inno Setup exe and the MSI.
+     The ShareGo.exe inside both was signed by the "exe" request just before. -->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <!-- pubspec.yaml version without the build number, e.g. 2.0.2 -->
+    <parameter name="version" required="true" />
+  </parameters>
+  <zip-file>
+    <pe-file path="ShareGo-windows-setup.exe" product-name="ShareGo" product-version="${version}" company-name="Mehdi Mamas">
+      <authenticode-sign />
+    </pe-file>
+    <msi-file path="ShareGo-windows.msi" subject="ShareGo" author="Mehdi Mamas">
+      <authenticode-sign />
+    </msi-file>
+  </zip-file>
+</artifact-configuration>

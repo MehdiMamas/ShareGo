@@ -12,6 +12,14 @@ void main() {
     expect(isNewer('2.0.1.1', '2.0.1'), isTrue);
   });
 
+  test('ShareGo.ini can turn the update check off', () {
+    expect(updateCheckAllowed(''), isTrue);
+    expect(updateCheckAllowed('[updates]\ncheck=true\n'), isTrue);
+    expect(updateCheckAllowed('[updates]\r\ncheck=false\r\n'), isFalse);
+    expect(updateCheckAllowed('[Updates]\n Check = FALSE \n'), isFalse);
+    expect(updateCheckAllowed('[other]\ncheck=false\n'), isTrue);
+  });
+
   test('Release.fromJson reads the tag, page, and asset hashes', () {
     final release = Release.fromJson({
       'tag_name': 'v2.0.2',

@@ -6,14 +6,25 @@ on:
       - "v*"
   # a manual run builds everything but publishes nothing: no release, no TestFlight upload
   workflow_dispatch:
+    inputs:
+      sign:
+        description: Sign the Windows files with SignPath (each request is approved there by hand)
+        type: boolean
+        default: false
 
 permissions:
   contents: write
+  # SignPath reads the unsigned files from this run's artifacts
+  actions: read
 
 jobs:
   build:
     name: ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
+    env:
+      # Windows files are signed through SignPath (docs/CODE_SIGNING.md) on tags, or on a
+      # manual run with sign checked, once the SIGNPATH_ORGANIZATION_ID variable is set
+      SIGN_WINDOWS: ${{ matrix.target == 'windows' && vars.SIGNPATH_ORGANIZATION_ID != '' && (github.ref_type == 'tag' || inputs.sign) }}
     strategy:
       fail-fast: false
       matrix:
@@ -184,27 +195,100 @@ jobs:
               for dll in msvcp140.dll vcruntime140.dll vcruntime140_1.dll; do
                 cp "/c/Windows/System32/$dll" "$bundle/"
               done
-              (cd "$bundle" && 7z a -tzip "$GITHUB_WORKSPACE/ShareGo-windows.zip" . > /dev/null)
+              full=$(sed -n 's/^version: *//p' pubspec.yaml)
+              echo "WINDOWS_VERSION=${full%%+*}" >> "$GITHUB_ENV"
+              echo "WINDOWS_BUILD_VERSION=$full" >> "$GITHUB_ENV"
               ;;
           esac
 
-      - name: Windows installers
+      # ShareGo.exe is signed first, so the zip and both installers carry the signed copy
+      - name: Upload ShareGo.exe for signing
+        id: unsigned-exe
+        if: env.SIGN_WINDOWS == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-unsigned-exe
+          path: build/windows/x64/runner/Release/ShareGo.exe
+          if-no-files-found: error
+
+      - name: Sign ShareGo.exe
+        if: env.SIGN_WINDOWS == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: sharego
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: exe
+          github-artifact-id: ${{ steps.unsigned-exe.outputs.artifact-id }}
+          wait-for-completion: true
+          # an approver signs off by hand in SignPath
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: signed-exe
+          parameters: |
+            version: ${{ toJSON(env.WINDOWS_BUILD_VERSION) }}
+
+      - name: Windows packages
         if: matrix.target == 'windows'
         shell: pwsh
         run: |
-          $version = (Select-String -Path pubspec.yaml -Pattern '^version:\s*([0-9.]+)').Matches[0].Groups[1].Value
           $bundle = "$PWD\build\windows\x64\runner\Release"
+          if ($env:SIGN_WINDOWS -eq 'true') { Copy-Item signed-exe\ShareGo.exe $bundle -Force }
+          Push-Location $bundle
+          7z a -tzip "$env:GITHUB_WORKSPACE\ShareGo-windows.zip" . | Out-Null
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          Pop-Location
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress }
-          & $iscc "/DAppVersion=$version" "/DSourceDir=$bundle" "/O$PWD" windows\installer\ShareGo.iss
+          & $iscc "/DAppVersion=$env:WINDOWS_VERSION" "/DSourceDir=$bundle" "/O$PWD" windows\installer\ShareGo.iss
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           dotnet tool install --global wix --version 5.0.2
-          wix build -arch x64 -d "Version=$version" -d "SourceDir=$bundle" -o ShareGo-windows.msi windows\installer\ShareGo.wxs
+          wix extension add -g WixToolset.UI.wixext/5.0.2
+          wix build -arch x64 -ext WixToolset.UI.wixext -d "Version=$env:WINDOWS_VERSION" -d "SourceDir=$bundle" -o ShareGo-windows.msi windows\installer\ShareGo.wxs
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      - name: Upload installers for signing
+        id: unsigned-installers
+        if: env.SIGN_WINDOWS == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-unsigned-installers
+          path: |
+            ShareGo-windows-setup.exe
+            ShareGo-windows.msi
+          if-no-files-found: error
+
+      - name: Sign installers
+        if: env.SIGN_WINDOWS == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: sharego
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: installers
+          github-artifact-id: ${{ steps.unsigned-installers.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: signed-installers
+          parameters: |
+            version: ${{ toJSON(env.WINDOWS_VERSION) }}
+
+      - name: Check signatures
+        if: env.SIGN_WINDOWS == 'true'
+        shell: pwsh
+        run: |
+          Copy-Item signed-installers\* . -Force
+          foreach ($file in 'build\windows\x64\runner\Release\ShareGo.exe', 'ShareGo-windows-setup.exe', 'ShareGo-windows.msi') {
+            $sig = Get-AuthenticodeSignature $file
+            "$file $($sig.Status) $($sig.SignerCertificate.Subject)"
+            if ($sig.Status -ne 'Valid') { exit 1 }
+          }
 
       - uses: actions/upload-artifact@v7
         with:
-          name: ${{ matrix.target }}
+          # the release job only takes release-* artifacts, not the unsigned ones above
+          name: release-${{ matrix.target }}
           path: ${{ matrix.artifact }}
           if-no-files-found: error
 
@@ -217,12 +301,15 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           path: dist
+          pattern: release-*
           merge-multiple: true
 
       - uses: softprops/action-gh-release@v3
         with:
           draft: true
           generate_release_notes: true
+          body: |
+            [Code signing policy](https://github.com/MehdiMamas/ShareGo/blob/main/docs/CODE_SIGNING.md) · [Privacy policy](https://github.com/MehdiMamas/ShareGo/blob/main/docs/PRIVACY.md)
           files: |
             dist/ShareGo-android.apk
             dist/ShareGo-linux.tar.gz
