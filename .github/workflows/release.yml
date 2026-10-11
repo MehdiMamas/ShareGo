@@ -59,8 +59,53 @@ jobs:
               "$STORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
           fi
 
+      - name: Apple signing keychain
+        if: matrix.target == 'ios' || matrix.target == 'macos'
+        env:
+          P12_BASE64: ${{ matrix.target == 'ios' && secrets.APPLE_DISTRIBUTION_P12_BASE64 || secrets.APPLE_DEVELOPER_ID_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.APPLE_P12_PASSWORD }}
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
+          PROFILE_BASE64: ${{ secrets.IOS_PROFILE_BASE64 }}
+        run: |
+          if [ -z "$P12_BASE64" ]; then
+            echo "No Apple signing secrets. Building unsigned."
+            exit 0
+          fi
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          keychain_password=$(uuidgen)
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          echo "$P12_BASE64" | base64 --decode > "$RUNNER_TEMP/signing.p12"
+          security import "$RUNNER_TEMP/signing.p12" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$keychain"
+          rm "$RUNNER_TEMP/signing.p12"
+          for ca in AppleWWDRCAG3 DeveloperIDG2CA; do
+            curl -fsSL "https://www.apple.com/certificateauthority/$ca.cer" -o "$RUNNER_TEMP/$ca.cer"
+            security import "$RUNNER_TEMP/$ca.cer" -k "$keychain" || true
+          done
+          security set-key-partition-list -S apple-tool:,apple: -k "$keychain_password" "$keychain"
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$API_KEY_P8_BASE64" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_$API_KEY_ID.p8
+          if [ "${{ matrix.target }}" = ios ]; then
+            echo "$PROFILE_BASE64" | base64 --decode > "$RUNNER_TEMP/app.mobileprovision"
+            security cms -D -i "$RUNNER_TEMP/app.mobileprovision" > "$RUNNER_TEMP/profile.plist"
+            uuid=$(plutil -extract UUID raw "$RUNNER_TEMP/profile.plist")
+            for dir in ~/Library/MobileDevice/Provisioning\ Profiles ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles; do
+              mkdir -p "$dir"
+              cp "$RUNNER_TEMP/app.mobileprovision" "$dir/$uuid.mobileprovision"
+            done
+            echo "IOS_PROFILE_NAME=$(plutil -extract Name raw "$RUNNER_TEMP/profile.plist")" >> "$GITHUB_ENV"
+          fi
+          echo "APPLE_SIGNING=1" >> "$GITHUB_ENV"
+
       - name: Build
         shell: bash
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
         run: |
           flutter pub get
           case "${{ matrix.target }}" in
@@ -75,7 +120,22 @@ jobs:
             macos)
               flutter build macos --release
               app=$(find build/macos/Build/Products/Release -maxdepth 1 -name '*.app' -print -quit)
+              if [ -n "${APPLE_SIGNING:-}" ]; then
+                identity="Developer ID Application"
+                find "$app/Contents/Frameworks" -depth \( -name '*.framework' -o -name '*.dylib' \) \
+                  -exec codesign --force --timestamp --options runtime --sign "$identity" {} \;
+                codesign --force --timestamp --options runtime \
+                  --entitlements macos/Runner/Release.entitlements --sign "$identity" "$app"
+                codesign --verify --strict --deep --verbose=2 "$app"
+              fi
               hdiutil create -volname ShareGo -srcfolder "$app" -ov -format UDZO ShareGo-macos.dmg
+              if [ -n "${APPLE_SIGNING:-}" ]; then
+                codesign --timestamp --sign "$identity" ShareGo-macos.dmg
+                xcrun notarytool submit ShareGo-macos.dmg --wait \
+                  --key ~/.appstoreconnect/private_keys/AuthKey_$API_KEY_ID.p8 \
+                  --key-id "$API_KEY_ID" --issuer "$API_ISSUER_ID"
+                xcrun stapler staple ShareGo-macos.dmg
+              fi
               ;;
             ios)
               flutter build ios --release --no-codesign
@@ -84,6 +144,27 @@ jobs:
               cp -R build/ios/iphoneos/Runner.app Payload/
               zip -r ShareGo-unsigned.ipa Payload
               rm -rf Payload
+              if [ -n "${APPLE_SIGNING:-}" ]; then
+                cat >> ios/Flutter/Release.xcconfig <<EOF
+          CODE_SIGN_STYLE = Manual
+          DEVELOPMENT_TEAM = $TEAM_ID
+          CODE_SIGN_IDENTITY = Apple Distribution
+          CODE_SIGN_IDENTITY[sdk=iphoneos*] = Apple Distribution
+          PROVISIONING_PROFILE_SPECIFIER = $IOS_PROFILE_NAME
+          EOF
+                plutil -create xml1 "$RUNNER_TEMP/ExportOptions.plist"
+                plutil -insert method -string app-store-connect "$RUNNER_TEMP/ExportOptions.plist"
+                plutil -insert teamID -string "$TEAM_ID" "$RUNNER_TEMP/ExportOptions.plist"
+                plutil -insert signingStyle -string manual "$RUNNER_TEMP/ExportOptions.plist"
+                plutil -insert signingCertificate -string "Apple Distribution" "$RUNNER_TEMP/ExportOptions.plist"
+                plutil -insert provisioningProfiles -dictionary "$RUNNER_TEMP/ExportOptions.plist"
+                plutil -insert 'provisioningProfiles.dev\.sharego\.sharego' -string "$IOS_PROFILE_NAME" "$RUNNER_TEMP/ExportOptions.plist"
+                flutter build ipa --release --build-number=${{ github.run_number }} \
+                  --export-options-plist="$RUNNER_TEMP/ExportOptions.plist"
+                ipa=$(find build/ios/ipa -maxdepth 1 -name '*.ipa' -print -quit)
+                xcrun altool --upload-app -t ios -f "$ipa" \
+                  --apiKey "$API_KEY_ID" --apiIssuer "$API_ISSUER_ID"
+              fi
               ;;
             windows)
               flutter build windows --release
