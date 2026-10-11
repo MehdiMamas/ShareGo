@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/MehdiMamas/ShareGo/releases/tag/v2.0.0"><strong>Download v2.0.0</strong></a>
+  <a href="https://github.com/MehdiMamas/ShareGo/releases/tag/v2.0.1"><strong>Download v2.0.1</strong></a>
 </p>
 
 <p align="center">
@@ -23,13 +23,11 @@
 
 | File | What to do |
 | --- | --- |
-| [ShareGo-windows.zip](https://github.com/MehdiMamas/ShareGo/releases/download/v2.0.0/ShareGo-windows.zip) | Unzip and run `ShareGo.exe`. Allow it on private networks when Windows asks. |
-| [ShareGo-macos.dmg](https://github.com/MehdiMamas/ShareGo/releases/download/v2.0.0/ShareGo-macos.dmg) | Open the disk image and move ShareGo to Applications. |
-| [ShareGo-android.apk](https://github.com/MehdiMamas/ShareGo/releases/download/v2.0.0/ShareGo-android.apk) | Install the APK. |
-| [ShareGo-linux.tar.gz](https://github.com/MehdiMamas/ShareGo/releases/download/v2.0.0/ShareGo-linux.tar.gz) | Unpack and run `ShareGo`. |
-| [ShareGo-unsigned.ipa](https://github.com/MehdiMamas/ShareGo/releases/download/v2.0.0/ShareGo-unsigned.ipa) | Sideload with AltStore or Sideloadly. |
-
-The macOS app is not notarized yet, so Gatekeeper will warn the first time you open it.
+| [ShareGo-windows.zip](https://github.com/MehdiMamas/ShareGo/releases/download/v2.0.1/ShareGo-windows.zip) | Unzip and run `ShareGo.exe`. Allow it on private networks when Windows asks. |
+| [ShareGo-macos.dmg](https://github.com/MehdiMamas/ShareGo/releases/download/v2.0.1/ShareGo-macos.dmg) | Open the disk image and move ShareGo to Applications. |
+| [ShareGo-android.apk](https://github.com/MehdiMamas/ShareGo/releases/download/v2.0.1/ShareGo-android.apk) | Install the APK. |
+| [ShareGo-linux.tar.gz](https://github.com/MehdiMamas/ShareGo/releases/download/v2.0.1/ShareGo-linux.tar.gz) | Unpack and run `ShareGo`. |
+| [ShareGo-unsigned.ipa](https://github.com/MehdiMamas/ShareGo/releases/download/v2.0.1/ShareGo-unsigned.ipa) | Sideload with AltStore or Sideloadly. |
 
 ## How a transfer works
 

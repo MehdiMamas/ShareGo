@@ -2,9 +2,6 @@ name: Store screenshots
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - store/listing
 
 jobs:
   shots:
