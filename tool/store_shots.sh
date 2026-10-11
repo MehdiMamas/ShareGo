@@ -35,6 +35,8 @@ shoot() {
   local name=$1 udid=$2 stage="" n=0
   xcrun simctl boot "$udid" 2>/dev/null || true
   xcrun simctl bootstatus "$udid" -b > /dev/null
+  # first-boot notifications (Apple Intelligence and the like) come and go here
+  sleep 90
   xcrun simctl status_bar "$udid" override --time 9:41 --dataNetwork wifi --wifiMode active \
     --wifiBars 3 --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100
   xcrun simctl install "$udid" "$app"
