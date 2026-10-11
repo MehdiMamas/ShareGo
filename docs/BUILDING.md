@@ -70,6 +70,14 @@ Team `7LPSQ8W7G8`, bundle ID `com.mehdimamas.sharego`. Repository secrets used b
 
 The profile expires with the Apple Distribution certificate after a year. Renew both and update the secrets. The Developer ID certificate lasts five years. Only the Account Holder can create it, on the developer website.
 
+## App Store
+
+The listing is app `6821553536` in App Store Connect ("ShareGo: Wi-Fi Secret Share"). The privacy policy it links to is [PRIVACY.md](PRIVACY.md).
+
+Screenshots come from the **Store screenshots** workflow (run it by hand). It runs `tool/store_shots.dart` in the largest iPhone and iPad simulators, and `tool/store_shots.sh` saves each screen, status bar included, as the `store-shots` artifact.
+
+Export compliance was answered as "standard encryption algorithms, not distributed in France", so `ITSAppUsesNonExemptEncryption` is `false` in `ios/Runner/Info.plist`. France is turned off under Pricing and Availability. Selling there needs an encryption declaration to ANSSI first, then those answers change.
+
 ## Windows
 
 `flutter build windows --release`. Zip the contents of `build/windows/x64/runner/Release/`. The first run may ask to allow ShareGo through the firewall. Allow it on private networks.

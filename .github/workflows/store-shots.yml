@@ -1,0 +1,30 @@
+name: Store screenshots
+
+on:
+  workflow_dispatch:
+
+jobs:
+  shots:
+    name: iPhone and iPad
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Build for the simulator
+        run: |
+          flutter pub get
+          flutter build ios --simulator --debug -t tool/store_shots.dart
+
+      - name: Screenshots
+        run: bash tool/store_shots.sh store-shots
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: store-shots
+          path: store-shots
+          if-no-files-found: error
