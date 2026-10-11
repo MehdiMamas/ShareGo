@@ -59,7 +59,7 @@ The camera, local network, and Bonjour usage strings are in `ios/Runner/Info.pli
 
 ## Apple secrets
 
-Team `7LPSQ8W7G8`, bundle ID `dev.sharego.sharego`. Repository secrets used by the release workflow:
+Team `7LPSQ8W7G8`, bundle ID `com.mehdimamas.sharego`. Repository secrets used by the release workflow:
 
 - `APPLE_TEAM_ID`
 - `APPLE_API_KEY_ID`, `APPLE_API_ISSUER_ID`, `APPLE_API_KEY_P8_BASE64`: an App Store Connect team API key (Admin), used for notarization and TestFlight upload

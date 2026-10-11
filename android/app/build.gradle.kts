@@ -14,7 +14,7 @@ if (hasReleaseKeystore) {
 }
 
 android {
-    namespace = "dev.sharego.sharego"
+    namespace = "com.mehdimamas.sharego"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -24,7 +24,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "dev.sharego.sharego"
+        applicationId = "com.mehdimamas.sharego"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

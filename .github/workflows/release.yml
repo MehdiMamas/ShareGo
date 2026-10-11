@@ -158,7 +158,7 @@ jobs:
                 plutil -insert signingStyle -string manual "$RUNNER_TEMP/ExportOptions.plist"
                 plutil -insert signingCertificate -string "Apple Distribution" "$RUNNER_TEMP/ExportOptions.plist"
                 plutil -insert provisioningProfiles -dictionary "$RUNNER_TEMP/ExportOptions.plist"
-                plutil -insert 'provisioningProfiles.dev\.sharego\.sharego' -string "$IOS_PROFILE_NAME" "$RUNNER_TEMP/ExportOptions.plist"
+                plutil -insert 'provisioningProfiles.com\.mehdimamas\.sharego' -string "$IOS_PROFILE_NAME" "$RUNNER_TEMP/ExportOptions.plist"
                 flutter build ipa --release --build-number=${{ github.run_number }} \
                   --export-options-plist="$RUNNER_TEMP/ExportOptions.plist"
                 ipa=$(find build/ios/ipa -maxdepth 1 -name '*.ipa' -print -quit)
