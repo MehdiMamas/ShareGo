@@ -45,13 +45,30 @@ If the secrets are absent, the release APK is still built and signed with the ru
 
 `flutter build macos --release` writes `build/macos/Build/Products/Release/ShareGo.app`. The app is sandboxed and is allowed incoming and outgoing network connections.
 
-The app is unsigned. macOS will say it cannot be opened. Use System Settings, or `xattr -dr com.apple.quarantine` on the app after you have checked the download. Signing and notarization can be added later with an Apple Developer account. The release workflow is not set up for that yet.
+A local build is unsigned. macOS will say it cannot be opened. Use System Settings, or `xattr -dr com.apple.quarantine` on the app after you have checked the download.
+
+The release workflow signs the app with the Developer ID Application certificate (hardened runtime), signs the DMG, notarizes it with `notarytool` and staples the ticket. It needs the Apple secrets listed below. Without them the DMG is built unsigned.
 
 ## iOS
 
-`flutter build ios --release --no-codesign` produces an unsigned `Runner.app`. The release workflow zips it as `Payload/Runner.app` into `ShareGo-unsigned.ipa` for AltStore or Sideloadly. A paid Apple Developer account is required before this can be installed as a normal App Store or TestFlight build. That signing step is not in the workflow yet.
+`flutter build ios --release --no-codesign` produces an unsigned `Runner.app`. The release workflow zips it as `Payload/Runner.app` into `ShareGo-unsigned.ipa` for AltStore or Sideloadly.
+
+With the Apple secrets set, the workflow also runs `flutter build ipa` with manual signing (Apple Distribution certificate and the `ShareGo App Store` profile) and uploads the IPA to TestFlight. The build number is the workflow run number, so each upload is new.
 
 The camera, local network, and Bonjour usage strings are in `ios/Runner/Info.plist`.
+
+## Apple secrets
+
+Team `7LPSQ8W7G8`, bundle ID `com.mehdimamas.sharego`. Repository secrets used by the release workflow:
+
+- `APPLE_TEAM_ID`
+- `APPLE_API_KEY_ID`, `APPLE_API_ISSUER_ID`, `APPLE_API_KEY_P8_BASE64`: an App Store Connect team API key (Admin), used for notarization and TestFlight upload
+- `APPLE_DISTRIBUTION_P12_BASE64`: Apple Distribution certificate and key (iOS)
+- `APPLE_DEVELOPER_ID_P12_BASE64`: Developer ID Application certificate and key (macOS)
+- `APPLE_P12_PASSWORD`: password of both `.p12` files
+- `IOS_PROFILE_BASE64`: the `ShareGo App Store` provisioning profile
+
+The profile expires with the Apple Distribution certificate after a year. Renew both and update the secrets. The Developer ID certificate lasts five years. Only the Account Holder can create it, on the developer website.
 
 ## Windows
 

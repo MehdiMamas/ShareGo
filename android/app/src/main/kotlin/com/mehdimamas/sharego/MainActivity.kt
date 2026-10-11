@@ -1,4 +1,4 @@
-package dev.sharego.sharego
+package com.mehdimamas.sharego
 
 import io.flutter.embedding.android.FlutterActivity
 

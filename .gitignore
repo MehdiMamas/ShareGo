@@ -99,3 +99,5 @@ Desktop.ini
 .progress/
 .cursor/rules/personal-context.mdc
 .cursor/plans/
+
+.worktrees/

@@ -8,7 +8,7 @@
 PRODUCT_NAME = ShareGo
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = dev.sharego.sharego
+PRODUCT_BUNDLE_IDENTIFIER = com.mehdimamas.sharego
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 dev.sharego. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 Mehdi Mamas. All rights reserved.
