@@ -1,3 +1,5 @@
+Send a password, code, or note to one other device on the same Wi-Fi. Encrypted on the device, nothing stored, no server.
+
 <p align="center">
   <img src="docs/images/icon.png" width="128" alt="ShareGo icon">
 </p>
@@ -5,13 +7,12 @@
 <h1 align="center">ShareGo</h1>
 
 <p align="center">
-  Hand a password, a code, or a note to one other device on the same Wi-Fi.<br>
-  Encrypted on the device. Nothing stored. Nothing sent to a server.
+  <a href="https://github.com/MehdiMamas/ShareGo/releases/latest"><strong>Download the latest release</strong></a><br>
+  <a href="docs/CODE_SIGNING.md">Code signing policy</a> · <a href="docs/PRIVACY.md">Privacy policy</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/MehdiMamas/ShareGo/releases/latest"><strong>Download the latest release</strong></a><br>
-  <a href="docs/CODE_SIGNING.md">Code signing policy</a> · <a href="docs/PRIVACY.md">Privacy policy</a>
+  <img src="docs/images/demo.gif" width="560" alt="ShareGo: show a code, enter it on the other device, send a secret">
 </p>
 
 <p align="center">
@@ -35,6 +36,14 @@
 The desktop apps check GitHub for a new release when they start and every 6 hours. On Windows (setup exe) the update installs with one click and ShareGo reopens. On macOS the new DMG is downloaded and opened; drag ShareGo to Applications to replace the old copy. Both Windows installers let you turn the check off; see the [privacy policy](docs/PRIVACY.md).
 
 Windows releases are signed through SignPath; see the [code signing policy](docs/CODE_SIGNING.md). Until a signed release is out, SmartScreen may warn on first run. Choose **More info**, then **Run anyway**.
+
+### Install from a terminal (Linux)
+
+```bash
+mkdir sharego && curl -sSL https://github.com/MehdiMamas/ShareGo/releases/latest/download/ShareGo-linux.tar.gz | tar xz -C sharego && ./sharego/ShareGo
+```
+
+There is no package-manager channel yet. On the other platforms, use the table above.
 
 ## How a transfer works
 
@@ -69,3 +78,11 @@ flutter run
 - [Architecture](docs/ARCHITECTURE.md)
 - [Threat model](docs/THREAT_MODEL.md)
 - [Security policy](SECURITY.md)
+
+## Credits
+
+ShareGo is built with [Flutter](https://flutter.dev) and these open-source packages: [cryptography](https://pub.dev/packages/cryptography) and [cryptography_flutter](https://pub.dev/packages/cryptography_flutter) (X25519, HKDF, XChaCha20-Poly1305), [bonsoir](https://pub.dev/packages/bonsoir) (local network discovery), [mobile_scanner](https://pub.dev/packages/mobile_scanner) (QR scanning), [qr_flutter](https://pub.dev/packages/qr_flutter) (QR codes) and [url_launcher](https://pub.dev/packages/url_launcher). Thanks to their authors. Windows releases are signed through [SignPath](https://signpath.org).
+
+## License
+
+[MIT](LICENSE)
