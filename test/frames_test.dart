@@ -23,9 +23,27 @@ void main() {
     expect(() => reader.add(header), throwsA(isA<FrameException>()));
   });
 
+  test('frames reject a zero-length header', () {
+    final reader = FrameReader();
+    final header = Uint8List(4);
+    expect(() => reader.add(header), throwsA(isA<FrameException>()));
+  });
+
+  test('encodeFrame rejects an empty body', () {
+    expect(() => encodeFrame(Uint8List(0)), throwsA(isA<FrameException>()));
+  });
+
+  test('encodeFrame rejects a body over the size limit', () {
+    final body = Uint8List(AppConfig.maxFrameSize + 1);
+    expect(() => encodeFrame(body), throwsA(isA<FrameException>()));
+  });
+
   test('a socket pair exchanges one frame', () async {
     final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
-    final client = await Socket.connect(InternetAddress.loopbackIPv4, server.port);
+    final client = await Socket.connect(
+      InternetAddress.loopbackIPv4,
+      server.port,
+    );
     final body = Uint8List.fromList(utf8.encode('{"ok":true}'));
     client.add(encodeFrame(body));
     await client.flush();
