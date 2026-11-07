@@ -23,6 +23,12 @@ void main() {
     expect(() => reader.add(header), throwsA(isA<FrameException>()));
   });
 
+  test('frames reject a zero-length header', () {
+    final reader = FrameReader();
+    final header = Uint8List(4);
+    expect(() => reader.add(header), throwsA(isA<FrameException>()));
+  });
+
   test('encodeFrame rejects an empty body', () {
     expect(() => encodeFrame(Uint8List(0)), throwsA(isA<FrameException>()));
   });
